@@ -2344,17 +2344,17 @@ export default function Page() {
 
   const renderAuthScreen = () => (
     <div style={{ ...styles.loginWrap, ...themeVars }}>
-      <div style={styles.loginShell}>
-        <div style={styles.loginShowcase}>
+      <div style={styles.loginShell} className="login-shell">
+        <div style={styles.loginShowcase} className="login-showcase">
           <div style={styles.loginOrbOne} />
           <div style={styles.loginOrbTwo} />
           <div style={styles.loginOrbThree} />
 
-          <div style={styles.loginBrand}>{"\u00d6DED\u0130 M\u0130"}</div>
-          <h1 style={styles.loginHeadline}>{"Parac\u0131klar Geldi Mi Acep..."}</h1>
+          <div style={styles.loginBrand} className="login-brand">{"\u00d6DED\u0130 M\u0130"}</div>
+          <h1 style={styles.loginHeadline} className="login-headline">{"Parac\u0131klar Geldi Mi Acep..."}</h1>
           </div>
 
-        <div style={styles.loginCard}>
+        <div style={styles.loginCard} className="login-card">
           <div style={styles.loginCardTitle}>
             {signupMode ? "Hesap Oluştur" : "Giriş Yap"}
           </div>
@@ -2634,7 +2634,41 @@ export default function Page() {
         .status-button:active{transform:scale(.985)}
         @media (max-width: 980px){
           .app-shell{grid-template-columns:1fr !important}
-          .app-sidebar{position:static !important}
+          .app-sidebar{position:static !important;height:auto !important}
+          .app-content{padding:16px !important}
+          .app-top-bar{flex-direction:column !important;align-items:stretch !important}
+          .top-search{width:100% !important;min-width:0 !important}
+          .hero-card{padding:16px !important}
+          .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+          .quick-grid{grid-template-columns:1fr !important}
+          .login-shell{grid-template-columns:1fr !important;min-height:auto !important}
+          .login-showcase{padding:32px 24px !important;min-height:280px !important}
+          .login-card{max-width:none !important;border-radius:0 !important}
+        }
+        @media (max-width: 720px){
+          .app-content{padding:12px !important}
+          .hero-card{border-radius:14px !important}
+          .hero-value{font-size:32px !important}
+          .hero-actions{justify-content:flex-start !important}
+          .login-brand{font-size:54px !important}
+          .login-headline{font-size:22px !important;max-width:none !important}
+          .stats-grid{grid-template-columns:1fr !important}
+          .quick-grid{gap:10px !important}
+          .login-showcase{padding:28px 20px !important;min-height:220px !important}
+          .login-shell{border-radius:20px !important}
+        }
+        @media (max-width: 560px){
+          .app-sidebar{padding:14px !important}
+          .app-content{padding:10px !important}
+          .top-search input{font-size:16px !important}
+          .hero-card{padding:14px !important}
+          .hero-value{font-size:28px !important}
+          .hero-actions{width:100% !important}
+          .login-brand{font-size:42px !important}
+          .login-headline{font-size:18px !important}
+          .login-shell{border-radius:18px !important}
+          .login-showcase{padding:22px 18px !important;min-height:180px !important}
+          .login-card{padding:24px 18px !important}
         }
         @media print{
           *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important}
@@ -2746,8 +2780,8 @@ export default function Page() {
           </div>
         </aside>
 
-        <main style={styles.content} ref={exportRef}>
-          <div style={styles.topBar}>
+        <main style={styles.content} className="app-content" ref={exportRef}>
+          <div style={styles.topBar} className="app-top-bar">
             <div>
               <h1 style={{ margin: 0, fontSize: 28, color: "var(--text)" }}>
                 {viewMode === "home"
@@ -2767,7 +2801,7 @@ export default function Page() {
 
             <div style={styles.topBarActions}>
               {viewMode !== "settings" ? (
-                <div style={styles.topSearchWrap}>
+                <div style={styles.topSearchWrap} className="top-search">
                   <Search size={15} color={palette.muted} />
                   <input
                     className="soft-input"
@@ -2825,15 +2859,15 @@ export default function Page() {
             renderSettingsContent()
           ) : (
             <>
-          <div style={styles.heroCard}>
+          <div style={styles.heroCard} className="hero-card">
             <div style={styles.heroTopRow}>
               <div>
                 <div style={styles.heroLabel}>TOPLAM</div>
-                <div style={styles.heroValue}>
+                <div style={styles.heroValue} className="hero-value">
                   {tl(viewMode === "home" ? tumToplam : toplam)}
                 </div>
               </div>
-              <div style={styles.heroActionGroup}>
+              <div style={styles.heroActionGroup} className="hero-actions">
                 <button
                   className="no-print"
                   onClick={exportWord}
@@ -2910,7 +2944,7 @@ export default function Page() {
             </div>
           </div>
 
-          <div style={styles.statsGrid}>
+          <div style={styles.statsGrid} className="stats-grid">
             {viewMode === "home" ? (
               <>
                 <Stat
@@ -2961,7 +2995,7 @@ export default function Page() {
           </div>
 
           {viewMode === "home" ? (
-            <div style={styles.quickGrid}>
+            <div style={styles.quickGrid} className="quick-grid">
               <div style={styles.quickCard}>
                 <div style={styles.quickTitle}>Tahsilat Özeti</div>
                 <div style={styles.quickBig}>{tl(tumOdenenTutar)}</div>
@@ -3028,7 +3062,7 @@ export default function Page() {
               </div>
             </div>
           ) : (
-            <div style={styles.quickGrid}>
+            <div style={styles.quickGrid} className="quick-grid">
               <div style={styles.quickCard}>
                 <div style={styles.quickTitle}>Sekme Özeti</div>
                 <div style={styles.quickBig}>{tl(toplam)}</div>
