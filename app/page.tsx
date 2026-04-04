@@ -14,9 +14,11 @@ import {
   FolderKanban,
   LayoutDashboard,
   LogOut,
+  Mail,
   Moon,
   Palette,
   Pencil,
+  Phone,
   Plus,
   Receipt,
   RotateCcw,
@@ -143,6 +145,8 @@ const DEFAULT_COLORS = [
   "#EA580C",
   "#16A34A",
 ];
+const MAX_INVOICE_FILE_SIZE_MB = 1;
+const MAX_INVOICE_FILE_SIZE_BYTES = MAX_INVOICE_FILE_SIZE_MB * 1024 * 1024;
 
 const LIGHT = {
   appBg: "#050A14",
@@ -372,6 +376,9 @@ export default function Page() {
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [phone, setPhone] = useState("");
+  const [phoneCode, setPhoneCode] = useState("");
+  const [phoneCodeSent, setPhoneCodeSent] = useState(false);
 
   const [theme, setTheme] = useState<ThemeMode>(readStoredTheme);
 
@@ -816,6 +823,13 @@ export default function Page() {
 
   const uploadInvoice = async (row: Odeme, file: File) => {
     if (!authUserId) return;
+
+    if (file.size > MAX_INVOICE_FILE_SIZE_BYTES) {
+      setMsg(
+        `Fatura yüklenemedi: Dosya boyutu en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`
+      );
+      return;
+    }
 
     setUploadingInvoiceId(row.id);
 
@@ -1473,6 +1487,72 @@ export default function Page() {
     }
   }
 
+  async function authLoginWithApple() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "apple",
+      options: {
+        redirectTo:
+          typeof window === "undefined" ? undefined : window.location.origin,
+      },
+    });
+
+    if (error) {
+      setMsg("Apple girişi başlatılamadı: " + error.message);
+    }
+  }
+
+  async function authLoginWithFacebook() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "facebook",
+      options: {
+        redirectTo:
+          typeof window === "undefined" ? undefined : window.location.origin,
+      },
+    });
+
+    if (error) {
+      setMsg("Facebook girişi başlatılamadı: " + error.message);
+    }
+  }
+
+  async function authSendPhoneCode() {
+    if (!phone.trim()) return;
+
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: phone.trim(),
+      options: {
+        shouldCreateUser: true,
+      },
+    });
+
+    if (error) {
+      setMsg("Telefon doğrulama kodu gönderilemedi: " + error.message);
+      return;
+    }
+
+    setPhoneCodeSent(true);
+    setMsg("Telefon doğrulama kodu gönderildi.");
+  }
+
+  async function authVerifyPhoneCode() {
+    if (!phone.trim() || !phoneCode.trim()) return;
+
+    const { error } = await supabase.auth.verifyOtp({
+      phone: phone.trim(),
+      token: phoneCode.trim(),
+      type: "sms",
+    });
+
+    if (error) {
+      setMsg("Telefon kodu doğrulanamadı: " + error.message);
+      return;
+    }
+
+    setPhoneCode("");
+    setPhoneCodeSent(false);
+    setMsg("Telefon ile giriş yapıldı.");
+  }
+
   async function cikisYap() {
     if (authEmail) {
       await supabase.auth.signOut();
@@ -1553,12 +1633,12 @@ export default function Page() {
   const renderAuthScreen = () => (
     <div style={{ ...styles.loginWrap, ...themeVars }}>
       <div style={styles.loginCard}>
-        <div style={styles.badge}>ODEME PANELI</div>
+        <div style={styles.badge}>ÖDEDİ Mİ</div>
         <h1 style={{ fontSize: 28, margin: "12px 0 8px", color: "var(--text)" }}>
-          Giris
+          ÖDEDİ Mİ Paneli
         </h1>
         <p style={{ color: "var(--muted)", marginBottom: 14 }}>
-          Sadece Google veya e-posta/sifre ile giris yapilabilir.
+          Google veya e-posta/şifre ile giriş yap.
         </p>
 
         <div style={styles.loginSection}>
@@ -1568,7 +1648,30 @@ export default function Page() {
             onClick={() => void authLoginWithGoogle()}
             style={{ ...styles.primaryBtn, width: "100%", marginTop: 12 }}
           >
-            Google ile Giris Yap
+            <span style={styles.btnInner}>
+              <span style={styles.authBrandIcon}>G</span>
+              Google ile Giriş Yap
+            </span>
+          </button>
+          <button
+            className="hover-button"
+            onClick={() => void authLoginWithApple()}
+            style={{ ...styles.secondaryBtn, width: "100%", marginTop: 8 }}
+          >
+            <span style={styles.btnInner}>
+              <span style={styles.authBrandIcon}>A</span>
+              Apple ile Devam Et
+            </span>
+          </button>
+          <button
+            className="hover-button"
+            onClick={() => void authLoginWithFacebook()}
+            style={{ ...styles.secondaryBtn, width: "100%", marginTop: 8 }}
+          >
+            <span style={styles.btnInner}>
+              <span style={styles.authBrandIcon}>f</span>
+              Facebook ile Devam Et
+            </span>
           </button>
         </div>
 
@@ -1576,7 +1679,7 @@ export default function Page() {
 
         <div style={styles.loginSection}>
           <div style={styles.loginLabel}>
-            {authMode === "login" ? "E-posta ile Giris" : "Yeni Hesap"}
+            {authMode === "login" ? "E-posta ile Giriş" : "Yeni Hesap"}
           </div>
           <input
             className="soft-input"
@@ -1589,7 +1692,7 @@ export default function Page() {
           <input
             className="soft-input"
             type="password"
-            placeholder="Sifre"
+            placeholder="Şifre"
             value={authPassword}
             onChange={(e) => setAuthPassword(e.target.value)}
             style={{ ...styles.input, marginTop: 8 }}
@@ -1599,14 +1702,51 @@ export default function Page() {
             onClick={() => void (authMode === "login" ? authLogin() : authSignUp())}
             style={{ ...styles.secondaryBtn, width: "100%", marginTop: 12 }}
           >
-            {authMode === "login" ? "Giris Yap" : "Hesap Olustur"}
+            <span style={styles.btnInner}>
+              <Mail size={16} />
+              {authMode === "login" ? "Giriş Yap" : "Hesap Oluştur"}
+            </span>
           </button>
           <button
             className="hover-button"
             onClick={() => setAuthMode((prev) => (prev === "login" ? "signup" : "login"))}
             style={{ ...styles.secondaryBtn, width: "100%", marginTop: 8 }}
           >
-            {authMode === "login" ? "Yeni hesap ac" : "Mevcut hesaba gir"}
+            {authMode === "login" ? "Yeni hesap aç" : "Mevcut hesaba gir"}
+          </button>
+        </div>
+
+        <div style={styles.loginDivider} />
+
+        <div style={styles.loginSection}>
+          <div style={styles.loginLabel}>Telefon ile Giriş</div>
+          <input
+            className="soft-input"
+            type="tel"
+            placeholder="+905551112233"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            style={styles.input}
+          />
+          {phoneCodeSent ? (
+            <input
+              className="soft-input"
+              type="text"
+              placeholder="SMS kodu"
+              value={phoneCode}
+              onChange={(e) => setPhoneCode(e.target.value)}
+              style={{ ...styles.input, marginTop: 8 }}
+            />
+          ) : null}
+          <button
+            className="hover-button"
+            onClick={() => void (phoneCodeSent ? authVerifyPhoneCode() : authSendPhoneCode())}
+            style={{ ...styles.secondaryBtn, width: "100%", marginTop: 12 }}
+          >
+            <span style={styles.btnInner}>
+              <Phone size={16} />
+              {phoneCodeSent ? "Kodu Doğrula" : "SMS Kodu Gönder"}
+            </span>
           </button>
         </div>
 
@@ -1651,9 +1791,9 @@ export default function Page() {
       <div style={styles.shell} className="app-shell">
         <aside style={styles.sidebar} className="app-sidebar">
           <div>
-            <div style={styles.sidebarTitle}>Ödeme Paneli</div>
+            <div style={styles.sidebarTitle}>ÖDEDİ Mİ</div>
             <div style={styles.sidebarSub}>
-              {authEmail ? authEmail : "Projeler"}
+              {authEmail ? authEmail : "Tahsilat paneli"}
             </div>
           </div>
 
@@ -1744,11 +1884,11 @@ export default function Page() {
           <div style={styles.topBar}>
             <div>
               <h1 style={{ margin: 0, fontSize: 28, color: "var(--text)" }}>
-                {viewMode === "home" ? "Ana Sayfa" : aktifSekme || "Proje"}
+                {viewMode === "home" ? "ÖDEDİ Mİ" : aktifSekme || "Proje"}
               </h1>
               <div style={{ color: "var(--muted)", marginTop: 4, fontSize: 13 }}>
                 {viewMode === "home"
-                  ? "Tüm projelerin genel özeti"
+                  ? "Tahsilat ve fatura takibinin genel özeti"
                   : "Sekme detayları"}
               </div>
             </div>
@@ -1784,7 +1924,7 @@ export default function Page() {
             <div style={styles.heroTopRow}>
               <div>
                 <div style={styles.heroLabel}>
-                  {viewMode === "home" ? "GENEL TOPLAM" : "PROJE TOPLAMI"}
+                  {viewMode === "home" ? "ÖDEDİ Mİ TOPLAMI" : "PROJE TOPLAMI"}
                 </div>
                 <div style={styles.heroValue}>
                   {tl(viewMode === "home" ? tumToplam : toplam)}
@@ -3677,5 +3817,18 @@ const styles: Record<string, CSSProperties> = {
     color: "var(--blue)",
     fontWeight: 800,
     fontSize: 11,
+  },
+  authBrandIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.16)",
+    color: "var(--white)",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 11,
+    fontWeight: 900,
+    lineHeight: 1,
   },
 };
