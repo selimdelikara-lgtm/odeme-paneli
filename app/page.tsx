@@ -124,8 +124,6 @@ type PdfWindow = Window &
     };
   };
 
-const PASSWORD = "";
-
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   "https://mhoidirxbxqaktkhhavp.supabase.co";
@@ -366,8 +364,6 @@ export default function Page() {
   const [data, setData] = useState<Odeme[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("home");
   const [aktifSekme, setAktifSekme] = useState("");
-  const [giris, setGiris] = useState(true);
-  const [sifre, setSifre] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -427,8 +423,7 @@ export default function Page() {
   const [uploadingInvoiceId, setUploadingInvoiceId] = useState<number | null>(null);
 
   const exportRef = useRef<HTMLElement | null>(null);
-  const projectExportRef = useRef<HTMLDivElement | null>(null);
-  const importInputRef = useRef<HTMLInputElement | null>(null);
+    const importInputRef = useRef<HTMLInputElement | null>(null);
   const invoiceInputRef = useRef<HTMLInputElement | null>(null);
   const initialLoadRef = useRef(false);
 
@@ -530,7 +525,6 @@ export default function Page() {
       if (session?.user?.email && session.user.id) {
         setAuthEmail(session.user.email);
         setAuthUserId(session.user.id);
-        setGiris(true);
       }
     };
 
@@ -542,7 +536,6 @@ export default function Page() {
       if (session?.user?.email && session.user.id) {
         setAuthEmail(session.user.email);
         setAuthUserId(session.user.id);
-        setGiris(true);
       } else {
         setAuthEmail(null);
         setAuthUserId(null);
@@ -940,8 +933,7 @@ export default function Page() {
         "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"
       );
 
-      const target =
-        viewMode === "project" ? projectExportRef.current : exportRef.current;
+      const target = exportRef.current;
       if (!target) {
         setMsg("PDF alanı bulunamadı.");
         return;
@@ -1494,15 +1486,34 @@ export default function Page() {
     if (!ad || !ad.trim()) return;
 
     const clean = ad.trim();
-    if (!tabMeta[clean]) {
-      setTabMeta((prev) => ({
+    setTabMeta((prev) => {
+      if (prev[clean]) return prev;
+      return {
         ...prev,
         [clean]: {
           icon: DEFAULT_ICONS[Object.keys(prev).length % DEFAULT_ICONS.length],
           color: DEFAULT_COLORS[Object.keys(prev).length % DEFAULT_COLORS.length],
         },
-      }));
-    }
+      };
+    });
+    setData((prev) => {
+      if (prev.some((item) => (item.grup || "") === clean)) return prev;
+      return [
+        ...prev,
+        {
+          id: -Date.now(),
+          user_id: authUserId,
+          proje: null,
+          tutar: null,
+          odendi: false,
+          grup: clean,
+          fatura_tarihi: null,
+          fatura_kesildi: false,
+          kdvli: false,
+          sira: null,
+        },
+      ];
+    });
 
     openProjectTab(clean);
   }
@@ -1608,74 +1619,9 @@ export default function Page() {
     return renderAuthScreen();
   }
 
-  if (!giris) {
-    return (
-      <div style={{ ...styles.loginWrap, ...themeVars }}>
-        <div style={styles.loginCard}>
-          <div style={styles.badge}>ÖDEME PANELİ</div>
-          <h1 style={{ fontSize: 28, margin: "12px 0 8px", color: "var(--text)" }}>
-            Giriş
-          </h1>
-          <p style={{ color: "var(--muted)", marginBottom: 14 }}>
-            İstersen panel şifresiyle, istersen Supabase hesabınla giriş yap.
-          </p>
 
-          <div style={styles.loginSection}>
-            <div style={styles.loginLabel}>Hızlı Giriş</div>
-            <input
-              className="soft-input"
-              type="password"
-              placeholder="Panel şifresi"
-              value={sifre}
-              onChange={(e) => setSifre(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && sifre === PASSWORD) setGiris(true);
-              }}
-              style={styles.input}
-            />
-            <button
-              className="hover-button"
-              onClick={() => sifre === PASSWORD && setGiris(true)}
-              style={{ ...styles.primaryBtn, width: "100%", marginTop: 12 }}
-            >
-              Panel Şifresiyle Gir
-            </button>
-          </div>
 
-          <div style={styles.loginDivider} />
 
-          <div style={styles.loginSection}>
-            <div style={styles.loginLabel}>Supabase Auth</div>
-            <input
-              className="soft-input"
-              type="email"
-              placeholder="E-posta"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={styles.input}
-            />
-            <input
-              className="soft-input"
-              type="password"
-              placeholder="Şifre"
-              value={authPassword}
-              onChange={(e) => setAuthPassword(e.target.value)}
-              style={{ ...styles.input, marginTop: 8 }}
-            />
-            <button
-              className="hover-button"
-              onClick={() => void authLogin()}
-              style={{ ...styles.secondaryBtn, width: "100%", marginTop: 12 }}
-            >
-              Supabase ile Giriş Yap
-            </button>
-          </div>
-
-          {msg ? <div style={{ ...styles.msg, marginTop: 14 }}>{msg}</div> : null}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div style={{ ...styles.page, ...themeVars }}>
@@ -2286,7 +2232,7 @@ export default function Page() {
             </div>
           ) : (
             <>
-              <div style={styles.card} ref={projectExportRef}>
+              <div style={styles.card}>
                 <div style={styles.sectionHead}>
                   <h2 style={styles.h2}>Kayıt Ekle / Güncelle</h2>
                   <div style={{ color: "var(--muted)", fontSize: 12 }}>
