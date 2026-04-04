@@ -3807,9 +3807,7 @@ const styles: Record<string, CSSProperties> = {
     flexDirection: "column",
     gap: 14,
     borderRight: "1px solid rgba(148,163,184,0.10)",
-    position: "sticky",
-    top: 0,
-    height: "100vh",
+    minHeight: "100vh",
   },
   sidebarTitle: {
     color: "var(--white)",
