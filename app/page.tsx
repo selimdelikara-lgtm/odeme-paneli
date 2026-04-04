@@ -10,7 +10,6 @@ import {
   Copy,
   Download,
   FileText,
-  Filter,
   FolderKanban,
   LayoutDashboard,
   LogOut,
@@ -400,9 +399,9 @@ export default function Page() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [statusFilter] = useState<StatusFilter>("all");
+  const [dateFrom] = useState("");
+  const [dateTo] = useState("");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [lastDeleted, setLastDeleted] = useState<Odeme[] | null>(null);
 
@@ -780,14 +779,6 @@ export default function Page() {
         return next;
       });
     }
-  };
-
-  const clearFilters = () => {
-    setSearchTerm("");
-    setStatusFilter("all");
-    setDateFrom("");
-    setDateTo("");
-    setSelectedIds([]);
   };
 
   const exportCSV = () => {
@@ -1838,7 +1829,20 @@ export default function Page() {
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div style={styles.topBarActions}>
+              <div style={styles.topSearchWrap}>
+                <Search size={15} color={palette.muted} />
+                <input
+                  className="soft-input"
+                  placeholder="Ara"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setSelectedIds([]);
+                  }}
+                  style={styles.topSearchInput}
+                />
+              </div>
               <button
                 className="hover-button"
                 onClick={() =>
@@ -1975,78 +1979,6 @@ export default function Page() {
                 </div>
               </div>
             </div>
-          </div>
-
-          <div style={styles.filterBar} className="no-print">
-            <div style={styles.searchWrap}>
-              <Search size={16} color={palette.muted} />
-              <input
-                className="soft-input"
-                placeholder="Proje veya sekme ara"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setSelectedIds([]);
-                }}
-                style={{
-                  ...styles.input,
-                  border: "none",
-                  padding: 0,
-                  background: "transparent",
-                }}
-              />
-            </div>
-
-            <div style={styles.filterGroup}>
-              <Filter size={16} color={palette.muted} />
-              <select
-                className="soft-input"
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value as StatusFilter);
-                  setSelectedIds([]);
-                }}
-                style={styles.selectCompact}
-              >
-                <option value="all">Tüm Durumlar</option>
-                <option value="paid">Ödendi</option>
-                <option value="invoiced">Fatura Kesildi</option>
-                <option value="waiting">Bekliyor</option>
-              </select>
-            </div>
-
-            <input
-              className="soft-input"
-              type="date"
-              value={dateFrom}
-              onChange={(e) => {
-                setDateFrom(e.target.value);
-                setSelectedIds([]);
-              }}
-              style={styles.dateCompact}
-            />
-
-            <input
-              className="soft-input"
-              type="date"
-              value={dateTo}
-              onChange={(e) => {
-                setDateTo(e.target.value);
-                setSelectedIds([]);
-              }}
-              style={styles.dateCompact}
-            />
-
-            <button
-              className="hover-button"
-              onClick={clearFilters}
-              style={styles.secondaryBtn}
-            >
-              <span style={styles.btnInner}>
-                <RotateCcw size={16} />
-                Temizle
-              </span>
-            </button>
           </div>
 
           <div style={styles.statsGrid}>
@@ -3149,6 +3081,34 @@ const styles: Record<string, CSSProperties> = {
     gap: 12,
     flexWrap: "wrap",
   },
+  topBarActions: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+  },
+  topSearchWrap: {
+    minWidth: 180,
+    width: 220,
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "8px 12px",
+    borderRadius: 999,
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+    boxShadow: "var(--shadow)",
+  },
+  topSearchInput: {
+    width: "100%",
+    border: "none",
+    background: "transparent",
+    color: "var(--text)",
+    fontSize: 13,
+    outline: "none",
+    padding: 0,
+  },
   btnInner: {
     display: "flex",
     alignItems: "center",
@@ -3202,47 +3162,6 @@ const styles: Record<string, CSSProperties> = {
     alignSelf: "stretch",
     background: "rgba(255,255,255,0.22)",
     minHeight: 36,
-  },
-  filterBar: {
-    background: "var(--card)",
-    border: "1px solid var(--border)",
-    borderRadius: 14,
-    padding: 12,
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-    alignItems: "center",
-    boxShadow: "var(--shadow)",
-  },
-  searchWrap: {
-    minWidth: 240,
-    flex: 1,
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "10px 12px",
-    borderRadius: 10,
-    background: "var(--slateSoft)",
-    border: "1px solid var(--border)",
-  },
-  filterGroup: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "10px 12px",
-    borderRadius: 10,
-    background: "var(--slateSoft)",
-    border: "1px solid var(--border)",
-  },
-  selectCompact: {
-    border: "none",
-    background: "transparent",
-    fontSize: 13,
-    color: "var(--text)",
-    outline: "none",
-  },
-  dateCompact: {
-    width: 160,
   },
   statsGrid: {
     display: "grid",
