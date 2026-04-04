@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   Archive,
@@ -331,17 +331,17 @@ export default function Page() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
-        const nextPassword = window.prompt("Yeni Ãƒâ€¦Ã…Â¸ifreni gir");
+        const nextPassword = window.prompt("Yeni şifreni gir");
 
         if (nextPassword && nextPassword.trim()) {
           void supabase.auth
             .updateUser({ password: nextPassword.trim() })
             .then(({ error }) => {
               if (error) {
-                setMsg("Ãƒâ€¦Ã‚Âifre gÃƒÆ’Ã‚Â¼ncellenemedi: " + error.message);
+                setMsg("Şifre güncellenemedi: " + error.message);
                 return;
               }
-              setMsg("Ãƒâ€¦Ã‚Âifren gÃƒÆ’Ã‚Â¼ncellendi. Yeni Ãƒâ€¦Ã…Â¸ifrenle giriÃƒâ€¦Ã…Â¸ yapabilirsin.");
+              setMsg("Şifren güncellendi. Yeni şifrenle giriş yapabilirsin.");
             });
         }
       }
@@ -380,7 +380,7 @@ export default function Page() {
       .order("id", { ascending: true });
 
     if (error) {
-      setMsg("Veriler alÃƒâ€Ã‚Â±namadÃƒâ€Ã‚Â±: " + error.message);
+      setMsg("Veriler alınamadı: " + error.message);
       setLoading(false);
       return;
     }
@@ -598,7 +598,7 @@ export default function Page() {
       sekme: row.grup || "",
       proje: row.proje || "",
       durum: row.odendi
-        ? "ÃƒÆ’Ã¢â‚¬â€œdeme alÃƒâ€Ã‚Â±ndÃƒâ€Ã‚Â±"
+        ? "Ödeme alındı"
         : row.fatura_kesildi
           ? "Fatura kesildi"
           : "Bekliyor",
@@ -644,8 +644,8 @@ export default function Page() {
     const rows = getExportRows();
     const title =
       viewMode === "home"
-        ? "ÃƒÆ’Ã¢â‚¬â€œDEDÃƒâ€Ã‚Â° MÃƒâ€Ã‚Â° Genel ÃƒÆ’Ã¢â‚¬â€œzet"
-        : `${aktifSekme || "Proje"} ÃƒÆ’Ã¢â‚¬â€œzeti`;
+        ? "ÖDEDİ Mİ Genel Özet"
+        : `${aktifSekme || "Proje"} Özeti`;
     const html = `<!DOCTYPE html>
 <html lang="tr">
   <head>
@@ -712,7 +712,7 @@ export default function Page() {
 
     if (file.size > MAX_INVOICE_FILE_SIZE_BYTES) {
       setMsg(
-        `Fatura yÃƒÆ’Ã‚Â¼klenemedi: Dosya boyutu en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`
+        `Fatura yüklenemedi: Dosya boyutu en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`
       );
       return;
     }
@@ -727,7 +727,7 @@ export default function Page() {
       .upload(path, file, { upsert: false });
 
     if (error) {
-      setMsg("Fatura yÃƒÆ’Ã‚Â¼klenemedi: " + error.message);
+      setMsg("Fatura yüklenemedi: " + error.message);
       setUploadingInvoiceId(null);
       return;
     }
@@ -758,7 +758,7 @@ export default function Page() {
 
     if (attachmentError || !insertedAttachment) {
       await supabase.storage.from("faturalar").remove([path]);
-      setMsg("Fatura kaydÃƒâ€Ã‚Â± oluÃƒâ€¦Ã…Â¸turulamadÃƒâ€Ã‚Â±: " + (attachmentError?.message || "Bilinmeyen hata"));
+      setMsg("Fatura kaydı oluşturulamadı: " + (attachmentError?.message || "Bilinmeyen hata"));
       setUploadingInvoiceId(null);
       return;
     }
@@ -770,7 +770,7 @@ export default function Page() {
       [row.id]: [...(prev[row.id] || []), nextAttachment],
     }));
 
-    setMsg("Fatura yÃƒÆ’Ã‚Â¼klendi.");
+    setMsg("Fatura yüklendi.");
     setUploadingInvoiceId(null);
   };
 
@@ -780,7 +780,7 @@ export default function Page() {
       : await faturaEkleriTable().delete().eq("path", attachment.path);
 
     if (metadataDelete.error) {
-      setMsg("Fatura kaydÃƒâ€Ã‚Â± silinemedi: " + metadataDelete.error.message);
+      setMsg("Fatura kaydı silinemedi: " + metadataDelete.error.message);
       return;
     }
 
@@ -796,7 +796,7 @@ export default function Page() {
       [rowId]: (prev[rowId] || []).filter((item) => item.path !== attachment.path),
     }));
 
-    setMsg("Fatura kaldÃƒâ€Ã‚Â±rÃƒâ€Ã‚Â±ldÃƒâ€Ã‚Â±.");
+    setMsg("Fatura kaldırıldı.");
   };
 
   const deleteInvoicesForRows = async (rowIds: number[]) => {
@@ -807,7 +807,7 @@ export default function Page() {
       .in("odeme_id", rowIds);
 
     if (attachmentsError) {
-      return { error: "Fatura kayÃƒâ€Ã‚Â±tlarÃƒâ€Ã‚Â± alÃƒâ€Ã‚Â±namadÃƒâ€Ã‚Â±: " + attachmentsError.message };
+      return { error: "Fatura kayıtları alınamadı: " + attachmentsError.message };
     }
 
     const typedAttachments = ((attachments || []) as Array<{
@@ -826,7 +826,7 @@ export default function Page() {
         .remove(attachmentPaths);
 
       if (storageError) {
-        return { error: "Fatura dosyalarÃƒâ€Ã‚Â± silinemedi: " + storageError.message };
+        return { error: "Fatura dosyaları silinemedi: " + storageError.message };
       }
     }
 
@@ -841,7 +841,7 @@ export default function Page() {
           .in("id", attachmentIds);
 
         if (deleteError) {
-          return { error: "Fatura kayÃƒâ€Ã‚Â±tlarÃƒâ€Ã‚Â± silinemedi: " + deleteError.message };
+          return { error: "Fatura kayıtları silinemedi: " + deleteError.message };
         }
       }
     }
@@ -859,7 +859,7 @@ export default function Page() {
 
   const exportPDF = async () => {
     try {
-      setMsg("PDF hazÃƒâ€Ã‚Â±rlanÃƒâ€Ã‚Â±yor...");
+      setMsg("PDF hazırlanıyor...");
 
       await loadScript(
         "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
@@ -870,7 +870,7 @@ export default function Page() {
 
       const target = exportRef.current;
       if (!target) {
-        setMsg("PDF alanÃƒâ€Ã‚Â± bulunamadÃƒâ€Ã‚Â±.");
+        setMsg("PDF alanı bulunamadı.");
         return;
       }
 
@@ -879,7 +879,7 @@ export default function Page() {
       const jsPDF = pdfWindow.jspdf?.jsPDF;
 
       if (!html2canvas || !jsPDF) {
-        setMsg("PDF araÃƒÆ’Ã‚Â§larÃƒâ€Ã‚Â± yÃƒÆ’Ã‚Â¼klenemedi.");
+        setMsg("PDF araçları yüklenemedi.");
         return;
       }
 
@@ -916,7 +916,7 @@ export default function Page() {
       );
       setMsg("PDF indirildi.");
     } catch (error) {
-      setMsg(error instanceof Error ? error.message : "PDF oluÃƒâ€¦Ã…Â¸turulamadÃƒâ€Ã‚Â±.");
+      setMsg(error instanceof Error ? error.message : "PDF oluşturulamadı.");
     }
   };
 
@@ -958,7 +958,7 @@ export default function Page() {
       : await odemelerTable().insert([payload]);
 
     if (res.error) {
-      setMsg("KayÃƒâ€Ã‚Â±t kaydedilemedi: " + res.error.message);
+      setMsg("Kayıt kaydedilemedi: " + res.error.message);
       return;
     }
 
@@ -973,7 +973,7 @@ export default function Page() {
     }
 
     temizle();
-    setMsg(editId ? "KayÃƒâ€Ã‚Â±t gÃƒÆ’Ã‚Â¼ncellendi." : "KayÃƒâ€Ã‚Â±t eklendi.");
+    setMsg(editId ? "Kayıt güncellendi." : "Kayıt eklendi.");
     await yukle();
   }
 
@@ -988,7 +988,7 @@ export default function Page() {
     const { error } = await odemelerTable().insert([
       {
         user_id: authUserId,
-        proje: `${row.proje || "Yeni KayÃƒâ€Ã‚Â±t"} Kopya`,
+        proje: `${row.proje || "Yeni Kayıt"} Kopya`,
         tutar: row.tutar,
         odendi: row.odendi,
         grup: row.grup,
@@ -1000,11 +1000,11 @@ export default function Page() {
     ] satisfies OdemeInsert[]);
 
     if (error) {
-      setMsg("Kopyalama baÃƒâ€¦Ã…Â¸arÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±z: " + error.message);
+      setMsg("Kopyalama başarısız: " + error.message);
       return;
     }
 
-    setMsg("KayÃƒâ€Ã‚Â±t ÃƒÆ’Ã‚Â§oÃƒâ€Ã…Â¸altÃƒâ€Ã‚Â±ldÃƒâ€Ã‚Â±.");
+    setMsg("Kayıt çoğaltıldı.");
     await yukle();
   }
 
@@ -1023,7 +1023,7 @@ export default function Page() {
       .eq("id", row.id);
 
     if (error) {
-      setMsg("Durum gÃƒÆ’Ã‚Â¼ncellenemedi: " + error.message);
+      setMsg("Durum güncellenemedi: " + error.message);
       return;
     }
 
@@ -1058,12 +1058,12 @@ export default function Page() {
     const { error } = await odemelerTable().insert(payload);
 
     if (error) {
-      setMsg("Geri alma baÃƒâ€¦Ã…Â¸arÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±z: " + error.message);
+      setMsg("Geri alma başarısız: " + error.message);
       return;
     }
 
     setLastDeleted(null);
-    setMsg("Silinen kayÃƒâ€Ã‚Â±tlar geri yÃƒÆ’Ã‚Â¼klendi.");
+    setMsg("Silinen kayıtlar geri yüklendi.");
     await yukle();
   }
 
@@ -1079,19 +1079,19 @@ export default function Page() {
     const { error } = await odemelerTable().delete().eq("id", id);
 
     if (error) {
-      setMsg("KayÃƒâ€Ã‚Â±t silinemedi: " + error.message);
+      setMsg("Kayıt silinemedi: " + error.message);
       return;
     }
 
     if (row) setLastDeleted([row]);
     if (editId === id) temizle();
-    setMsg("KayÃƒâ€Ã‚Â±t silindi.");
+    setMsg("Kayıt silindi.");
     await yukle();
   }
 
   async function sekmeSil(tabName: string) {
     const onay = window.confirm(
-      `${tabName} sekmesindeki tÃƒÆ’Ã‚Â¼m kayÃƒâ€Ã‚Â±tlar silinecek. Emin misin?`
+      `${tabName} sekmesindeki tüm kayıtlar silinecek. Emin misin?`
     );
     if (!onay) return;
 
@@ -1128,7 +1128,7 @@ export default function Page() {
   }
 
   async function sekmeYenidenAdlandir(tabName: string) {
-    const yeniAd = window.prompt("Sekmenin yeni adÃƒâ€Ã‚Â± ne olsun?", tabName);
+    const yeniAd = window.prompt("Sekmenin yeni adı ne olsun?", tabName);
     if (!yeniAd || !yeniAd.trim()) return;
 
     const rows = data.filter((x) => (x.grup || "") === tabName);
@@ -1143,7 +1143,7 @@ export default function Page() {
     const failed = res.find((r) => r.error);
 
     if (failed?.error) {
-      setMsg("Sekme adÃƒâ€Ã‚Â± gÃƒÆ’Ã‚Â¼ncellenemedi: " + failed.error.message);
+      setMsg("Sekme adı güncellenemedi: " + failed.error.message);
       return;
     }
 
@@ -1164,7 +1164,7 @@ export default function Page() {
       openProjectTab(yeniAd.trim());
     }
 
-    setMsg("Sekme adÃƒâ€Ã‚Â± gÃƒÆ’Ã‚Â¼ncellendi.");
+    setMsg("Sekme adı güncellendi.");
     await yukle();
   }
 
@@ -1205,7 +1205,7 @@ export default function Page() {
 
     const failed = res.find((r) => r.error);
     if (failed?.error) {
-      setMsg("SÃƒâ€Ã‚Â±ralama kaydedilemedi: " + failed.error.message);
+      setMsg("Sıralama kaydedilemedi: " + failed.error.message);
       await yukle();
     }
   }
@@ -1245,8 +1245,8 @@ export default function Page() {
   };
 
   const arrow = (key: SortKey) => {
-    if (sortKey !== key) return "ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Â¢";
-    return sortDirection === "asc" ? "ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ" : "ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Å“";
+    if (sortKey !== key) return "↕";
+    return sortDirection === "asc" ? "↑" : "↓";
   };
 
   const moveProjectColumn = (
@@ -1336,7 +1336,7 @@ export default function Page() {
   const durumGorunum = (row: Odeme) => {
     if (row.odendi) {
       return {
-        text: "Ã–deme alÄ±ndÄ±",
+        text: "Ödeme alındı",
         bg: theme === "dark" ? "rgba(60, 193, 139, 0.18)" : "#EAF8F0",
         color: theme === "dark" ? "#9BE4BF" : "#2A8B62",
         rowBg: theme === "dark" ? "#0C1813" : "#FBFEFC",
@@ -1353,7 +1353,7 @@ export default function Page() {
     }
 
     return {
-      text: "HenÃ¼z kesilmedi",
+      text: "Henüz kesilmedi",
       bg: theme === "dark" ? "rgba(244, 114, 182, 0.14)" : "#FDEEF3",
       color: theme === "dark" ? "#F4A4C7" : "#C25A84",
       rowBg: theme === "dark" ? "#181017" : "#FFF9FB",
@@ -1366,7 +1366,7 @@ export default function Page() {
     if (key === "select") {
       return {
         key,
-        label: "SEÃƒÆ’Ã¢â‚¬Â¡",
+        label: "SEÇ",
         className: "no-print",
         style: { ...styles.th, width: 52 },
       };
@@ -1375,7 +1375,7 @@ export default function Page() {
     if (key === "sira") {
       return {
         key,
-        label: `SIRA ${sortKey === "manual" ? "ÃƒÂ¢Ã¢â‚¬â€Ã‚Â" : ""}`,
+        label: `SIRA ${sortKey === "manual" ? "●" : ""}`,
         className: "",
         style: {
           ...styles.th,
@@ -1421,7 +1421,7 @@ export default function Page() {
     if (key === "fatura_tarihi") {
       return {
         key,
-        label: `FATURA TARÃƒâ€Ã‚Â°HÃƒâ€Ã‚Â° ${arrow("fatura_tarihi")}`,
+        label: `FATURA TARİHİ ${arrow("fatura_tarihi")}`,
         className: "",
         style: {
           ...styles.th,
@@ -1448,7 +1448,7 @@ export default function Page() {
 
     return {
       key,
-      label: "Ãƒâ€Ã‚Â°Ãƒâ€¦Ã‚ÂLEM",
+      label: "İŞLEM",
       className: "no-print",
       style: { ...styles.th, width: 160 },
     };
@@ -1474,7 +1474,7 @@ export default function Page() {
     if (key === "odeme") {
       return {
         key,
-        label: "ÃƒÆ’Ã¢â‚¬â€œDEME",
+        label: "ÖDEME",
         style: { ...styles.th, background: "var(--amberSoft)" },
       };
     }
@@ -1514,7 +1514,7 @@ export default function Page() {
             type="button"
             onClick={() => toggleSelected(row.id)}
             style={styles.checkboxBtn}
-            title="KaydÃƒâ€Ã‚Â± seÃƒÆ’Ã‚Â§"
+            title="Kaydı seç"
           >
             {selectedIds.includes(row.id) ? (
               <CheckSquare size={18} color={palette.blue} />
@@ -1547,11 +1547,11 @@ export default function Page() {
           }}
           title={
             sortKey === "manual"
-              ? "SÃƒÆ’Ã‚Â¼rÃƒÆ’Ã‚Â¼kle"
-              : "Manuel sÃƒâ€Ã‚Â±ralama iÃƒÆ’Ã‚Â§in SIRA baÃƒâ€¦Ã…Â¸lÃƒâ€Ã‚Â±Ãƒâ€Ã…Â¸Ãƒâ€Ã‚Â±na tÃƒâ€Ã‚Â±kla"
+              ? "Sürükle"
+              : "Manuel sıralama için SIRA başlığına tıkla"
           }
         >
-          {isDragSource ? "ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢" : "ÃƒÂ¢Ã¢â‚¬Â°Ã‚Â¡"}
+          {isDragSource ? "•••" : "≡"}
         </td>
       );
     }
@@ -1561,7 +1561,7 @@ export default function Page() {
         <td
           key={column}
           onDoubleClick={() => editAc(row)}
-          title="DÃƒÆ’Ã‚Â¼zenlemek iÃƒÆ’Ã‚Â§in ÃƒÆ’Ã‚Â§ift tÃƒâ€Ã‚Â±kla"
+          title="Düzenlemek için çift tıkla"
           style={{
             ...styles.td,
             borderLeft: `5px solid ${aktifTabMeta.color}`,
@@ -1577,7 +1577,7 @@ export default function Page() {
             />
           ) : (
             <div>
-              <div style={{ fontWeight: 800 }}>{row.proje || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</div>
+              <div style={{ fontWeight: 800 }}>{row.proje || "—"}</div>
               {invoices.length > 0 ? (
                 <div style={styles.invoiceList}>
                   {invoices.map((attachment) => (
@@ -1594,7 +1594,7 @@ export default function Page() {
                         type="button"
                         onClick={() => void removeInvoice(row.id, attachment)}
                         style={styles.invoiceRemoveBtn}
-                        title="FaturayÃƒâ€Ã‚Â± kaldÃƒâ€Ã‚Â±r"
+                        title="Faturayı kaldır"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -1603,10 +1603,10 @@ export default function Page() {
                 </div>
               ) : null}
               <div style={styles.metaText}>
-                OluÃƒâ€¦Ã…Â¸turma: {shortDateTime(meta?.createdAt || null)}
+                Oluşturma: {shortDateTime(meta?.createdAt || null)}
               </div>
               <div style={styles.metaText}>
-                GÃƒÆ’Ã‚Â¼ncelleme: {shortDateTime(meta?.updatedAt || null)}
+                Güncelleme: {shortDateTime(meta?.updatedAt || null)}
               </div>
             </div>
           )}
@@ -1630,9 +1630,9 @@ export default function Page() {
               }}
               style={styles.input}
             >
-              <option value="bekliyor">HenÃƒÆ’Ã‚Â¼z kesilmedi</option>
+              <option value="bekliyor">Henüz kesilmedi</option>
               <option value="fatura">Fatura kesildi</option>
-              <option value="odeme">ÃƒÆ’Ã¢â‚¬â€œdeme alÃƒâ€Ã‚Â±ndÃƒâ€Ã‚Â±</option>
+              <option value="odeme">Ödeme alındı</option>
             </select>
           ) : (
             <button
@@ -1664,7 +1664,7 @@ export default function Page() {
         <td
           key={column}
           onDoubleClick={() => editAc(row)}
-          title="DÃƒÆ’Ã‚Â¼zenlemek iÃƒÆ’Ã‚Â§in ÃƒÆ’Ã‚Â§ift tÃƒâ€Ã‚Â±kla"
+          title="Düzenlemek için çift tıkla"
           style={{ ...styles.td, cursor: "pointer" }}
         >
           {editing ? (
@@ -1687,7 +1687,7 @@ export default function Page() {
         <td
           key={column}
           onDoubleClick={() => editAc(row)}
-          title="DÃƒÆ’Ã‚Â¼zenlemek iÃƒÆ’Ã‚Â§in ÃƒÆ’Ã‚Â§ift tÃƒâ€Ã‚Â±kla"
+          title="Düzenlemek için çift tıkla"
           style={{
             ...styles.td,
             cursor: "pointer",
@@ -1715,19 +1715,19 @@ export default function Page() {
                 onChange={(e) => setKdvli(e.target.value === "kdvli")}
                 style={styles.input}
               >
-                <option value="kdvsiz">KDVÃƒÂ¢Ã¢â€šÂ¬Ã¢â€Â¢siz</option>
+                <option value="kdvsiz">KDV’siz</option>
                 <option value="kdvli">+ %20 KDV</option>
               </select>
               <button className="hover-button" onClick={kaydet} style={styles.secondaryBtn}>
                 Kaydet
               </button>
               <button className="hover-button" onClick={temizle} style={styles.deleteBtn}>
-                Ãƒâ€Ã‚Â°ptal
+                İptal
               </button>
             </div>
           ) : (
             <div>
-              <div>{row.tutar ? tl(Number(row.tutar)) : "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</div>
+              <div>{row.tutar ? tl(Number(row.tutar)) : "—"}</div>
               {row.kdvli ? <div style={styles.metaText}>+ %20 KDV</div> : null}
             </div>
           )}
@@ -1742,7 +1742,7 @@ export default function Page() {
             className="hover-button"
             onClick={() => editAc(row)}
             style={styles.iconActionBtn}
-            title="DÃƒÆ’Ã‚Â¼zenle"
+            title="Düzenle"
           >
             <Pencil size={15} />
           </button>
@@ -1750,7 +1750,7 @@ export default function Page() {
             className="hover-button"
             onClick={() => void kaydiKopyala(row)}
             style={styles.iconActionBtn}
-            title="ÃƒÆ’Ã¢â‚¬Â¡oÃƒâ€Ã…Â¸alt"
+            title="Çoğalt"
           >
             <Copy size={15} />
           </button>
@@ -1758,7 +1758,7 @@ export default function Page() {
             className="hover-button"
             onClick={() => openInvoicePicker(row.id)}
             style={styles.iconActionBtn}
-            title="Fatura yÃƒÆ’Ã‚Â¼kle"
+            title="Fatura yükle"
             disabled={uploadingInvoiceId === row.id}
           >
             <Upload size={15} />
@@ -1786,11 +1786,11 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Supabase giriÃƒâ€¦Ã…Â¸ baÃƒâ€¦Ã…Â¸arÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±z: " + error.message);
+      setMsg("Supabase giriş başarısız: " + error.message);
       return;
     }
 
-    setMsg("Supabase ile giriÃƒâ€¦Ã…Â¸ yapÃƒâ€Ã‚Â±ldÃƒâ€Ã‚Â±.");
+    setMsg("Supabase ile giriş yapıldı.");
   }
 
   async function authSignUp() {
@@ -1807,17 +1807,17 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Hesap oluÃƒâ€¦Ã…Â¸turulamadÃƒâ€Ã‚Â±: " + error.message);
+      setMsg("Hesap oluşturulamadı: " + error.message);
       return;
     }
 
     setSignupMode(false);
-    setMsg("Hesap oluÃƒâ€¦Ã…Â¸turuldu. E-posta doÃƒâ€Ã…Â¸rulamasÃƒâ€Ã‚Â± aÃƒÆ’Ã‚Â§Ãƒâ€Ã‚Â±ksa kutunu kontrol et.");
+    setMsg("Hesap oluşturuldu. E-posta doğrulaması açıksa kutunu kontrol et.");
   }
 
   async function authResetPassword() {
     if (!email.trim()) {
-      setMsg("Ãƒâ€¦Ã‚Âifre sÃƒâ€Ã‚Â±fÃƒâ€Ã‚Â±rlama iÃƒÆ’Ã‚Â§in ÃƒÆ’Ã‚Â¶nce e-posta adresini gir.");
+      setMsg("Şifre sıfırlama için önce e-posta adresini gir.");
       return;
     }
 
@@ -1827,11 +1827,11 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Ãƒâ€¦Ã‚Âifre sÃƒâ€Ã‚Â±fÃƒâ€Ã‚Â±rlama e-postasÃƒâ€Ã‚Â± gÃƒÆ’Ã‚Â¶nderilemedi: " + error.message);
+      setMsg("Şifre sıfırlama e-postası gönderilemedi: " + error.message);
       return;
     }
 
-    setMsg("Ãƒâ€¦Ã‚Âifre sÃƒâ€Ã‚Â±fÃƒâ€Ã‚Â±rlama baÃƒâ€Ã…Â¸lantÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â± e-posta adresine gÃƒÆ’Ã‚Â¶nderildi.");
+    setMsg("Şifre sıfırlama bağlantısı e-posta adresine gönderildi.");
   }
 
   async function authLoginWithGoogle() {
@@ -1845,7 +1845,7 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Google giriÃƒâ€¦Ã…Â¸i baÃƒâ€¦Ã…Â¸latÃƒâ€Ã‚Â±lamadÃƒâ€Ã‚Â±: " + error.message);
+      setMsg("Google girişi başlatılamadı: " + error.message);
     }
   }
 
@@ -1862,7 +1862,7 @@ export default function Page() {
     if (!authUserId) return;
 
     if (file.size > MAX_INVOICE_FILE_SIZE_BYTES) {
-      setMsg(`Profil fotoÃƒâ€Ã…Â¸rafÃƒâ€Ã‚Â± en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`);
+      setMsg(`Profil fotoğrafı en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`);
       return;
     }
 
@@ -1877,7 +1877,7 @@ export default function Page() {
       });
 
     if (error) {
-      setMsg("Profil fotoÃƒâ€Ã…Â¸rafÃƒâ€Ã‚Â± yÃƒÆ’Ã‚Â¼klenemedi: " + error.message);
+      setMsg("Profil fotoğrafı yüklenemedi: " + error.message);
       setSettingsBusy(false);
       return;
     }
@@ -1895,13 +1895,13 @@ export default function Page() {
     });
 
     if (profileError) {
-      setMsg("Profil gÃƒÆ’Ã‚Â¼ncellenemedi: " + profileError.message);
+      setMsg("Profil güncellenemedi: " + profileError.message);
       setSettingsBusy(false);
       return;
     }
 
     setSettingsAvatarUrl(avatarUrl);
-    setMsg("Profil fotoÃƒâ€Ã…Â¸rafÃƒâ€Ã‚Â± gÃƒÆ’Ã‚Â¼ncellendi.");
+    setMsg("Profil fotoğrafı güncellendi.");
     setSettingsBusy(false);
   }
 
@@ -1921,23 +1921,23 @@ export default function Page() {
       return;
     }
 
-    setMsg("Hesap ayarlarÃƒâ€Ã‚Â± kaydedildi.");
+    setMsg("Hesap ayarları kaydedildi.");
     setSettingsBusy(false);
   }
 
   async function changePassword() {
     if (!settingsPassword.trim()) {
-      setMsg("Yeni Ãƒâ€¦Ã…Â¸ifre alanÃƒâ€Ã‚Â± boÃƒâ€¦Ã…Â¸ olamaz.");
+      setMsg("Yeni şifre alanı boş olamaz.");
       return;
     }
 
     if (settingsPassword.trim().length < 6) {
-      setMsg("Yeni Ãƒâ€¦Ã…Â¸ifre en az 6 karakter olmalÃƒâ€Ã‚Â±.");
+      setMsg("Yeni şifre en az 6 karakter olmalı.");
       return;
     }
 
     if (settingsPassword !== settingsPasswordRepeat) {
-      setMsg("Ãƒâ€¦Ã‚Âifre tekrar alanÃƒâ€Ã‚Â± eÃƒâ€¦Ã…Â¸leÃƒâ€¦Ã…Â¸miyor.");
+      setMsg("Şifre tekrar alanı eşleşmiyor.");
       return;
     }
 
@@ -1947,14 +1947,14 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Ãƒâ€¦Ã‚Âifre deÃƒâ€Ã…Â¸iÃƒâ€¦Ã…Â¸tirilemedi: " + error.message);
+      setMsg("Şifre değiştirilemedi: " + error.message);
       setSettingsBusy(false);
       return;
     }
 
     setSettingsPassword("");
     setSettingsPasswordRepeat("");
-    setMsg("Ãƒâ€¦Ã‚Âifre gÃƒÆ’Ã‚Â¼ncellendi.");
+    setMsg("Şifre güncellendi.");
     setSettingsBusy(false);
   }
 
@@ -1962,7 +1962,7 @@ export default function Page() {
     if (!authUserId) return;
 
     const confirmed = window.confirm(
-      "Bu iÃƒâ€¦Ã…Â¸lem hesabÃƒâ€Ã‚Â±, panel verilerini ve yÃƒÆ’Ã‚Â¼klenen dosyalarÃƒâ€Ã‚Â± kalÃƒâ€Ã‚Â±cÃƒâ€Ã‚Â± olarak siler. Devam edilsin mi?"
+      "Bu işlem hesabı, panel verilerini ve yüklenen dosyaları kalıcı olarak siler. Devam edilsin mi?"
     );
     if (!confirmed) return;
 
@@ -1974,14 +1974,14 @@ export default function Page() {
 
     const accessToken = session?.access_token;
     if (!accessToken) {
-      setMsg("Hesap silme iÃƒÆ’Ã‚Â§in oturum doÃƒâ€Ã…Â¸rulanamadÃƒâ€Ã‚Â±.");
+      setMsg("Hesap silme için oturum doğrulanamadı.");
       setSettingsBusy(false);
       return;
     }
 
     if (authProviders.includes("email")) {
       if (!authEmail || !settingsCurrentPassword.trim()) {
-        setMsg("HesabÃƒâ€Ã‚Â± kapatmak iÃƒÆ’Ã‚Â§in mevcut Ãƒâ€¦Ã…Â¸ifreni gir.");
+        setMsg("Hesabı kapatmak için mevcut şifreni gir.");
         setSettingsBusy(false);
         return;
       }
@@ -1992,7 +1992,7 @@ export default function Page() {
       });
 
       if (verifyError) {
-        setMsg("Mevcut Ãƒâ€¦Ã…Â¸ifre doÃƒâ€Ã…Â¸rulanamadÃƒâ€Ã‚Â±.");
+        setMsg("Mevcut şifre doğrulanamadı.");
         setSettingsBusy(false);
         return;
       }
@@ -2016,11 +2016,11 @@ export default function Page() {
     await supabase.auth.signOut();
     setSettingsCurrentPassword("");
     setSettingsBusy(false);
-    setMsg("Hesap ve tÃƒÆ’Ã‚Â¼m veriler silindi.");
+    setMsg("Hesap ve tüm veriler silindi.");
   }
 
   function yeniProjeOlustur() {
-    const ad = window.prompt("Proje adÃƒâ€Ã‚Â±");
+    const ad = window.prompt("Proje adı");
     if (!ad || !ad.trim()) return;
 
     const clean = ad.trim();
@@ -2260,7 +2260,7 @@ export default function Page() {
                       ? styles.activeTab
                       : styles.tab
                   }
-                  title="SaÃƒâ€Ã…Â¸ tÃƒâ€Ã‚Â±k: sekme seÃƒÆ’Ã‚Â§enekleri"
+                  title="Sağ tık: sekme seçenekleri"
                 >
                   <span style={styles.sidebarTabInner}>
                     <span
@@ -2284,7 +2284,7 @@ export default function Page() {
             >
               <span style={styles.sidebarTabInner}>
                 <Settings2 size={16} />
-                Hesap AyarlarÃƒâ€Ã‚Â±
+                Hesap Ayarları
               </span>
             </button>
             <button
@@ -2294,7 +2294,7 @@ export default function Page() {
             >
               <span style={styles.btnInner}>
                 <Archive size={16} />
-                {showArchivedTabs ? "Aktifleri GÃƒÆ’Ã‚Â¶ster" : "ArÃƒâ€¦Ã…Â¸ivleri GÃƒÆ’Ã‚Â¶ster"}
+                {showArchivedTabs ? "Aktifleri Göster" : "Arşivleri Göster"}
               </span>
             </button>
           </div>
@@ -2307,15 +2307,15 @@ export default function Page() {
                 {viewMode === "home"
                   ? "Ana Sayfa"
                   : viewMode === "settings"
-                    ? "Hesap AyarlarÃƒâ€Ã‚Â±"
+                    ? "Hesap Ayarları"
                     : aktifSekme || "Proje"}
               </h1>
               <div style={styles.pageSubtitle}>
                 {viewMode === "home"
-                  ? "Tahsilat ve fatura takibinin genel ÃƒÆ’Ã‚Â¶zeti"
+                  ? "Tahsilat ve fatura takibinin genel özeti"
                   : viewMode === "settings"
-                    ? "Profil, gÃƒÆ’Ã‚Â¼venlik ve hesap iÃƒâ€¦Ã…Â¸lemleri"
-                    : "Sekme detaylarÃƒâ€Ã‚Â±"}
+                    ? "Profil, güvenlik ve hesap işlemleri"
+                    : "Sekme detayları"}
               </div>
             </div>
 
@@ -2344,7 +2344,7 @@ export default function Page() {
               >
                 <span style={styles.btnInner}>
                   {theme === "light" ? <Moon size={16} /> : <SunMedium size={16} />}
-                  {theme === "light" ? "KaranlÃƒâ€Ã‚Â±k Tema" : "AÃƒÆ’Ã‚Â§Ãƒâ€Ã‚Â±k Tema"}
+                  {theme === "light" ? "Karanlık Tema" : "Açık Tema"}
                 </span>
               </button>
 
@@ -2355,7 +2355,7 @@ export default function Page() {
               >
                 <span style={styles.btnInner}>
                   <LogOut size={16} />
-                  ÃƒÆ’Ã¢â‚¬Â¡Ãƒâ€Ã‚Â±kÃƒâ€Ã‚Â±Ãƒâ€¦Ã…Â¸ Yap
+                  Çıkış Yap
                 </span>
               </button>
             </div>
@@ -2404,7 +2404,7 @@ export default function Page() {
                 >
                   <span style={styles.heroExportToggleInner}>
                     <Download size={14} />
-                    DÃƒâ€Ã‚Â±Ãƒâ€¦Ã…Â¸a Aktar
+                    Dışa Aktar
                     <ChevronDown size={14} />
                   </span>
                 </button>
@@ -2753,7 +2753,7 @@ export default function Page() {
                               opacity:
                                 draggedHomeColumn === column.key ? 0.55 : column.style.opacity,
                             }}
-                            title="SÃƒÆ’Ã‚Â¼rÃƒÆ’Ã‚Â¼kleyerek yer deÃƒâ€Ã…Â¸iÃƒâ€¦Ã…Â¸tir"
+                            title="Sürükleyerek yer değiştir"
                           >
                             {column.label}
                           </th>
@@ -3262,7 +3262,7 @@ export default function Page() {
               >
                 <span style={styles.btnInner}>
                   <Pencil size={14} />
-                  Ad DeÃƒâ€Ã…Â¸iÃƒâ€¦Ã…Â¸tir
+                  Ad Değiştir
                 </span>
               </button>
 
@@ -3275,7 +3275,7 @@ export default function Page() {
               >
                 <span style={styles.btnInner}>
                   <Palette size={14} />
-                  Renk SeÃƒÆ’Ã‚Â§
+                  Renk Seç
                 </span>
               </button>
 
@@ -3290,8 +3290,8 @@ export default function Page() {
                 <span style={styles.btnInner}>
                   <Archive size={14} />
                   {archivedTabs.includes(tabMenu.tabName)
-                    ? "ArÃƒâ€¦Ã…Â¸ivden ÃƒÆ’Ã¢â‚¬Â¡Ãƒâ€Ã‚Â±kar"
-                    : "Sekmeyi ArÃƒâ€¦Ã…Â¸ivle"}
+                    ? "Arşivden Çıkar"
+                    : "Sekmeyi Arşivle"}
                 </span>
               </button>
 
@@ -3312,7 +3312,7 @@ export default function Page() {
           ) : (
             <div style={styles.colorPickerWrap}>
               <div style={styles.colorPickerHead}>
-                <div style={styles.colorPickerTitle}>Renk SeÃƒÆ’Ã‚Â§</div>
+                <div style={styles.colorPickerTitle}>Renk Seç</div>
                 <button
                   type="button"
                   style={styles.colorPickerBackBtn}
