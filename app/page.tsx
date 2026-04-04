@@ -100,6 +100,44 @@ type InvoiceAttachment = {
   uploadedAt: string;
 };
 
+type ImportedImageRow = {
+  proje: string;
+  durumText: string;
+  tarihText: string;
+  tutarText: string;
+  tutar: number | null;
+  kdvli: boolean;
+  faturaKesildi: boolean;
+  odemeAlindi: boolean;
+  faturaTarihi: string | null;
+};
+
+type OcrBBox = {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+};
+
+type OcrWord = {
+  text: string;
+  bbox: OcrBBox;
+};
+
+type OcrLine = {
+  text: string;
+  bbox: OcrBBox;
+  words: OcrWord[];
+};
+
+type OcrPage = {
+  blocks: Array<{
+    paragraphs: Array<{
+      lines: OcrLine[];
+    }>;
+  }> | null;
+};
+
 type PdfWindow = Window &
   typeof globalThis & {
     html2canvas?: (
@@ -151,6 +189,21 @@ const DEFAULT_COLORS = [
 ];
 const MAX_INVOICE_FILE_SIZE_MB = 1;
 const MAX_INVOICE_FILE_SIZE_BYTES = MAX_INVOICE_FILE_SIZE_MB * 1024 * 1024;
+const IMAGE_IMPORT_LANGS = "tur+eng";
+const TURKISH_MONTHS: Record<string, number> = {
+  ocak: 0,
+  subat: 1,
+  mart: 2,
+  nisan: 3,
+  mayis: 4,
+  haziran: 5,
+  temmuz: 6,
+  agustos: 7,
+  eylul: 8,
+  ekim: 9,
+  kasim: 10,
+  aralik: 11,
+};
 
 const LIGHT = {
   appBg: "#050A14",
@@ -224,6 +277,321 @@ const readStoredTheme = (): ThemeMode => {
 
 const sanitizeFileName = (name: string) =>
   name.replace(/[^a-zA-Z0-9._-]/g, "-");
+
+const normalizeOcrText = (value: string) =>
+  value
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ı/g, "i")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u")
+    .replace(/[|]/g, "i")
+    .replace(/[^a-z0-9%+\-–—./\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const cleanImportedCell = (value: string) =>
+  value
+    .replace(/\s+/g, " ")
+    .replace(/[|]/g, "I")
+    .trim();
+
+const parseImportedAmount = (value: string) => {
+  const normalized = normalizeOcrText(value);
+  const kdvli = normalized.includes("kdv");
+
+  if (!normalized || normalized === "-") {
+    return { tutar: null, kdvli };
+  }
+
+  const kiloMatch = normalized.match(/(\d+(?:[.,]\d+)?)\s*k\b/);
+  if (kiloMatch) {
+    return {
+      tutar: Math.round(Number(kiloMatch[1].replace(",", ".")) * 1000),
+      kdvli,
+    };
+  }
+
+  const amountMatch = normalized.match(/(\d[\d.]*)/);
+  if (!amountMatch) {
+    return { tutar: null, kdvli };
+  }
+
+  return {
+    tutar: Number(amountMatch[1].replace(/\./g, "")),
+    kdvli,
+  };
+};
+
+const parseImportedStatus = (value: string) => {
+  const normalized = normalizeOcrText(value);
+
+  if (
+    normalized.includes("odemesi alindi") ||
+    normalized.includes("odeme alindi") ||
+    normalized.includes("odemesi alindi")
+  ) {
+    return {
+      odemeAlindi: true,
+      faturaKesildi: true,
+      durumText: "Ödemesi alındı",
+    };
+  }
+
+  if (normalized.includes("fatura kesildi")) {
+    return {
+      odemeAlindi: false,
+      faturaKesildi: true,
+      durumText: "Fatura kesildi",
+    };
+  }
+
+  return {
+    odemeAlindi: false,
+    faturaKesildi: false,
+    durumText: "Henüz fatura kesilmedi",
+  };
+};
+
+const parseImportedDate = (value: string) => {
+  const cleaned = cleanImportedCell(value);
+  const normalized = normalizeOcrText(cleaned);
+
+  if (!normalized || /^[-–—]+$/.test(normalized)) {
+    return { value: null, label: "—" };
+  }
+
+  const match = normalized.match(
+    /(\d{1,2})\s+(ocak|subat|mart|nisan|mayis|haziran|temmuz|agustos|eylul|ekim|kasim|aralik)/
+  );
+
+  if (!match) {
+    return { value: null, label: cleaned || "—" };
+  }
+
+  const day = Number(match[1]);
+  const month = TURKISH_MONTHS[match[2]];
+  const year = new Date().getFullYear();
+  const iso = new Date(Date.UTC(year, month, day)).toISOString().slice(0, 10);
+
+  return {
+    value: iso,
+    label: cleaned,
+  };
+};
+
+const extractOcrLines = (page: OcrPage) =>
+  (page.blocks || []).flatMap((block) =>
+    (block.paragraphs || []).flatMap((paragraph) => paragraph.lines || [])
+  );
+
+const detectFourColumnImportColumns = (headerLine: OcrLine) => {
+  const words = headerLine.words.map((word) => ({
+    ...word,
+    normalized: normalizeOcrText(word.text),
+  }));
+
+  const matchSpan = (patterns: RegExp[]) => {
+    const matched = words.filter((word) =>
+      patterns.some((pattern) => pattern.test(word.normalized))
+    );
+    if (!matched.length) return null;
+    return {
+      start: Math.min(...matched.map((word) => word.bbox.x0)),
+      end: Math.max(...matched.map((word) => word.bbox.x1)),
+    };
+  };
+
+  const bolum = matchSpan([/^bolum$/]);
+  const durum = matchSpan([/^durum$/]);
+  const tarih = matchSpan([/^fatura$/, /^tarihi$/]);
+  const tutar = matchSpan([/^tutar$/]);
+
+  if (!bolum || !durum || !tarih || !tutar) {
+    return null;
+  }
+
+  return {
+    first: (bolum.end + durum.start) / 2,
+    second: (durum.end + tarih.start) / 2,
+    third: (tarih.end + tutar.start) / 2,
+  };
+};
+
+const splitImportedRowCells = (
+  line: OcrLine,
+  columns: { first: number; second: number; third: number }
+) => {
+  const groups = [[], [], [], []] as OcrWord[][];
+
+  line.words.forEach((word) => {
+    const center = (word.bbox.x0 + word.bbox.x1) / 2;
+    if (center < columns.first) {
+      groups[0].push(word);
+    } else if (center < columns.second) {
+      groups[1].push(word);
+    } else if (center < columns.third) {
+      groups[2].push(word);
+    } else {
+      groups[3].push(word);
+    }
+  });
+
+  return groups.map((group) =>
+    cleanImportedCell(
+      group
+        .sort((a, b) => a.bbox.x0 - b.bbox.x0)
+        .map((word) => word.text)
+        .join(" ")
+    )
+  );
+};
+
+const parseDetailedImportRows = (lines: OcrLine[]) => {
+  const headerIndex = lines.findIndex((line) => {
+    const normalized = normalizeOcrText(line.text);
+    return (
+      normalized.includes("bolum") &&
+      normalized.includes("durum") &&
+      normalized.includes("fatura") &&
+      normalized.includes("tutar")
+    );
+  });
+
+  if (headerIndex === -1) {
+    return [];
+  }
+
+  const columns = detectFourColumnImportColumns(lines[headerIndex]);
+  if (!columns) {
+    return [];
+  }
+
+  return lines
+    .slice(headerIndex + 1)
+    .map((line) => splitImportedRowCells(line, columns))
+    .map(([proje, durum, tarih, tutar]) => {
+      const status = parseImportedStatus(durum);
+      const amount = parseImportedAmount(tutar);
+      const date = parseImportedDate(tarih);
+
+      return {
+        proje,
+        durumText: status.durumText,
+        tarihText: date.label,
+        tutarText: cleanImportedCell(tutar || "—") || "—",
+        tutar: amount.tutar,
+        kdvli: amount.kdvli,
+        faturaKesildi: status.faturaKesildi,
+        odemeAlindi: status.odemeAlindi,
+        faturaTarihi: date.value,
+      } satisfies ImportedImageRow;
+    })
+    .filter((row) => {
+      const normalizedProject = normalizeOcrText(row.proje);
+      return normalizedProject.startsWith("bolum");
+    });
+};
+
+const detectBudgetColumns = (headerLine: OcrLine) => {
+  const words = headerLine.words.map((word) => ({
+    ...word,
+    normalized: normalizeOcrText(word.text),
+  }));
+
+  const titleWords = words.filter((word) => /^(proje|kalem)$/.test(word.normalized));
+  const amountWords = words.filter((word) => /^(tutar|k)$/.test(word.normalized));
+
+  if (!titleWords.length || !amountWords.length) {
+    return null;
+  }
+
+  const leftEnd = Math.max(...titleWords.map((word) => word.bbox.x1));
+  const rightStart = Math.min(...amountWords.map((word) => word.bbox.x0));
+
+  return {
+    split: (leftEnd + rightStart) / 2,
+  };
+};
+
+const parseBudgetImportRows = (lines: OcrLine[]) => {
+  const headerIndex = lines.findIndex((line) => {
+    const normalized = normalizeOcrText(line.text);
+    return normalized.includes("proje") && normalized.includes("tutar");
+  });
+
+  if (headerIndex === -1) {
+    return [];
+  }
+
+  const columns = detectBudgetColumns(lines[headerIndex]);
+  if (!columns) {
+    return [];
+  }
+
+  return lines
+    .slice(headerIndex + 1)
+    .map((line) => {
+      const left = line.words
+        .filter((word) => (word.bbox.x0 + word.bbox.x1) / 2 < columns.split)
+        .sort((a, b) => a.bbox.x0 - b.bbox.x0)
+        .map((word) => word.text)
+        .join(" ");
+      const right = line.words
+        .filter((word) => (word.bbox.x0 + word.bbox.x1) / 2 >= columns.split)
+        .sort((a, b) => a.bbox.x0 - b.bbox.x0)
+        .map((word) => word.text)
+        .join(" ");
+
+      return {
+        proje: cleanImportedCell(left),
+        tutarText: cleanImportedCell(right || "—") || "—",
+      };
+    })
+    .filter((row) => {
+      const normalized = normalizeOcrText(row.proje);
+      return (
+        normalized.length > 0 &&
+        !normalized.includes("ara toplam") &&
+        !normalized.includes("genel toplam") &&
+        !normalized.includes("ek pay") &&
+        !normalized.includes("tum tutarlar")
+      );
+    })
+    .map((row) => {
+      const amount = parseImportedAmount(row.tutarText);
+
+      return {
+        proje: row.proje,
+        durumText: "Henüz fatura kesilmedi",
+        tarihText: "—",
+        tutarText: row.tutarText,
+        tutar: amount.tutar,
+        kdvli: amount.kdvli,
+        faturaKesildi: false,
+        odemeAlindi: false,
+        faturaTarihi: null,
+      } satisfies ImportedImageRow;
+    })
+    .filter((row) => row.proje.length > 0 && row.tutar !== null);
+};
+
+const parseImportedImageRows = (page: OcrPage): ImportedImageRow[] => {
+  const lines = extractOcrLines(page)
+    .filter((line) => line.words.length > 0)
+    .sort((a, b) => a.bbox.y0 - b.bbox.y0);
+
+  const detailedRows = parseDetailedImportRows(lines);
+  if (detailedRows.length) {
+    return detailedRows;
+  }
+
+  return parseBudgetImportRows(lines);
+};
 
 const supabase =
   globalThis.__odeme_supabase__ ??
@@ -435,10 +803,16 @@ export default function Page() {
   const [settingsPassword, setSettingsPassword] = useState("");
   const [settingsPasswordRepeat, setSettingsPasswordRepeat] = useState("");
   const [settingsBusy, setSettingsBusy] = useState(false);
+  const [imageImportBusy, setImageImportBusy] = useState(false);
+  const [imageImportProgress, setImageImportProgress] = useState(0);
+  const [imageImportStatus, setImageImportStatus] = useState("");
+  const [imageImportPreview, setImageImportPreview] = useState<ImportedImageRow[]>([]);
+  const [imageImportFileName, setImageImportFileName] = useState("");
 
   const exportRef = useRef<HTMLElement | null>(null);
   const invoiceInputRef = useRef<HTMLInputElement | null>(null);
   const profileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageImportInputRef = useRef<HTMLInputElement | null>(null);
   const initialLoadRef = useRef(false);
 
   const palette = theme === "dark" ? DARK : LIGHT;
@@ -972,6 +1346,106 @@ export default function Page() {
         : `${aktifSekme || "proje"}.doc`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const clearImageImportPreview = () => {
+    setImageImportPreview([]);
+    setImageImportFileName("");
+    setImageImportStatus("");
+    setImageImportProgress(0);
+  };
+
+  const openImageImportPicker = () => {
+    imageImportInputRef.current?.click();
+  };
+
+  const handleImageImport = async (file: File) => {
+    if (!aktifSekme) {
+      setMsg("Önce bir proje sekmesi seç.");
+      return;
+    }
+
+    setImageImportBusy(true);
+    setImageImportPreview([]);
+    setImageImportFileName(file.name);
+    setImageImportStatus("Görsel hazırlanıyor...");
+    setImageImportProgress(0);
+    setMsg("");
+
+    try {
+      const tesseract = await import("tesseract.js");
+      const worker = await tesseract.createWorker(IMAGE_IMPORT_LANGS, undefined, {
+        logger: (message) => {
+          if (typeof message.progress === "number") {
+            setImageImportProgress(Math.round(message.progress * 100));
+          }
+          if (message.status) {
+            setImageImportStatus(message.status);
+          }
+        },
+      });
+
+      await worker.setParameters({
+        preserve_interword_spaces: "1",
+      });
+
+      const result = await worker.recognize(file);
+      await worker.terminate();
+
+      const rows = parseImportedImageRows(result.data as OcrPage);
+
+      if (!rows.length) {
+        setMsg("Görsel okunamadı. Tabloyu daha net bir görüntüyle tekrar yükle.");
+        clearImageImportPreview();
+        return;
+      }
+
+      setImageImportPreview(rows);
+      setImageImportStatus("Önizleme hazır");
+      setImageImportProgress(100);
+      setMsg(`${rows.length} kayıt önizlemesi hazır.`);
+    } catch (error) {
+      setMsg(
+        error instanceof Error
+          ? `Görsel işlenemedi: ${error.message}`
+          : "Görsel işlenemedi."
+      );
+      clearImageImportPreview();
+    } finally {
+      setImageImportBusy(false);
+    }
+  };
+
+  const saveImportedRows = async () => {
+    if (!authUserId || !aktifSekme || !imageImportPreview.length) return;
+
+    const nextSira =
+      aktifKayitlar.length > 0
+        ? Math.max(...aktifKayitlar.map((x) => x.sira ?? 0)) + 1
+        : 1;
+
+    const payload = imageImportPreview.map((row, index) => ({
+      user_id: authUserId,
+      proje: row.proje,
+      tutar: row.tutar,
+      odendi: row.odemeAlindi,
+      grup: aktifSekme,
+      fatura_tarihi: row.faturaTarihi,
+      fatura_kesildi: row.faturaKesildi,
+      kdvli: row.kdvli,
+      sira: nextSira + index,
+    }));
+
+    const { error } = await odemelerTable().insert(payload as never);
+
+    if (error) {
+      setMsg("Görselden kayıt oluşturulamadı: " + error.message);
+      return;
+    }
+
+    clearImageImportPreview();
+    setMsg(`${payload.length} kayıt projeye eklendi.`);
+    await yukle();
   };
 
   const openInvoicePicker = (rowId: number) => {
@@ -2363,6 +2837,20 @@ export default function Page() {
             }}
           />
 
+          <input
+            ref={imageImportInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                await handleImageImport(file);
+              }
+              e.currentTarget.value = "";
+            }}
+          />
+
           {viewMode === "settings" ? (
             renderSettingsContent()
           ) : (
@@ -2720,6 +3208,112 @@ export default function Page() {
             </div>
           ) : (
             <>
+              <div style={styles.card}>
+                <div style={styles.sectionHead}>
+                  <h2 style={styles.h2}>Görselden Kayıt Oluştur</h2>
+                  <div style={{ color: "var(--muted)", fontSize: 12 }}>
+                    Tablo görselinden önizleme çıkarır
+                  </div>
+                </div>
+
+                <div style={styles.imageImportHeader}>
+                  <div style={styles.imageImportInfo}>
+                    <div style={styles.imageImportTitle}>Desteklenen düzen</div>
+                    <div style={styles.imageImportText}>
+                      Bölüm / Durum / Fatura Tarihi / Tutar veya Proje / Kalem / Tutar (K)
+                    </div>
+                  </div>
+
+                  <button
+                    className="hover-button"
+                    onClick={openImageImportPicker}
+                    style={styles.secondaryBtn}
+                  >
+                    <span style={styles.btnInner}>
+                      <ImageUp size={16} />
+                      Görsel Yükle
+                    </span>
+                  </button>
+                </div>
+
+                {imageImportBusy ? (
+                  <div style={styles.imageImportProgressCard}>
+                    <div style={styles.imageImportProgressTop}>
+                      <strong>{imageImportStatus || "Görsel okunuyor..."}</strong>
+                      <span>%{imageImportProgress}</span>
+                    </div>
+                    <div style={styles.progressWrapThin}>
+                      <div
+                        style={{
+                          ...styles.progressBar,
+                          width: `${imageImportProgress}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+
+                {imageImportPreview.length ? (
+                  <div style={styles.imageImportPreviewWrap}>
+                    <div style={styles.imageImportPreviewHead}>
+                      <div>
+                        <div style={styles.imageImportTitle}>
+                          Önizleme: {imageImportFileName}
+                        </div>
+                        <div style={styles.imageImportText}>
+                          {imageImportPreview.length} kayıt bulunmuş görünüyor. Onaydan sonra projeye eklenecek.
+                        </div>
+                      </div>
+
+                      <div style={styles.bulkActions}>
+                        <button
+                          className="hover-button"
+                          onClick={clearImageImportPreview}
+                          style={styles.secondaryBtn}
+                        >
+                          Temizle
+                        </button>
+                        <button
+                          className="hover-button"
+                          onClick={() => void saveImportedRows()}
+                          style={styles.primaryBtn}
+                        >
+                          Kayıtları Oluştur
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={styles.tableWrap}>
+                      <table style={styles.table}>
+                        <thead>
+                          <tr>
+                            <th style={styles.th}>PROJE</th>
+                            <th style={styles.th}>DURUM</th>
+                            <th style={styles.th}>FATURA TARİHİ</th>
+                            <th style={styles.th}>TUTAR</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {imageImportPreview.map((row, index) => (
+                            <tr key={`${row.proje}-${index}`}>
+                              <td style={styles.td}>{row.proje}</td>
+                              <td style={styles.td}>{row.durumText}</td>
+                              <td style={styles.td}>{row.tarihText}</td>
+                              <td style={styles.td}>
+                                {row.tutar !== null ? tl(row.tutar) : "—"}
+                                {row.kdvli ? (
+                                  <div style={styles.metaText}>+ %20 KDV</div>
+                                ) : null}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
               <div style={styles.card}>
                 <div style={styles.sectionHead}>
                   <h2 style={styles.h2}>Kayıt Ekle / Güncelle</h2>
@@ -3761,6 +4355,54 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 12,
     color: "var(--muted)",
     marginTop: 4,
+  },
+  imageImportHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    flexWrap: "wrap",
+  },
+  imageImportInfo: {
+    display: "grid",
+    gap: 4,
+  },
+  imageImportTitle: {
+    fontSize: 13,
+    fontWeight: 800,
+    color: "var(--text)",
+  },
+  imageImportText: {
+    fontSize: 12,
+    color: "var(--muted)",
+  },
+  imageImportProgressCard: {
+    marginTop: 14,
+    padding: 14,
+    borderRadius: 12,
+    border: "1px solid var(--border)",
+    background: "var(--slateSoft)",
+  },
+  imageImportProgressTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 8,
+    color: "var(--text)",
+    fontSize: 12,
+  },
+  imageImportPreviewWrap: {
+    marginTop: 14,
+    display: "grid",
+    gap: 12,
+  },
+  imageImportPreviewHead: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+    flexWrap: "wrap",
   },
   progressWrap: {
     height: 10,
