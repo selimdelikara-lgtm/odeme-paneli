@@ -337,6 +337,8 @@ export default function Page() {
   const invoiceInputRef = useRef<HTMLInputElement | null>(null);
   const profileInputRef = useRef<HTMLInputElement | null>(null);
   const initialLoadRef = useRef(false);
+  const draggedColumnRef = useRef<ProjectColumnKey | null>(null);
+  const draggedHomeColumnRef = useRef<HomeProjectColumnKey | null>(null);
 
   const palette = theme === "dark" ? DARK : LIGHT;
 
@@ -1538,7 +1540,9 @@ export default function Page() {
   ) => {
     const payload = event.dataTransfer.getData("text/plain");
     const activeColumn =
-      draggedColumn ?? (isProjectColumnKey(payload) ? payload : null);
+      draggedColumnRef.current ??
+      draggedColumn ??
+      (isProjectColumnKey(payload) ? payload : null);
 
     if (!activeColumn || activeColumn === column) return;
 
@@ -1548,6 +1552,7 @@ export default function Page() {
     if (draggedColumn !== activeColumn) {
       setDraggedColumn(activeColumn);
     }
+    draggedColumnRef.current = activeColumn;
     setDragOverColumn(column);
     setColumnDropPosition(offset < rect.width / 2 ? "before" : "after");
   };
@@ -1577,7 +1582,9 @@ export default function Page() {
   ) => {
     const payload = event.dataTransfer.getData("text/plain");
     const activeColumn =
-      draggedHomeColumn ?? (isHomeProjectColumnKey(payload) ? payload : null);
+      draggedHomeColumnRef.current ??
+      draggedHomeColumn ??
+      (isHomeProjectColumnKey(payload) ? payload : null);
 
     if (!activeColumn || activeColumn === column) return;
 
@@ -1587,6 +1594,7 @@ export default function Page() {
     if (draggedHomeColumn !== activeColumn) {
       setDraggedHomeColumn(activeColumn);
     }
+    draggedHomeColumnRef.current = activeColumn;
     setDragOverHomeColumn(column);
     setHomeColumnDropPosition(offset < rect.width / 2 ? "before" : "after");
   };
@@ -3102,9 +3110,11 @@ export default function Page() {
                             onDragStart={(e) => {
                               e.dataTransfer.effectAllowed = "move";
                               e.dataTransfer.setData("text/plain", column.key);
+                              draggedHomeColumnRef.current = column.key;
                               setDraggedHomeColumn(column.key);
                             }}
                             onDragEnd={() => {
+                              draggedHomeColumnRef.current = null;
                               setDraggedHomeColumn(null);
                               setDragOverHomeColumn(null);
                             }}
@@ -3113,6 +3123,7 @@ export default function Page() {
                               e.preventDefault();
                               const payload = e.dataTransfer.getData("text/plain");
                               const sourceColumn =
+                                draggedHomeColumnRef.current ??
                                 draggedHomeColumn ??
                                 (isHomeProjectColumnKey(payload) ? payload : null);
 
@@ -3123,6 +3134,7 @@ export default function Page() {
                                   homeColumnDropPosition
                                 );
                               }
+                              draggedHomeColumnRef.current = null;
                               setDraggedHomeColumn(null);
                               setDragOverHomeColumn(null);
                             }}
@@ -3466,9 +3478,11 @@ export default function Page() {
                               onDragStart={(e) => {
                                 e.dataTransfer.effectAllowed = "move";
                                 e.dataTransfer.setData("text/plain", column.key);
+                                draggedColumnRef.current = column.key;
                                 setDraggedColumn(column.key);
                               }}
                               onDragEnd={() => {
+                                draggedColumnRef.current = null;
                                 setDraggedColumn(null);
                                 setDragOverColumn(null);
                               }}
@@ -3477,6 +3491,7 @@ export default function Page() {
                                 e.preventDefault();
                                 const payload = e.dataTransfer.getData("text/plain");
                                 const sourceColumn =
+                                  draggedColumnRef.current ??
                                   draggedColumn ??
                                   (isProjectColumnKey(payload) ? payload : null);
 
@@ -3487,6 +3502,7 @@ export default function Page() {
                                     columnDropPosition
                                   );
                                 }
+                                draggedColumnRef.current = null;
                                 setDraggedColumn(null);
                                 setDragOverColumn(null);
                               }}

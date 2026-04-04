@@ -10,6 +10,33 @@ const supabaseKey =
   "sb_publishable_4M8RAgm3SzrWEMrxm8HDUw_3fRU8cMr";
 
 const AUTH_STORAGE_PREFERENCE_KEY = "odeme-auth-storage";
+const SUPABASE_STORAGE_KEY_PREFIX = "sb-";
+
+const moveSupabaseSessionKeys = (remember: boolean) => {
+  if (typeof window === "undefined") return;
+
+  const sourceStorage = remember ? window.sessionStorage : window.localStorage;
+  const targetStorage = remember ? window.localStorage : window.sessionStorage;
+
+  for (let index = 0; index < sourceStorage.length; index += 1) {
+    const key = sourceStorage.key(index);
+    if (!key || !key.startsWith(SUPABASE_STORAGE_KEY_PREFIX)) continue;
+
+    const value = sourceStorage.getItem(key);
+    if (value === null) continue;
+    targetStorage.setItem(key, value);
+  }
+
+  const keysToRemove: string[] = [];
+  for (let index = 0; index < sourceStorage.length; index += 1) {
+    const key = sourceStorage.key(index);
+    if (key && key.startsWith(SUPABASE_STORAGE_KEY_PREFIX)) {
+      keysToRemove.push(key);
+    }
+  }
+
+  keysToRemove.forEach((key) => sourceStorage.removeItem(key));
+};
 
 const authStorage = {
   getItem(key: string) {
@@ -56,6 +83,7 @@ export const setAuthStoragePreference = (remember: boolean) => {
     AUTH_STORAGE_PREFERENCE_KEY,
     remember ? "local" : "session"
   );
+  moveSupabaseSessionKeys(remember);
 };
 
 export const browserSupabase =
