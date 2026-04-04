@@ -6,12 +6,16 @@ import {
   BarChart3,
   CheckCircle2,
   CheckSquare,
+  CircleAlert,
   Clock3,
   Copy,
   Download,
   FileText,
   FolderKanban,
+  ImageUp,
+  KeyRound,
   LayoutDashboard,
+  LockKeyhole,
   LogOut,
   Mail,
   Moon,
@@ -21,10 +25,12 @@ import {
   Receipt,
   RotateCcw,
   Search,
+  Settings2,
   Square,
   SunMedium,
   Trash2,
   Upload,
+  UserRound,
   Wallet,
 } from "lucide-react";
 import {
@@ -51,7 +57,7 @@ type Odeme = {
   sira: number | null;
 };
 
-type ViewMode = "home" | "project";
+type ViewMode = "home" | "project" | "settings";
 type SortKey = "manual" | "proje" | "durum" | "fatura_tarihi" | "tutar";
 type SortDirection = "asc" | "desc";
 type StatusFilter = "all" | "paid" | "invoiced" | "waiting";
@@ -373,7 +379,7 @@ export default function Page() {
   const [authPassword, setAuthPassword] = useState("");
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authUserId, setAuthUserId] = useState<string | null>(null);
-  const [rememberMe, setRememberMe] = useState(true);
+    const [rememberMe, setRememberMe] = useState(true);
   const [signupMode, setSignupMode] = useState(false);
 
   const [theme, setTheme] = useState<ThemeMode>(readStoredTheme);
@@ -422,12 +428,29 @@ export default function Page() {
   const [invoiceMap, setInvoiceMap] = useState<Record<number, InvoiceAttachment[]>>({});
   const [invoiceTargetId, setInvoiceTargetId] = useState<number | null>(null);
   const [uploadingInvoiceId, setUploadingInvoiceId] = useState<number | null>(null);
+  const [settingsName, setSettingsName] = useState("");
+  const [settingsAvatarUrl, setSettingsAvatarUrl] = useState<string | null>(null);
+  const [settingsPassword, setSettingsPassword] = useState("");
+  const [settingsPasswordRepeat, setSettingsPasswordRepeat] = useState("");
+  const [settingsBusy, setSettingsBusy] = useState(false);
 
   const exportRef = useRef<HTMLElement | null>(null);
   const invoiceInputRef = useRef<HTMLInputElement | null>(null);
+  const profileInputRef = useRef<HTMLInputElement | null>(null);
   const initialLoadRef = useRef(false);
 
   const palette = theme === "dark" ? DARK : LIGHT;
+
+  const syncAuthProfile = (user: { email?: string | null; id?: string | null; user_metadata?: Record<string, unknown> } | null) => {
+    const metadata = (user?.user_metadata || {}) as Record<string, unknown>;
+    const displayName = typeof metadata.display_name === "string" ? metadata.display_name : "";
+    const avatarUrl = typeof metadata.avatar_url === "string" ? metadata.avatar_url : null;
+
+    setAuthEmail(user?.email || null);
+    setAuthUserId(user?.id || null);
+    setSettingsName(displayName);
+    setSettingsAvatarUrl(avatarUrl);
+  };
 
   const applyDraftToForm = (draft: DraftState | undefined) => {
     setProje(draft?.proje ?? "");
@@ -518,9 +541,8 @@ export default function Page() {
         data: { session },
       } = await supabase.auth.getSession();
 
-      if (session?.user?.email && session.user.id) {
-        setAuthEmail(session.user.email);
-        setAuthUserId(session.user.id);
+      if (session?.user) {
+        syncAuthProfile(session.user);
       }
     };
 
@@ -545,12 +567,15 @@ export default function Page() {
         }
       }
 
-      if (session?.user?.email && session.user.id) {
-        setAuthEmail(session.user.email);
-        setAuthUserId(session.user.id);
+      if (session?.user) {
+        syncAuthProfile(session.user);
       } else {
         setAuthEmail(null);
         setAuthUserId(null);
+        setSettingsName("");
+        setSettingsAvatarUrl(null);
+        setSettingsPassword("");
+        setSettingsPasswordRepeat("");
         setData([]);
         setAktifSekme("");
       }
@@ -1604,6 +1629,146 @@ export default function Page() {
     setAuthUserId(null);
   }
 
+  async function uploadProfilePhoto(file: File) {
+    if (!authUserId) return;
+
+    if (file.size > MAX_INVOICE_FILE_SIZE_BYTES) {
+      setMsg(`Profil fotoğrafı en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`);
+      return;
+    }
+
+    setSettingsBusy(true);
+    const safeName = sanitizeFileName(file.name);
+    const path = `${authUserId}/profile/avatar-${safeName}`;
+
+    const { error } = await supabase.storage
+      .from("faturalar")
+      .upload(path, file, {
+        upsert: true,
+      });
+
+    if (error) {
+      setMsg("Profil fotoğrafı yüklenemedi: " + error.message);
+      setSettingsBusy(false);
+      return;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("faturalar")
+      .getPublicUrl(path);
+
+    const avatarUrl = publicUrlData.publicUrl;
+    const { error: profileError } = await supabase.auth.updateUser({
+      data: {
+        display_name: settingsName.trim(),
+        avatar_url: avatarUrl,
+      },
+    });
+
+    if (profileError) {
+      setMsg("Profil güncellenemedi: " + profileError.message);
+      setSettingsBusy(false);
+      return;
+    }
+
+    setSettingsAvatarUrl(avatarUrl);
+    setMsg("Profil fotoğrafı güncellendi.");
+    setSettingsBusy(false);
+  }
+
+  async function saveProfileSettings() {
+    setSettingsBusy(true);
+
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        display_name: settingsName.trim(),
+        avatar_url: settingsAvatarUrl,
+      },
+    });
+
+    if (error) {
+      setMsg("Profil kaydedilemedi: " + error.message);
+      setSettingsBusy(false);
+      return;
+    }
+
+    setMsg("Hesap ayarları kaydedildi.");
+    setSettingsBusy(false);
+  }
+
+  async function changePassword() {
+    if (!settingsPassword.trim()) {
+      setMsg("Yeni şifre alanı boş olamaz.");
+      return;
+    }
+
+    if (settingsPassword.trim().length < 6) {
+      setMsg("Yeni şifre en az 6 karakter olmalı.");
+      return;
+    }
+
+    if (settingsPassword !== settingsPasswordRepeat) {
+      setMsg("Şifre tekrar alanı eşleşmiyor.");
+      return;
+    }
+
+    setSettingsBusy(true);
+    const { error } = await supabase.auth.updateUser({
+      password: settingsPassword.trim(),
+    });
+
+    if (error) {
+      setMsg("Şifre değiştirilemedi: " + error.message);
+      setSettingsBusy(false);
+      return;
+    }
+
+    setSettingsPassword("");
+    setSettingsPasswordRepeat("");
+    setMsg("Şifre güncellendi.");
+    setSettingsBusy(false);
+  }
+
+  async function closeAccountData() {
+    if (!authUserId) return;
+
+    const confirmed = window.confirm(
+      "Bu işlem panel verilerini siler ve oturumu kapatır. Devam edilsin mi?"
+    );
+    if (!confirmed) return;
+
+    setSettingsBusy(true);
+
+    const attachmentsResult = await faturaEkleriTable().select("path").eq("user_id", authUserId);
+    const attachmentPaths = ((attachmentsResult.data || []) as Array<Record<string, unknown>>)
+      .map((item) => String(item.path || ""))
+      .filter(Boolean);
+
+    if (attachmentPaths.length) {
+      await supabase.storage.from("faturalar").remove(attachmentPaths);
+    }
+
+    const deleteAttachments = await faturaEkleriTable().delete().eq("user_id", authUserId);
+    if (deleteAttachments.error) {
+      setMsg("Fatura ekleri silinemedi: " + deleteAttachments.error.message);
+      setSettingsBusy(false);
+      return;
+    }
+
+    const deleteRows = await odemelerTable().delete().eq("user_id", authUserId);
+    if (deleteRows.error) {
+      setMsg("Kayıtlar silinemedi: " + deleteRows.error.message);
+      setSettingsBusy(false);
+      return;
+    }
+
+    await supabase.auth.signOut();
+    setSettingsBusy(false);
+    setMsg(
+      "Panel verileri silindi ve çıkış yapıldı. Auth hesabını tamamen kapatmak için yönetici işlemi gerekir."
+    );
+  }
+
   function yeniProjeOlustur() {
     const ad = window.prompt("Proje adı");
     if (!ad || !ad.trim()) return;
@@ -1782,6 +1947,152 @@ export default function Page() {
     </div>
   );
 
+  const renderSettingsContent = () => (
+    <div style={styles.settingsGrid}>
+      <div style={styles.settingsCard}>
+        <div style={styles.sectionHead}>
+          <h2 style={styles.h2}>Hesap Ayarları</h2>
+          <Settings2 size={18} color={palette.muted} />
+        </div>
+
+        <div style={styles.settingsProfileRow}>
+          <div style={styles.settingsAvatar}>
+            {settingsAvatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={settingsAvatarUrl}
+                alt="Profil fotoğrafı"
+                style={styles.settingsAvatarImage}
+              />
+            ) : (
+              <span>{(settingsName || authEmail || "U").slice(0, 1).toUpperCase()}</span>
+            )}
+          </div>
+
+          <div style={{ display: "grid", gap: 10 }}>
+            <div>
+              <div style={styles.settingsMetaLabel}>Görünen Ad</div>
+              <input
+                className="soft-input"
+                value={settingsName}
+                onChange={(e) => setSettingsName(e.target.value)}
+                placeholder="Ad Soyad"
+                style={styles.input}
+              />
+            </div>
+            <div>
+              <div style={styles.settingsMetaLabel}>E-posta</div>
+              <div style={styles.settingsEmail}>{authEmail || "—"}</div>
+            </div>
+            <div style={styles.settingsButtonRow}>
+              <button
+                className="hover-button"
+                onClick={() => profileInputRef.current?.click()}
+                style={styles.settingsGhostBtn}
+                disabled={settingsBusy}
+              >
+                <span style={styles.btnInner}>
+                  <ImageUp size={15} />
+                  Fotoğraf Yükle
+                </span>
+              </button>
+              <button
+                className="hover-button"
+                onClick={() => void saveProfileSettings()}
+                style={styles.primaryBtn}
+                disabled={settingsBusy}
+              >
+                <span style={styles.btnInner}>
+                  <UserRound size={15} />
+                  Profili Kaydet
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={styles.settingsCard}>
+        <div style={styles.sectionHead}>
+          <h2 style={styles.h2}>Güvenlik</h2>
+          <LockKeyhole size={18} color={palette.muted} />
+        </div>
+
+        <div style={styles.settingsStack}>
+          <div>
+            <div style={styles.settingsMetaLabel}>Yeni Şifre</div>
+            <input
+              className="soft-input"
+              type="password"
+              value={settingsPassword}
+              onChange={(e) => setSettingsPassword(e.target.value)}
+              placeholder="Yeni şifre"
+              style={styles.input}
+            />
+          </div>
+          <div>
+            <div style={styles.settingsMetaLabel}>Yeni Şifre Tekrar</div>
+            <input
+              className="soft-input"
+              type="password"
+              value={settingsPasswordRepeat}
+              onChange={(e) => setSettingsPasswordRepeat(e.target.value)}
+              placeholder="Yeni şifre tekrar"
+              style={styles.input}
+            />
+          </div>
+          <div style={styles.settingsButtonRow}>
+            <button
+              className="hover-button"
+              onClick={() => void changePassword()}
+              style={styles.secondaryBtn}
+              disabled={settingsBusy}
+            >
+              <span style={styles.btnInner}>
+                <KeyRound size={15} />
+                Şifreyi Güncelle
+              </span>
+            </button>
+            <button
+              className="hover-button"
+              onClick={() => void authResetPassword()}
+              style={styles.settingsGhostBtn}
+              disabled={settingsBusy}
+            >
+              <span style={styles.btnInner}>
+                <Mail size={15} />
+                Sıfırlama Bağlantısı Gönder
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ ...styles.settingsCard, ...styles.settingsDangerCard }}>
+        <div style={styles.sectionHead}>
+          <h2 style={{ ...styles.h2, color: "var(--red)" }}>Tehlikeli Alan</h2>
+          <CircleAlert size={18} color={palette.red} />
+        </div>
+        <div style={styles.settingsStack}>
+          <div style={styles.settingsDangerText}>
+            Bu işlem panel verilerini siler ve oturumu kapatır. Auth hesabını tamamen silmez.
+          </div>
+          <button
+            className="hover-button"
+            onClick={() => void closeAccountData()}
+            style={styles.deleteBtn}
+            disabled={settingsBusy}
+          >
+            <span style={styles.btnInner}>
+              <Trash2 size={15} />
+              Hesabı Kapat
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   if (!authUserId) {
     return renderAuthScreen();
   }
@@ -1818,7 +2129,7 @@ export default function Page() {
       <div style={styles.shell} className="app-shell">
         <aside style={styles.sidebar} className="app-sidebar">
           <div>
-            <div style={styles.sidebarTitle}>ÖDEDİ Mİ</div>
+            <div style={styles.sidebarTitle}>Panel</div>
             <div style={styles.sidebarSub}>
               {authEmail ? authEmail : "Tahsilat paneli"}
             </div>
@@ -1896,6 +2207,16 @@ export default function Page() {
           <div style={styles.sidebarBottom}>
             <button
               className="hover-button"
+              onClick={() => setViewMode("settings")}
+              style={viewMode === "settings" ? styles.activeTab : styles.tab}
+            >
+              <span style={styles.sidebarTabInner}>
+                <Settings2 size={16} />
+                Hesap Ayarları
+              </span>
+            </button>
+            <button
+              className="hover-button"
               onClick={() => setShowArchivedTabs((p) => !p)}
               style={styles.secondaryBtn}
             >
@@ -1911,29 +2232,37 @@ export default function Page() {
           <div style={styles.topBar}>
             <div>
               <h1 style={{ margin: 0, fontSize: 28, color: "var(--text)" }}>
-                {viewMode === "home" ? "ÖDEDİ Mİ" : aktifSekme || "Proje"}
+                {viewMode === "home"
+                  ? "Ana Sayfa"
+                  : viewMode === "settings"
+                    ? "Hesap Ayarları"
+                    : aktifSekme || "Proje"}
               </h1>
               <div style={{ color: "var(--muted)", marginTop: 4, fontSize: 13 }}>
                 {viewMode === "home"
                   ? "Tahsilat ve fatura takibinin genel özeti"
-                  : "Sekme detayları"}
+                  : viewMode === "settings"
+                    ? "Profil, güvenlik ve hesap işlemleri"
+                    : "Sekme detayları"}
               </div>
             </div>
 
             <div style={styles.topBarActions}>
-              <div style={styles.topSearchWrap}>
-                <Search size={15} color={palette.muted} />
-                <input
-                  className="soft-input"
-                  placeholder="Ara"
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setSelectedIds([]);
-                  }}
-                  style={styles.topSearchInput}
-                />
-              </div>
+              {viewMode !== "settings" ? (
+                <div style={styles.topSearchWrap}>
+                  <Search size={15} color={palette.muted} />
+                  <input
+                    className="soft-input"
+                    placeholder="Ara"
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setSelectedIds([]);
+                    }}
+                    style={styles.topSearchInput}
+                  />
+                </div>
+              ) : null}
               <button
                 className="hover-button"
                 onClick={() =>
@@ -1960,12 +2289,28 @@ export default function Page() {
             </div>
           </div>
 
+          <input
+            ref={profileInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                await uploadProfilePhoto(file);
+              }
+              e.currentTarget.value = "";
+            }}
+          />
+
+          {viewMode === "settings" ? (
+            renderSettingsContent()
+          ) : (
+            <>
           <div style={styles.heroCard}>
             <div style={styles.heroTopRow}>
               <div>
-                <div style={styles.heroLabel}>
-                  {viewMode === "home" ? "ÖDEDİ Mİ TOPLAMI" : "PROJE TOPLAMI"}
-                </div>
+                <div style={styles.heroLabel}>TOPLAM</div>
                 <div style={styles.heroValue}>
                   {tl(viewMode === "home" ? tumToplam : toplam)}
                 </div>
@@ -2024,6 +2369,7 @@ export default function Page() {
                     e.currentTarget.value = "";
                   }}
                 />
+
               </div>
             </div>
 
@@ -2969,6 +3315,9 @@ export default function Page() {
             </>
           )}
 
+            </>
+          )}
+
           {loading ? (
             <div style={{ color: "var(--muted)", fontSize: 13 }}>
               Veriler yükleniyor...
@@ -3095,6 +3444,8 @@ const styles: Record<string, CSSProperties> = {
   },
   sidebarBottom: {
     marginTop: "auto",
+    display: "grid",
+    gap: 8,
   },
   sidebarTabInner: {
     display: "flex",
@@ -3194,10 +3545,11 @@ const styles: Record<string, CSSProperties> = {
   },
   heroActionGroup: {
     display: "flex",
-    gap: 10,
+    gap: 8,
     alignItems: "center",
-    padding: 8,
-    borderRadius: 20,
+    marginLeft: "auto",
+    padding: 6,
+    borderRadius: 18,
     background: "rgba(255,255,255,0.08)",
     backdropFilter: "blur(10px)",
   },
@@ -3211,43 +3563,43 @@ const styles: Record<string, CSSProperties> = {
     whiteSpace: "nowrap",
   },
   heroActionBtnWord: {
-    minWidth: 108,
-    minHeight: 42,
-    padding: "10px 12px",
-    borderRadius: 13,
+    minWidth: 88,
+    minHeight: 34,
+    padding: "8px 10px",
+    borderRadius: 11,
     border: "1px solid rgba(78,127,223,0.20)",
     background: "#4E7FDF",
     color: "#FFFFFF",
     fontWeight: 900,
-    fontSize: 11,
+    fontSize: 10,
     cursor: "pointer",
-    boxShadow: "0 6px 14px rgba(34,82,182,0.18)",
+    boxShadow: "0 4px 10px rgba(34,82,182,0.14)",
   },
   heroActionBtnExcel: {
-    minWidth: 110,
-    minHeight: 42,
-    padding: "10px 12px",
-    borderRadius: 13,
+    minWidth: 92,
+    minHeight: 34,
+    padding: "8px 10px",
+    borderRadius: 11,
     border: "1px solid rgba(31,169,127,0.20)",
     background: "linear-gradient(135deg, #34C79A, #1FA97F)",
     color: "#FFFFFF",
     fontWeight: 900,
-    fontSize: 11,
+    fontSize: 10,
     cursor: "pointer",
-    boxShadow: "0 6px 14px rgba(19,110,82,0.16)",
+    boxShadow: "0 4px 10px rgba(19,110,82,0.14)",
   },
   heroActionBtnPdf: {
-    minWidth: 96,
-    minHeight: 42,
-    padding: "10px 12px",
-    borderRadius: 13,
+    minWidth: 80,
+    minHeight: 34,
+    padding: "8px 10px",
+    borderRadius: 11,
     border: "1px solid rgba(213,83,83,0.20)",
     background: "linear-gradient(135deg, #E66A6A, #D55353)",
     color: "#FFFFFF",
     fontWeight: 900,
-    fontSize: 11,
+    fontSize: 10,
     cursor: "pointer",
-    boxShadow: "0 6px 14px rgba(145,43,43,0.16)",
+    boxShadow: "0 4px 10px rgba(145,43,43,0.14)",
   },
   heroLabel: {
     fontSize: 12,
@@ -3417,6 +3769,87 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 14,
     padding: 14,
     boxShadow: "var(--shadow)",
+  },
+  settingsGrid: {
+    display: "grid",
+    gap: 12,
+  },
+  settingsCard: {
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+    borderRadius: 18,
+    padding: 18,
+    boxShadow: "var(--shadow)",
+  },
+  settingsDangerCard: {
+    borderColor: "rgba(220,38,38,0.18)",
+    background: "linear-gradient(180deg, var(--card), rgba(220,38,38,0.03))",
+  },
+  settingsProfileRow: {
+    display: "grid",
+    gridTemplateColumns: "120px 1fr",
+    gap: 18,
+    alignItems: "center",
+  },
+  settingsAvatar: {
+    width: 104,
+    height: 104,
+    borderRadius: 999,
+    background: "var(--blueSoft)",
+    border: "1px solid rgba(37,99,235,0.18)",
+    color: "var(--blue)",
+    fontSize: 34,
+    fontWeight: 900,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  settingsAvatarImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+  settingsMetaLabel: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: "var(--muted)",
+    marginBottom: 6,
+  },
+  settingsEmail: {
+    minHeight: 42,
+    padding: "10px 12px",
+    borderRadius: 12,
+    border: "1px solid var(--border)",
+    background: "var(--slateSoft)",
+    color: "var(--textSoft)",
+    fontSize: 13,
+    display: "flex",
+    alignItems: "center",
+  },
+  settingsButtonRow: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+  },
+  settingsGhostBtn: {
+    padding: "10px 14px",
+    borderRadius: 12,
+    border: "1px solid var(--border)",
+    background: "var(--slateSoft)",
+    color: "var(--text)",
+    fontWeight: 800,
+    fontSize: 13,
+    cursor: "pointer",
+  },
+  settingsStack: {
+    display: "grid",
+    gap: 14,
+  },
+  settingsDangerText: {
+    color: "var(--textSoft)",
+    fontSize: 13,
+    lineHeight: 1.5,
   },
   sectionHead: {
     display: "flex",
