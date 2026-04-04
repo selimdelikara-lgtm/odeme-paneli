@@ -2635,6 +2635,7 @@ export default function Page() {
         @media (max-width: 980px){
           .app-shell{grid-template-columns:1fr !important}
           .app-sidebar{position:static !important;height:auto !important}
+          .app-sidebar [data-sidebar-bottom="true"]{position:static !important;background:none !important;padding-top:8px !important;padding-bottom:0 !important}
           .app-content{padding:16px !important}
           .app-top-bar{flex-direction:column !important;align-items:stretch !important}
           .top-search{width:100% !important;min-width:0 !important}
@@ -2714,16 +2715,12 @@ export default function Page() {
             <button
               className="sidebar-item hover-button"
               onClick={yeniProjeOlustur}
-              style={{
-                ...styles.tab,
-                border: "1px dashed var(--blue)",
-                color: "#93C5FD",
-                fontWeight: 800,
-              }}
+              style={styles.sidebarIconOnlyBtn}
+              title="Yeni Proje"
+              aria-label="Yeni Proje"
             >
-              <span style={styles.sidebarTabInner}>
+              <span style={styles.sidebarIconOnlyInner}>
                 <Plus size={16} />
-                Yeni Proje
               </span>
             </button>
 
@@ -2766,7 +2763,7 @@ export default function Page() {
             })}
           </div>
 
-          <div style={styles.sidebarBottom}>
+          <div style={styles.sidebarBottom} data-sidebar-bottom="true">
             <button
               className="hover-button"
               onClick={() => setViewMode("settings")}
@@ -3829,10 +3826,35 @@ const styles: Record<string, CSSProperties> = {
     flexDirection: "column",
     gap: 8,
   },
+  sidebarIconOnlyBtn: {
+    width: 40,
+    height: 40,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    border: "1px dashed rgba(96,165,250,0.34)",
+    background: "rgba(255,255,255,0.03)",
+    color: "#93C5FD",
+    cursor: "pointer",
+    padding: 0,
+  },
+  sidebarIconOnlyInner: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   sidebarBottom: {
     marginTop: "auto",
     display: "grid",
     gap: 8,
+    position: "sticky",
+    bottom: 0,
+    paddingTop: 14,
+    paddingBottom: 4,
+    background:
+      "linear-gradient(180deg, rgba(11,22,38,0) 0%, rgba(11,22,38,0.92) 22%, rgba(11,22,38,1) 100%)",
+    zIndex: 2,
   },
   sidebarTabInner: {
     display: "flex",
