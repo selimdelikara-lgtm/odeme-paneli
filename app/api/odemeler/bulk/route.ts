@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit } from "../../_lib/rate-limit";
+import type { Database } from "@/lib/database.types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     return jsonError("Yetkilendirme bilgisi eksik.", 401);
   }
 
-  const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+  const authClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     global: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
     return jsonError("Geçersiz toplu işlem isteği.", 400);
   }
 
-  const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
+  const adminClient = createClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

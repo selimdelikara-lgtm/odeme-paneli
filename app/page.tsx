@@ -1,6 +1,5 @@
 "use client";
 
-import { createClient } from "@supabase/supabase-js";
 import {
   Archive,
   CheckCircle2,
@@ -42,192 +41,35 @@ import {
   useRef,
   useState,
 } from "react";
-
-type Odeme = {
-  id: number;
-  user_id?: string | null;
-  proje: string | null;
-  tutar: number | null;
-  odendi: boolean | null;
-  grup: string | null;
-  fatura_tarihi: string | null;
-  fatura_kesildi: boolean | null;
-  kdvli: boolean | null;
-  sira: number | null;
-};
-
-type ViewMode = "home" | "project" | "settings";
-type SortKey = "manual" | "proje" | "durum" | "fatura_tarihi" | "tutar";
-type SortDirection = "asc" | "desc";
-type StatusFilter = "all" | "paid" | "invoiced" | "waiting";
-type ThemeMode = "light" | "dark";
-
-type TabMenu = {
-  visible: boolean;
-  x: number;
-  y: number;
-  tabName: string;
-  mode: "menu" | "colors";
-};
-
-type DraftState = {
-  proje: string;
-  tutar: string;
-  tarih: string;
-  kdvli: boolean;
-  faturaKesildi: boolean;
-  odemeAlindi: boolean;
-};
-
-type RowMeta = {
-  createdAt: string;
-  updatedAt: string;
-};
-
-type TabMeta = {
-  color: string;
-};
-
-type StoredState<T> = T;
-type DropPosition = "before" | "after";
-type ProjectColumnKey =
-  | "select"
-  | "sira"
-  | "proje"
-  | "durum"
-  | "fatura_tarihi"
-  | "tutar"
-  | "islem";
-
-type InvoiceAttachment = {
-  id?: number;
-  name: string;
-  path: string;
-  url: string;
-  uploadedAt: string;
-};
-
-type PdfWindow = Window &
-  typeof globalThis & {
-    html2canvas?: (
-      element: HTMLElement,
-      options?: {
-        scale?: number;
-        useCORS?: boolean;
-        backgroundColor?: string | null;
-      }
-    ) => Promise<HTMLCanvasElement>;
-    jspdf?: {
-      jsPDF: new (
-        orientation: string,
-        unit: string,
-        format: string
-      ) => {
-        addImage: (
-          imageData: string,
-          format: string,
-          x: number,
-          y: number,
-          width: number,
-          height: number
-        ) => void;
-        addPage: () => void;
-        save: (filename: string) => void;
-      };
-    };
-  };
-
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  "https://mhoidirxbxqaktkhhavp.supabase.co";
-const supabaseKey =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  "sb_publishable_4M8RAgm3SzrWEMrxm8HDUw_3fRU8cMr";
-
-const DEFAULT_COLORS = [
-  "#2563EB",
-  "#0F766E",
-  "#D97706",
-  "#DC2626",
-  "#7C3AED",
-  "#0891B2",
-  "#4F46E5",
-  "#EA580C",
-  "#16A34A",
-  "#E11D48",
-  "#9333EA",
-  "#0EA5E9",
-  "#14B8A6",
-  "#84CC16",
-  "#F97316",
-  "#F59E0B",
-  "#64748B",
-  "#111827",
-  "#EC4899",
-  "#22C55E",
-  "#06B6D4",
-];
-const MAX_INVOICE_FILE_SIZE_MB = 1;
-const MAX_INVOICE_FILE_SIZE_BYTES = MAX_INVOICE_FILE_SIZE_MB * 1024 * 1024;
-const PROJECT_COLUMN_ORDER_DEFAULT: ProjectColumnKey[] = [
-  "select",
-  "sira",
-  "proje",
-  "durum",
-  "fatura_tarihi",
-  "tutar",
-  "islem",
-];
-
-const LIGHT = {
-  appBg: "#050A14",
-  sidebarBg: "#0B1626",
-  contentBg: "#F5F7FB",
-  card: "#FFFFFF",
-  border: "#E6EBF2",
-  text: "#1F2937",
-  textSoft: "#374151",
-  muted: "#6B7280",
-  white: "#FFFFFF",
-  blue: "#2563EB",
-  blueSoft: "#EFF6FF",
-  teal: "#0F766E",
-  tealSoft: "#F0FDF9",
-  amber: "#D97706",
-  amberSoft: "#FFFBEB",
-  red: "#DC2626",
-  redSoft: "#FEF2F2",
-  slateSoft: "#F8FAFC",
-  shadow: "0 4px 12px rgba(0,0,0,0.04)",
-  hero: "linear-gradient(135deg, #111827, #2563EB)",
-};
-
-const DARK = {
-  appBg: "#030712",
-  sidebarBg: "#08101D",
-  contentBg: "#0B1220",
-  card: "#111827",
-  border: "#253041",
-  text: "#E5E7EB",
-  textSoft: "#CBD5E1",
-  muted: "#94A3B8",
-  white: "#FFFFFF",
-  blue: "#3B82F6",
-  blueSoft: "#0F1E37",
-  teal: "#14B8A6",
-  tealSoft: "#0B2623",
-  amber: "#F59E0B",
-  amberSoft: "#2A1E06",
-  red: "#EF4444",
-  redSoft: "#2C1114",
-  slateSoft: "#0F172A",
-  shadow: "0 8px 24px rgba(0,0,0,0.28)",
-  hero: "linear-gradient(135deg, #0F172A, #1D4ED8)",
-};
-
-declare global {
-  var __odeme_supabase__: ReturnType<typeof createClient> | undefined;
-}
+import {
+  DARK,
+  DEFAULT_COLORS,
+  LIGHT,
+  MAX_INVOICE_FILE_SIZE_BYTES,
+  MAX_INVOICE_FILE_SIZE_MB,
+  PROJECT_COLUMN_ORDER_DEFAULT,
+  type DraftState,
+  type DropPosition,
+  type InvoiceAttachment,
+  type Odeme,
+  type PdfWindow,
+  type ProjectColumnKey,
+  type RowMeta,
+  type SortDirection,
+  type SortKey,
+  type StatusFilter,
+  type StoredState,
+  type TabMenu,
+  type TabMeta,
+  type ThemeMode,
+  type ViewMode,
+} from "./page.shared";
+import { browserSupabase as supabase } from "@/lib/supabase";
+import type {
+  FaturaEkiInsert,
+  OdemeInsert,
+  OdemeUpdate,
+} from "@/lib/database.types";
 
 const readStoredState = <T,>(key: string, fallback: T): StoredState<T> => {
   if (typeof window === "undefined") return fallback;
@@ -252,19 +94,11 @@ const readStoredTheme = (): ThemeMode => {
 const sanitizeFileName = (name: string) =>
   name.replace(/[^a-zA-Z0-9._-]/g, "-");
 
-const supabase =
-  globalThis.__odeme_supabase__ ??
-  createClient(supabaseUrl, supabaseKey);
-
-if (!globalThis.__odeme_supabase__) {
-  globalThis.__odeme_supabase__ = supabase;
-}
-
 const odemelerTable = () =>
-  supabase.from("odemeler" as never) as ReturnType<typeof supabase.from>;
+  supabase.from("odemeler");
 
 const faturaEkleriTable = () =>
-  supabase.from("fatura_ekleri" as never) as ReturnType<typeof supabase.from>;
+  supabase.from("fatura_ekleri");
 
 const tl = (v: number) =>
   new Intl.NumberFormat("tr-TR", {
@@ -1070,7 +904,7 @@ export default function Page() {
           path: nextAttachment.path,
           url: nextAttachment.url,
           uploaded_at: nextAttachment.uploadedAt,
-        } as never)
+        } satisfies FaturaEkiInsert)
         .select()
         .single();
 
@@ -1081,7 +915,7 @@ export default function Page() {
       return;
     }
 
-    nextAttachment.id = Number((insertedAttachment as Record<string, unknown>).id)
+    nextAttachment.id = Number(insertedAttachment.id);
 
     setInvoiceMap((prev) => ({
       ...prev,
@@ -1257,7 +1091,7 @@ export default function Page() {
         ? Math.max(...aktifKayitlar.map((x) => x.sira ?? 0)) + 1
         : 1;
 
-    const payload = {
+    const payload: OdemeInsert = {
       user_id: authUserId,
       proje: proje.trim(),
       tutar: tutar ? Number(tutar) : null,
@@ -1272,8 +1106,8 @@ export default function Page() {
     const now = new Date().toISOString();
 
     const res = editId
-      ? await odemelerTable().update(payload as never).eq("id", editId)
-      : await odemelerTable().insert([payload] as never);
+      ? await odemelerTable().update(payload satisfies OdemeUpdate).eq("id", editId)
+      : await odemelerTable().insert([payload]);
 
     if (res.error) {
       setMsg("Kayıt kaydedilemedi: " + res.error.message);
@@ -1305,6 +1139,7 @@ export default function Page() {
 
     const { error } = await odemelerTable().insert([
       {
+        user_id: authUserId,
         proje: `${row.proje || "Yeni Kayıt"} Kopya`,
         tutar: row.tutar,
         odendi: row.odendi,
@@ -1314,7 +1149,7 @@ export default function Page() {
         kdvli: row.kdvli,
         sira: nextSira,
       },
-    ] as never);
+    ] satisfies OdemeInsert[]);
 
     if (error) {
       setMsg("Kopyalama başarısız: " + error.message);
@@ -1334,8 +1169,9 @@ export default function Page() {
       next = { fatura_kesildi: true, odendi: true };
     }
 
+    const nextUpdate: OdemeUpdate = next;
     const { error } = await odemelerTable()
-      .update(next as never)
+      .update(nextUpdate)
       .eq("id", row.id);
 
     if (error) {
@@ -1431,9 +1267,10 @@ export default function Page() {
   }
 
   async function undoDelete() {
-    if (!lastDeleted?.length) return;
+    if (!lastDeleted?.length || !authUserId) return;
 
-    const payload = lastDeleted.map((row) => ({
+    const payload: OdemeInsert[] = lastDeleted.map((row) => ({
+      user_id: authUserId,
       proje: row.proje,
       tutar: row.tutar,
       odendi: row.odendi,
@@ -1444,7 +1281,7 @@ export default function Page() {
       sira: row.sira,
     }));
 
-    const { error } = await odemelerTable().insert(payload as never);
+    const { error } = await odemelerTable().insert(payload);
 
     if (error) {
       setMsg("Geri alma başarısız: " + error.message);
@@ -1524,7 +1361,7 @@ export default function Page() {
     const res = await Promise.all(
       rows.map((x) =>
         odemelerTable()
-          .update({ grup: yeniAd.trim() } as never)
+          .update({ grup: yeniAd.trim() } satisfies OdemeUpdate)
           .eq("id", x.id)
       )
     );
@@ -1588,7 +1425,7 @@ export default function Page() {
 
     const res = await Promise.all(
       updated.map((row, i) =>
-        odemelerTable().update({ sira: i + 1 } as never).eq("id", row.id)
+        odemelerTable().update({ sira: i + 1 } satisfies OdemeUpdate).eq("id", row.id)
       )
     );
 
