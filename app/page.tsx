@@ -1603,26 +1603,26 @@ export default function Page() {
     if (row.odendi) {
       return {
         text: "Ödeme alındı",
-        bg: "var(--tealSoft)",
-        color: "var(--teal)",
-        rowBg: theme === "dark" ? "#0B1E1A" : "#F3FBFA",
+        bg: theme === "dark" ? "rgba(45, 212, 191, 0.14)" : "#EAF8F4",
+        color: theme === "dark" ? "#71D8C9" : "#1A7F68",
+        rowBg: theme === "dark" ? "#0C1716" : "#F8FCFB",
       };
     }
 
     if (row.fatura_kesildi) {
       return {
         text: "Fatura kesildi",
-        bg: "var(--amberSoft)",
-        color: "var(--amber)",
-        rowBg: theme === "dark" ? "#221A0B" : "#FFF9EF",
+        bg: theme === "dark" ? "rgba(251, 191, 36, 0.14)" : "#FFF6E8",
+        color: theme === "dark" ? "#F0C46A" : "#B97812",
+        rowBg: theme === "dark" ? "#17130C" : "#FFFCF6",
       };
     }
 
     return {
       text: "Henüz kesilmedi",
-      bg: "var(--redSoft)",
-      color: "var(--red)",
-      rowBg: theme === "dark" ? "#221014" : "#FFF5F5",
+      bg: theme === "dark" ? "rgba(244, 114, 182, 0.14)" : "#FDEEF3",
+      color: theme === "dark" ? "#F4A4C7" : "#C25A84",
+      rowBg: theme === "dark" ? "#181017" : "#FFF9FB",
     };
   };
 
@@ -2793,14 +2793,14 @@ export default function Page() {
         <main style={styles.content} className="app-content" ref={exportRef}>
           <div style={styles.topBar} className="app-top-bar">
             <div>
-              <h1 style={{ margin: 0, fontSize: 28, color: "var(--text)" }}>
+              <h1 style={styles.pageTitle}>
                 {viewMode === "home"
                   ? "Ana Sayfa"
                   : viewMode === "settings"
                     ? "Hesap Ayarları"
                     : aktifSekme || "Proje"}
               </h1>
-              <div style={{ color: "var(--muted)", marginTop: 4, fontSize: 13 }}>
+              <div style={styles.pageSubtitle}>
                 {viewMode === "home"
                   ? "Tahsilat ve fatura takibinin genel özeti"
                   : viewMode === "settings"
@@ -3796,32 +3796,32 @@ const styles: Record<string, CSSProperties> = {
   page: {
     minHeight: "100vh",
     background: "linear-gradient(180deg, var(--appBg) 0%, var(--sidebarBg) 100%)",
-    fontFamily: 'Inter, "SF Pro Display", Arial, sans-serif',
+    fontFamily: '"Inter", "SF Pro Display", "Segoe UI", Arial, sans-serif',
     fontVariantNumeric: "tabular-nums",
   },
   shell: {
     minHeight: "100vh",
     display: "grid",
-    gridTemplateColumns: "220px 1fr",
+    gridTemplateColumns: "206px 1fr",
   },
   sidebar: {
     background: "var(--sidebarBg)",
-    padding: 18,
+    padding: 16,
     display: "flex",
     flexDirection: "column",
     gap: 14,
-    borderRight: "1px solid rgba(255,255,255,0.05)",
+    borderRight: "1px solid rgba(148,163,184,0.10)",
     position: "sticky",
     top: 0,
     height: "100vh",
   },
   sidebarTitle: {
     color: "var(--white)",
-    fontSize: 18,
-    fontWeight: 800,
+    fontSize: 17,
+    fontWeight: 750,
   },
   sidebarSub: {
-    color: "#8ea2b7",
+    color: "#93A4BA",
     fontSize: 12,
   },
   sidebarTabs: {
@@ -3849,33 +3849,48 @@ const styles: Record<string, CSSProperties> = {
   tab: {
     width: "100%",
     textAlign: "left",
-    padding: "10px 12px",
+    padding: "10px 10px 10px 14px",
     borderRadius: 10,
     border: "1px solid transparent",
     background: "transparent",
-    color: "#d7e3ef",
-    fontWeight: 700,
+    color: "#D5E0EB",
+    fontWeight: 600,
     fontSize: 13,
     cursor: "pointer",
   },
   activeTab: {
     width: "100%",
     textAlign: "left",
-    padding: "10px 12px",
+    padding: "10px 10px 10px 14px",
     borderRadius: 10,
-    border: "1px solid transparent",
-    background: "var(--blue)",
-    color: "var(--white)",
+    border: "1px solid rgba(96,165,250,0.10)",
+    borderLeft: "2px solid var(--blue)",
+    background: "rgba(255,255,255,0.03)",
+    color: "#8BB7FF",
     fontWeight: 700,
     fontSize: 13,
     cursor: "pointer",
-    boxShadow: "0 4px 12px rgba(37,99,235,0.22)",
+    boxShadow: "none",
   },
   content: {
     background: "var(--contentBg)",
     padding: 20,
     display: "grid",
     gap: 12,
+  },
+  pageTitle: {
+    margin: 0,
+    fontSize: 31,
+    fontWeight: 850,
+    color: "var(--text)",
+    letterSpacing: "-0.7px",
+  },
+  pageSubtitle: {
+    color: "var(--muted)",
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: 500,
+    letterSpacing: "-0.1px",
   },
   topBar: {
     display: "flex",
@@ -3920,8 +3935,8 @@ const styles: Record<string, CSSProperties> = {
   heroCard: {
     background: "var(--hero)",
     color: "white",
-    padding: 20,
-    borderRadius: 16,
+    padding: 16,
+    borderRadius: 15,
   },
   heroTopRow: {
     display: "flex",
@@ -3935,8 +3950,8 @@ const styles: Record<string, CSSProperties> = {
     gap: 8,
     alignItems: "center",
     marginLeft: "auto",
-    padding: 6,
-    borderRadius: 18,
+    padding: 5,
+    borderRadius: 16,
     background: "rgba(255,255,255,0.08)",
     backdropFilter: "blur(10px)",
   },
@@ -3995,15 +4010,15 @@ const styles: Record<string, CSSProperties> = {
     letterSpacing: 1,
   },
   heroValue: {
-    fontSize: 40,
+    fontSize: 34,
     fontWeight: 900,
-    letterSpacing: "-0.8px",
+    letterSpacing: "-0.7px",
     fontVariantNumeric: "tabular-nums",
   },
   heroSubRow: {
     display: "flex",
     gap: 20,
-    marginTop: 10,
+    marginTop: 8,
     flexWrap: "wrap",
     alignItems: "center",
   },
@@ -4013,7 +4028,7 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 700,
   },
   heroSubValue: {
-    fontSize: 22,
+    fontSize: 19,
     fontWeight: 800,
     letterSpacing: "-0.3px",
     fontVariantNumeric: "tabular-nums",
@@ -4033,7 +4048,7 @@ const styles: Record<string, CSSProperties> = {
     background: "var(--card)",
     border: "1px solid var(--border)",
     borderRadius: 14,
-    padding: 14,
+    padding: 15,
     boxShadow: "var(--shadow)",
   },
   statHead: {
@@ -4068,8 +4083,11 @@ const styles: Record<string, CSSProperties> = {
     background: "var(--card)",
     border: "1px solid var(--border)",
     borderRadius: 14,
-    padding: 16,
+    padding: 18,
     boxShadow: "var(--shadow)",
+    minHeight: 302,
+    display: "flex",
+    flexDirection: "column",
   },
   quickTitle: {
     fontSize: 14,

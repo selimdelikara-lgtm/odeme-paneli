@@ -163,7 +163,7 @@ export const LIGHT = {
   red: "#DC2626",
   redSoft: "#FEF2F2",
   slateSoft: "#F8FAFC",
-  shadow: "0 4px 12px rgba(0,0,0,0.04)",
+  shadow: "0 18px 42px rgba(15,23,42,0.06)",
   hero: "linear-gradient(135deg, #111827, #2563EB)",
 };
 
@@ -186,6 +186,6 @@ export const DARK = {
   red: "#EF4444",
   redSoft: "#2C1114",
   slateSoft: "#0F172A",
-  shadow: "0 8px 24px rgba(0,0,0,0.28)",
+  shadow: "0 18px 42px rgba(0,0,0,0.22)",
   hero: "linear-gradient(135deg, #0F172A, #1D4ED8)",
 };
