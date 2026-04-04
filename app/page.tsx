@@ -87,6 +87,7 @@ type StoredState<T> = T;
 type DropPosition = "before" | "after";
 
 type InvoiceAttachment = {
+  id?: number;
   name: string;
   path: string;
   url: string;
@@ -215,9 +216,6 @@ const readStoredTheme = (): ThemeMode => {
   return savedTheme === "dark" ? "dark" : "light";
 };
 
-const readStoredInvoices = () =>
-  readStoredState<Record<number, InvoiceAttachment[]>>("odeme-invoices-v1", {});
-
 const sanitizeFileName = (name: string) =>
   name.replace(/[^a-zA-Z0-9._-]/g, "-");
 
@@ -231,6 +229,9 @@ if (!globalThis.__odeme_supabase__) {
 
 const odemelerTable = () =>
   supabase.from("odemeler" as never) as ReturnType<typeof supabase.from>;
+
+const faturaEkleriTable = () =>
+  supabase.from("fatura_ekleri" as never) as ReturnType<typeof supabase.from>;
 
 const tl = (v: number) =>
   new Intl.NumberFormat("tr-TR", {
@@ -418,9 +419,7 @@ export default function Page() {
     readStoredState<string[]>("odeme-archived-tabs-v1", [])
   );
   const [showArchivedTabs, setShowArchivedTabs] = useState(false);
-  const [invoiceMap, setInvoiceMap] = useState<Record<number, InvoiceAttachment[]>>(
-    readStoredInvoices
-  );
+  const [invoiceMap, setInvoiceMap] = useState<Record<number, InvoiceAttachment[]>>({});
   const [invoiceTargetId, setInvoiceTargetId] = useState<number | null>(null);
   const [uploadingInvoiceId, setUploadingInvoiceId] = useState<number | null>(null);
 
@@ -509,10 +508,6 @@ export default function Page() {
   useEffect(() => {
     localStorage.setItem("odeme-archived-tabs-v1", JSON.stringify(archivedTabs));
   }, [archivedTabs]);
-
-  useEffect(() => {
-    localStorage.setItem("odeme-invoices-v1", JSON.stringify(invoiceMap));
-  }, [invoiceMap]);
 
   useEffect(() => {
     initialLoadRef.current = false;
@@ -634,6 +629,52 @@ export default function Page() {
 
     return () => window.clearTimeout(timer);
   }, [authUserId, yukle]);
+
+  useEffect(() => {
+    const rowIds = data.map((row) => row.id).filter((id) => id > 0);
+    let cancelled = false;
+
+    const run = async () => {
+      if (!authUserId || !rowIds.length) {
+        if (!cancelled) {
+          setInvoiceMap({});
+        }
+        return;
+      }
+
+      const { data: rows, error } = await faturaEkleriTable()
+        .select("*")
+        .eq("user_id", authUserId)
+        .in("odeme_id", rowIds)
+        .order("uploaded_at", { ascending: false });
+
+      if (cancelled || error) return;
+
+      const nextMap: Record<number, InvoiceAttachment[]> = {};
+
+      for (const item of (rows || []) as Array<Record<string, unknown>>) {
+        const rowId = Number(item.odeme_id);
+        if (!rowId) continue;
+
+        if (!nextMap[rowId]) nextMap[rowId] = [];
+        nextMap[rowId].push({
+          id: Number(item.id),
+          name: String(item.name || ""),
+          path: String(item.path || ""),
+          url: String(item.url || ""),
+          uploadedAt: String(item.uploaded_at || ""),
+        });
+      }
+
+      setInvoiceMap(nextMap);
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authUserId, data]);
 
   useEffect(() => {
     const close = () => setTabMenu((p) => ({ ...p, visible: false }));
@@ -860,6 +901,28 @@ export default function Page() {
       uploadedAt: new Date().toISOString(),
     };
 
+    const { data: insertedAttachment, error: attachmentError } =
+      await faturaEkleriTable()
+        .insert({
+          odeme_id: row.id,
+          user_id: authUserId,
+          name: nextAttachment.name,
+          path: nextAttachment.path,
+          url: nextAttachment.url,
+          uploaded_at: nextAttachment.uploadedAt,
+        } as never)
+        .select()
+        .single();
+
+    if (attachmentError || !insertedAttachment) {
+      await supabase.storage.from("faturalar").remove([path]);
+      setMsg("Fatura kaydı oluşturulamadı: " + (attachmentError?.message || "Bilinmeyen hata"));
+      setUploadingInvoiceId(null);
+      return;
+    }
+
+    nextAttachment.id = Number((insertedAttachment as Record<string, unknown>).id);
+
     setInvoiceMap((prev) => ({
       ...prev,
       [row.id]: [...(prev[row.id] || []), nextAttachment],
@@ -870,6 +933,15 @@ export default function Page() {
   };
 
   const removeInvoice = async (rowId: number, attachment: InvoiceAttachment) => {
+    const metadataDelete = attachment.id
+      ? await faturaEkleriTable().delete().eq("id", attachment.id)
+      : await faturaEkleriTable().delete().eq("path", attachment.path);
+
+    if (metadataDelete.error) {
+      setMsg("Fatura kaydı silinemedi: " + metadataDelete.error.message);
+      return;
+    }
+
     const { error } = await supabase.storage.from("faturalar").remove([attachment.path]);
 
     if (error) {
@@ -1476,7 +1548,7 @@ export default function Page() {
 
   async function authResetPassword() {
     if (!email.trim()) {
-      setMsg("?ifre s?f?rlama i?in ?nce e-posta adresini gir.");
+      setMsg("Şifre sıfırlama için önce e-posta adresini gir.");
       return;
     }
 
@@ -1486,11 +1558,11 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("?ifre s?f?rlama e-postas? g?nderilemedi: " + error.message);
+      setMsg("Şifre sıfırlama e-postası gönderilemedi: " + error.message);
       return;
     }
 
-    setMsg("?ifre s?f?rlama ba?lant?s? e-posta adresine g?nderildi.");
+    setMsg("Şifre sıfırlama bağlantısı e-posta adresine gönderildi.");
   }
 
   async function authLoginWithGoogle() {
@@ -1881,14 +1953,13 @@ export default function Page() {
                   {tl(viewMode === "home" ? tumToplam : toplam)}
                 </div>
               </div>
-
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <div style={styles.heroActionGroup}>
                 <button
                   className="no-print"
                   onClick={exportCSV}
-                  style={styles.secondaryBtn}
+                  style={styles.heroActionBtn}
                 >
-                  <span style={styles.btnInner}>
+                  <span style={styles.heroActionInner}>
                     <Download size={16} />
                     CSV
                   </span>
@@ -1897,9 +1968,9 @@ export default function Page() {
                 <button
                   className="no-print"
                   onClick={exportJSON}
-                  style={styles.secondaryBtn}
+                  style={styles.heroActionBtn}
                 >
-                  <span style={styles.btnInner}>
+                  <span style={styles.heroActionInner}>
                     <FileText size={16} />
                     JSON
                   </span>
@@ -1908,9 +1979,9 @@ export default function Page() {
                 <button
                   className="no-print"
                   onClick={() => importInputRef.current?.click()}
-                  style={styles.secondaryBtn}
+                  style={styles.heroActionBtnWide}
                 >
-                  <span style={styles.btnInner}>
+                  <span style={styles.heroActionInner}>
                     <Upload size={16} />
                     JSON Yükle
                   </span>
@@ -1919,9 +1990,9 @@ export default function Page() {
                 <button
                   className="no-print"
                   onClick={exportPDF}
-                  style={styles.primaryBtn}
+                  style={styles.heroActionBtnPrimary}
                 >
-                  <span style={styles.btnInner}>
+                  <span style={styles.heroActionInner}>
                     <FileText size={16} />
                     PDF
                   </span>
@@ -3128,6 +3199,51 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     gap: 12,
     flexWrap: "wrap",
+  },
+  heroActionGroup: {
+    display: "flex",
+    gap: 12,
+    flexWrap: "wrap",
+  },
+  heroActionInner: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    fontFamily: '"Arial Black", "Segoe UI Black", "Segoe UI", sans-serif',
+    letterSpacing: "-0.3px",
+  },
+  heroActionBtn: {
+    padding: "14px 18px",
+    borderRadius: 18,
+    border: "1px solid rgba(255,255,255,0.16)",
+    background: "rgba(255,255,255,0.96)",
+    color: "#0F172A",
+    fontWeight: 900,
+    fontSize: 15,
+    cursor: "pointer",
+    boxShadow: "0 10px 24px rgba(8, 15, 45, 0.18)",
+  },
+  heroActionBtnWide: {
+    padding: "14px 20px",
+    borderRadius: 18,
+    border: "1px solid rgba(255,255,255,0.16)",
+    background: "rgba(255,255,255,0.96)",
+    color: "#0F172A",
+    fontWeight: 900,
+    fontSize: 15,
+    cursor: "pointer",
+    boxShadow: "0 10px 24px rgba(8, 15, 45, 0.18)",
+  },
+  heroActionBtnPrimary: {
+    padding: "14px 18px",
+    borderRadius: 18,
+    border: "1px solid rgba(37,99,235,0.26)",
+    background: "linear-gradient(135deg, #2563EB, #1D4ED8)",
+    color: "#FFFFFF",
+    fontWeight: 900,
+    fontSize: 15,
+    cursor: "pointer",
+    boxShadow: "0 14px 28px rgba(29,78,216,0.34)",
   },
   heroLabel: {
     fontSize: 12,
