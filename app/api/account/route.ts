@@ -10,6 +10,9 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const jsonError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
+const getClientIp = (request: Request) =>
+  request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+
 export async function DELETE(request: Request) {
   if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
     return jsonError("Sunucu ortam değişkenleri eksik.", 500);
@@ -17,7 +20,7 @@ export async function DELETE(request: Request) {
 
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  const forwardedFor = request.headers.get("x-forwarded-for") || "unknown";
+  const clientIp = getClientIp(request);
 
   if (!token) {
     return jsonError("Yetkilendirme bilgisi eksik.", 401);
@@ -40,7 +43,7 @@ export async function DELETE(request: Request) {
     return jsonError("Kullanıcı doğrulanamadı.", 401);
   }
 
-  const limiter = rateLimit(`account-delete:${forwardedFor}:${user.id}`, 3, 10 * 60 * 1000);
+  const limiter = rateLimit(`account-delete:${clientIp}:${user.id}`, 3, 10 * 60 * 1000);
   if (!limiter.ok) {
     return jsonError("Çok fazla silme denemesi yapıldı. Biraz sonra tekrar dene.", 429);
   }

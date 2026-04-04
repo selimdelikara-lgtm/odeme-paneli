@@ -12,6 +12,9 @@ const jsonError = (message: string, status: number) =>
 
 type BulkAction = "invoice" | "paid" | "delete";
 
+const getClientIp = (request: Request) =>
+  request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+
 export async function POST(request: Request) {
   if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
     return jsonError("Sunucu ortam değişkenleri eksik.", 500);
@@ -19,7 +22,7 @@ export async function POST(request: Request) {
 
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  const forwardedFor = request.headers.get("x-forwarded-for") || "unknown";
+  const clientIp = getClientIp(request);
 
   if (!token) {
     return jsonError("Yetkilendirme bilgisi eksik.", 401);
@@ -42,7 +45,7 @@ export async function POST(request: Request) {
     return jsonError("Kullanıcı doğrulanamadı.", 401);
   }
 
-  const limiter = rateLimit(`bulk:${forwardedFor}:${user.id}`, 20, 60 * 1000);
+  const limiter = rateLimit(`bulk:${clientIp}:${user.id}`, 20, 60 * 1000);
   if (!limiter.ok) {
     return jsonError("Çok fazla toplu işlem denemesi yapıldı. Biraz sonra tekrar dene.", 429);
   }
@@ -58,6 +61,10 @@ export async function POST(request: Request) {
     return jsonError("Geçersiz toplu işlem isteği.", 400);
   }
 
+  if (ids.length > 250) {
+    return jsonError("Tek seferde en fazla 250 kayıt işlenebilir.", 400);
+  }
+
   const adminClient = createClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,
@@ -68,7 +75,7 @@ export async function POST(request: Request) {
   if (action === "delete") {
     const { data: attachments, error: attachmentsError } = await adminClient
       .from("fatura_ekleri")
-      .select("path")
+      .select("id, path")
       .eq("user_id", user.id)
       .in("odeme_id", ids);
 
@@ -76,7 +83,12 @@ export async function POST(request: Request) {
       return jsonError("Fatura ekleri alınamadı.", 500);
     }
 
-    const attachmentPaths = ((attachments || []) as Array<{ path: string | null }>)
+    const typedAttachments = ((attachments || []) as Array<{
+      id: number | null;
+      path: string | null;
+    }>);
+
+    const attachmentPaths = typedAttachments
       .map((item) => item.path || "")
       .filter(Boolean);
 
@@ -87,6 +99,22 @@ export async function POST(request: Request) {
 
       if (storageError) {
         return jsonError("Fatura dosyaları silinemedi.", 500);
+      }
+    }
+
+    const attachmentIds = typedAttachments
+      .map((item) => item.id)
+      .filter((item): item is number => typeof item === "number");
+
+    if (attachmentIds.length) {
+      const { error: metadataDeleteError } = await adminClient
+        .from("fatura_ekleri")
+        .delete()
+        .eq("user_id", user.id)
+        .in("id", attachmentIds);
+
+      if (metadataDeleteError) {
+        return jsonError("Fatura kayıtları silinemedi.", 500);
       }
     }
 
