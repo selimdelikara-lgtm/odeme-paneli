@@ -66,7 +66,10 @@ import {
   type ThemeMode,
   type ViewMode,
 } from "./page.shared";
-import { browserSupabase as supabase } from "@/lib/supabase";
+import {
+  browserSupabase as supabase,
+  setAuthStoragePreference,
+} from "@/lib/supabase";
 import type {
   FaturaEkiInsert,
   OdemeInsert,
@@ -95,6 +98,12 @@ const readStoredTheme = (): ThemeMode => {
 
 const sanitizeFileName = (name: string) =>
   name.replace(/[^a-zA-Z0-9._-]/g, "-");
+
+const isProjectColumnKey = (value: string): value is ProjectColumnKey =>
+  PROJECT_COLUMN_ORDER_DEFAULT.includes(value as ProjectColumnKey);
+
+const isHomeProjectColumnKey = (value: string): value is HomeProjectColumnKey =>
+  HOME_PROJECT_COLUMN_ORDER_DEFAULT.includes(value as HomeProjectColumnKey);
 
 const odemelerTable = () =>
   supabase.from("odemeler");
@@ -1527,11 +1536,18 @@ export default function Page() {
     event: DragEvent<HTMLTableCellElement>,
     column: ProjectColumnKey
   ) => {
-    if (!draggedColumn || draggedColumn === column) return;
+    const payload = event.dataTransfer.getData("text/plain");
+    const activeColumn =
+      draggedColumn ?? (isProjectColumnKey(payload) ? payload : null);
+
+    if (!activeColumn || activeColumn === column) return;
 
     event.preventDefault();
     const rect = event.currentTarget.getBoundingClientRect();
     const offset = event.clientX - rect.left;
+    if (draggedColumn !== activeColumn) {
+      setDraggedColumn(activeColumn);
+    }
     setDragOverColumn(column);
     setColumnDropPosition(offset < rect.width / 2 ? "before" : "after");
   };
@@ -1559,11 +1575,18 @@ export default function Page() {
     event: DragEvent<HTMLTableCellElement>,
     column: HomeProjectColumnKey
   ) => {
-    if (!draggedHomeColumn || draggedHomeColumn === column) return;
+    const payload = event.dataTransfer.getData("text/plain");
+    const activeColumn =
+      draggedHomeColumn ?? (isHomeProjectColumnKey(payload) ? payload : null);
+
+    if (!activeColumn || activeColumn === column) return;
 
     event.preventDefault();
     const rect = event.currentTarget.getBoundingClientRect();
     const offset = event.clientX - rect.left;
+    if (draggedHomeColumn !== activeColumn) {
+      setDraggedHomeColumn(activeColumn);
+    }
     setDragOverHomeColumn(column);
     setHomeColumnDropPosition(offset < rect.width / 2 ? "before" : "after");
   };
@@ -2013,6 +2036,7 @@ export default function Page() {
 
   async function authLogin() {
     if (!email.trim() || !authPassword.trim()) return;
+    setAuthStoragePreference(rememberMe);
 
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -2029,6 +2053,7 @@ export default function Page() {
 
   async function authSignUp() {
     if (!email.trim() || !authPassword.trim()) return;
+    setAuthStoragePreference(rememberMe);
 
     const { error } = await supabase.auth.signUp({
       email: email.trim(),
@@ -2068,6 +2093,7 @@ export default function Page() {
   }
 
   async function authLoginWithGoogle() {
+    setAuthStoragePreference(rememberMe);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -3073,7 +3099,11 @@ export default function Page() {
                           <th
                             key={column.key}
                             draggable
-                            onDragStart={() => setDraggedHomeColumn(column.key)}
+                            onDragStart={(e) => {
+                              e.dataTransfer.effectAllowed = "move";
+                              e.dataTransfer.setData("text/plain", column.key);
+                              setDraggedHomeColumn(column.key);
+                            }}
                             onDragEnd={() => {
                               setDraggedHomeColumn(null);
                               setDragOverHomeColumn(null);
@@ -3081,9 +3111,14 @@ export default function Page() {
                             onDragOver={(e) => handleHomeColumnDragOver(e, column.key)}
                             onDrop={(e) => {
                               e.preventDefault();
-                              if (draggedHomeColumn) {
+                              const payload = e.dataTransfer.getData("text/plain");
+                              const sourceColumn =
+                                draggedHomeColumn ??
+                                (isHomeProjectColumnKey(payload) ? payload : null);
+
+                              if (sourceColumn) {
                                 moveHomeProjectColumn(
-                                  draggedHomeColumn,
+                                  sourceColumn,
                                   column.key,
                                   homeColumnDropPosition
                                 );
@@ -3428,7 +3463,11 @@ export default function Page() {
                               draggable
                               className={column.className}
                               onClick={column.onClick}
-                              onDragStart={() => setDraggedColumn(column.key)}
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", column.key);
+                                setDraggedColumn(column.key);
+                              }}
                               onDragEnd={() => {
                                 setDraggedColumn(null);
                                 setDragOverColumn(null);
@@ -3436,9 +3475,14 @@ export default function Page() {
                               onDragOver={(e) => handleColumnDragOver(e, column.key)}
                               onDrop={(e) => {
                                 e.preventDefault();
-                                if (draggedColumn) {
+                                const payload = e.dataTransfer.getData("text/plain");
+                                const sourceColumn =
+                                  draggedColumn ??
+                                  (isProjectColumnKey(payload) ? payload : null);
+
+                                if (sourceColumn) {
                                   moveProjectColumn(
-                                    draggedColumn,
+                                    sourceColumn,
                                     column.key,
                                     columnDropPosition
                                   );
