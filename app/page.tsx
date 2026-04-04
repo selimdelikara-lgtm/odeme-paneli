@@ -424,7 +424,6 @@ export default function Page() {
   const [uploadingInvoiceId, setUploadingInvoiceId] = useState<number | null>(null);
 
   const exportRef = useRef<HTMLElement | null>(null);
-    const importInputRef = useRef<HTMLInputElement | null>(null);
   const invoiceInputRef = useRef<HTMLInputElement | null>(null);
   const initialLoadRef = useRef(false);
 
@@ -822,20 +821,30 @@ export default function Page() {
     }
   };
 
-  const exportCSV = () => {
+  const getExportRows = () => {
     const rows = viewMode === "home" ? filteredHomeRows : filteredActiveKayitlar;
-    const headers = ["Sekme", "Proje", "Durum", "Fatura Tarihi", "Tutar"];
-
-    const csvRows = rows.map((row) => [
-      row.grup || "",
-      row.proje || "",
-      row.odendi
+    return rows.map((row) => ({
+      sekme: row.grup || "",
+      proje: row.proje || "",
+      durum: row.odendi
         ? "Ödeme alındı"
         : row.fatura_kesildi
           ? "Fatura kesildi"
           : "Bekliyor",
-      row.fatura_tarihi || "",
-      Number(row.tutar || 0),
+      faturaTarihi: row.fatura_tarihi || "",
+      tutar: Number(row.tutar || 0),
+    }));
+  };
+
+  const exportExcel = () => {
+    const rows = getExportRows();
+    const headers = ["Sekme", "Proje", "Durum", "Fatura Tarihi", "Tutar"];
+    const csvRows = rows.map((row) => [
+      row.sekme,
+      row.proje,
+      row.durum,
+      row.faturaTarihi,
+      row.tutar,
     ]);
 
     const csv = [headers, ...csvRows]
@@ -847,15 +856,77 @@ export default function Page() {
       .join("\n");
 
     const blob = new Blob(["\uFEFF" + csv], {
-      type: "text/csv;charset=utf-8;",
+      type: "application/vnd.ms-excel;charset=utf-8;",
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download =
       viewMode === "home"
-        ? "odeme-paneli-genel.csv"
-        : `${aktifSekme || "proje"}.csv`;
+        ? "odeme-paneli-genel.xls"
+        : `${aktifSekme || "proje"}.xls`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportWord = () => {
+    const rows = getExportRows();
+    const title =
+      viewMode === "home"
+        ? "ÖDEDİ Mİ Genel Özet"
+        : `${aktifSekme || "Proje"} Özeti`;
+    const html = `<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <title>${title}</title>
+    <style>
+      body { font-family: Arial, sans-serif; color: #111827; padding: 32px; }
+      h1 { font-size: 24px; margin-bottom: 20px; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border: 1px solid #D1D5DB; padding: 10px 12px; text-align: left; font-size: 13px; }
+      th { background: #EFF6FF; }
+    </style>
+  </head>
+  <body>
+    <h1>${title}</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Sekme</th>
+          <th>Proje</th>
+          <th>Durum</th>
+          <th>Fatura Tarihi</th>
+          <th>Tutar</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows
+          .map(
+            (row) => `<tr>
+              <td>${row.sekme}</td>
+              <td>${row.proje}</td>
+              <td>${row.durum}</td>
+              <td>${row.faturaTarihi}</td>
+              <td>${tl(row.tutar)}</td>
+            </tr>`
+          )
+          .join("")}
+      </tbody>
+    </table>
+  </body>
+</html>`;
+
+    const blob = new Blob(["\ufeff", html], {
+      type: "application/msword;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download =
+      viewMode === "home"
+        ? "odeme-paneli-genel.doc"
+        : `${aktifSekme || "proje"}.doc`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -870,7 +941,7 @@ export default function Page() {
 
     if (file.size > MAX_INVOICE_FILE_SIZE_BYTES) {
       setMsg(
-        `Fatura yüklenemedi: Dosya boyutu en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`
+        `Fatura y?klenemedi: Dosya boyutu en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`
       );
       return;
     }
@@ -885,7 +956,7 @@ export default function Page() {
       .upload(path, file, { upsert: false });
 
     if (error) {
-      setMsg("Fatura yüklenemedi: " + error.message);
+      setMsg("Fatura y?klenemedi: " + error.message);
       setUploadingInvoiceId(null);
       return;
     }
@@ -916,19 +987,19 @@ export default function Page() {
 
     if (attachmentError || !insertedAttachment) {
       await supabase.storage.from("faturalar").remove([path]);
-      setMsg("Fatura kaydı oluşturulamadı: " + (attachmentError?.message || "Bilinmeyen hata"));
+      setMsg("Fatura kayd? olu?turulamad?: " + (attachmentError?.message || "Bilinmeyen hata"));
       setUploadingInvoiceId(null);
       return;
     }
 
-    nextAttachment.id = Number((insertedAttachment as Record<string, unknown>).id);
+    nextAttachment.id = Number((insertedAttachment as Record<string, unknown>).id)
 
     setInvoiceMap((prev) => ({
       ...prev,
       [row.id]: [...(prev[row.id] || []), nextAttachment],
     }));
 
-    setMsg("Fatura yüklendi.");
+    setMsg("Fatura y?klendi.");
     setUploadingInvoiceId(null);
   };
 
@@ -938,7 +1009,7 @@ export default function Page() {
       : await faturaEkleriTable().delete().eq("path", attachment.path);
 
     if (metadataDelete.error) {
-      setMsg("Fatura kaydı silinemedi: " + metadataDelete.error.message);
+      setMsg("Fatura kayd? silinemedi: " + metadataDelete.error.message);
       return;
     }
 
@@ -954,61 +1025,7 @@ export default function Page() {
       [rowId]: (prev[rowId] || []).filter((item) => item.path !== attachment.path),
     }));
 
-    setMsg("Fatura kaldırıldı.");
-  };
-
-  const exportJSON = () => {
-    const rows = viewMode === "home" ? filteredHomeRows : filteredActiveKayitlar;
-    const blob = new Blob([JSON.stringify(rows, null, 2)], {
-      type: "application/json;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download =
-      viewMode === "home"
-        ? "odeme-paneli-genel.json"
-        : `${aktifSekme || "proje"}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const importJSON = async (file: File) => {
-    if (!authUserId) return;
-
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-
-      if (!Array.isArray(parsed)) {
-        setMsg("Geçersiz JSON formatı.");
-        return;
-      }
-
-      const payload = parsed.map((item) => ({
-        user_id: authUserId,
-        proje: item.proje ?? null,
-        tutar: item.tutar ?? null,
-        odendi: item.odendi ?? false,
-        grup: item.grup ?? aktifSekme ?? null,
-        fatura_tarihi: item.fatura_tarihi ?? null,
-        fatura_kesildi: item.fatura_kesildi ?? false,
-        kdvli: item.kdvli ?? false,
-        sira: item.sira ?? null,
-      }));
-
-      const { error } = await odemelerTable().insert(payload as never);
-
-      if (error) {
-        setMsg("JSON yüklenemedi: " + error.message);
-        return;
-      }
-
-      setMsg("JSON başarıyla içe aktarıldı.");
-      await yukle();
-    } catch {
-      setMsg("JSON okunamadı.");
-    }
+    setMsg("Fatura kald?r?ld?.");
   };
 
   const exportPDF = async () => {
@@ -1956,61 +1973,36 @@ export default function Page() {
               <div style={styles.heroActionGroup}>
                 <button
                   className="no-print"
-                  onClick={exportCSV}
-                  style={styles.heroActionBtn}
+                  onClick={exportWord}
+                  style={styles.heroActionBtnWord}
                 >
                   <span style={styles.heroActionInner}>
-                    <Download size={16} />
-                    CSV
+                    <FileText size={15} />
+                    WORD
                   </span>
                 </button>
 
                 <button
                   className="no-print"
-                  onClick={exportJSON}
-                  style={styles.heroActionBtn}
+                  onClick={exportExcel}
+                  style={styles.heroActionBtnExcel}
                 >
                   <span style={styles.heroActionInner}>
-                    <FileText size={16} />
-                    JSON
-                  </span>
-                </button>
-
-                <button
-                  className="no-print"
-                  onClick={() => importInputRef.current?.click()}
-                  style={styles.heroActionBtnWide}
-                >
-                  <span style={styles.heroActionInner}>
-                    <Upload size={16} />
-                    JSON Yükle
+                    <Download size={15} />
+                    EXCEL
                   </span>
                 </button>
 
                 <button
                   className="no-print"
                   onClick={exportPDF}
-                  style={styles.heroActionBtnPrimary}
+                  style={styles.heroActionBtnPdf}
                 >
                   <span style={styles.heroActionInner}>
-                    <FileText size={16} />
+                    <FileText size={15} />
                     PDF
                   </span>
                 </button>
-
-                <input
-                  ref={importInputRef}
-                  type="file"
-                  accept="application/json"
-                  style={{ display: "none" }}
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      await importJSON(file);
-                    }
-                    e.currentTarget.value = "";
-                  }}
-                />
 
                 <input
                   ref={invoiceInputRef}
@@ -3202,48 +3194,60 @@ const styles: Record<string, CSSProperties> = {
   },
   heroActionGroup: {
     display: "flex",
-    gap: 12,
-    flexWrap: "wrap",
+    gap: 10,
+    alignItems: "center",
+    padding: 8,
+    borderRadius: 20,
+    background: "rgba(255,255,255,0.08)",
+    backdropFilter: "blur(10px)",
   },
   heroActionInner: {
     display: "flex",
     alignItems: "center",
-    gap: 10,
+    justifyContent: "center",
+    gap: 6,
     fontFamily: '"Arial Black", "Segoe UI Black", "Segoe UI", sans-serif',
-    letterSpacing: "-0.3px",
+    letterSpacing: "-0.15px",
+    whiteSpace: "nowrap",
   },
-  heroActionBtn: {
-    padding: "14px 18px",
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.16)",
-    background: "rgba(255,255,255,0.96)",
-    color: "#0F172A",
-    fontWeight: 900,
-    fontSize: 15,
-    cursor: "pointer",
-    boxShadow: "0 10px 24px rgba(8, 15, 45, 0.18)",
-  },
-  heroActionBtnWide: {
-    padding: "14px 20px",
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.16)",
-    background: "rgba(255,255,255,0.96)",
-    color: "#0F172A",
-    fontWeight: 900,
-    fontSize: 15,
-    cursor: "pointer",
-    boxShadow: "0 10px 24px rgba(8, 15, 45, 0.18)",
-  },
-  heroActionBtnPrimary: {
-    padding: "14px 18px",
-    borderRadius: 18,
-    border: "1px solid rgba(37,99,235,0.26)",
-    background: "linear-gradient(135deg, #2563EB, #1D4ED8)",
+  heroActionBtnWord: {
+    minWidth: 108,
+    minHeight: 42,
+    padding: "10px 12px",
+    borderRadius: 13,
+    border: "1px solid rgba(78,127,223,0.20)",
+    background: "#4E7FDF",
     color: "#FFFFFF",
     fontWeight: 900,
-    fontSize: 15,
+    fontSize: 11,
     cursor: "pointer",
-    boxShadow: "0 14px 28px rgba(29,78,216,0.34)",
+    boxShadow: "0 6px 14px rgba(34,82,182,0.18)",
+  },
+  heroActionBtnExcel: {
+    minWidth: 110,
+    minHeight: 42,
+    padding: "10px 12px",
+    borderRadius: 13,
+    border: "1px solid rgba(31,169,127,0.20)",
+    background: "linear-gradient(135deg, #34C79A, #1FA97F)",
+    color: "#FFFFFF",
+    fontWeight: 900,
+    fontSize: 11,
+    cursor: "pointer",
+    boxShadow: "0 6px 14px rgba(19,110,82,0.16)",
+  },
+  heroActionBtnPdf: {
+    minWidth: 96,
+    minHeight: 42,
+    padding: "10px 12px",
+    borderRadius: 13,
+    border: "1px solid rgba(213,83,83,0.20)",
+    background: "linear-gradient(135deg, #E66A6A, #D55353)",
+    color: "#FFFFFF",
+    fontWeight: 900,
+    fontSize: 11,
+    cursor: "pointer",
+    boxShadow: "0 6px 14px rgba(145,43,43,0.16)",
   },
   heroLabel: {
     fontSize: 12,
