@@ -3,7 +3,6 @@
 import { createClient } from "@supabase/supabase-js";
 import {
   Archive,
-  BarChart3,
   CheckCircle2,
   CheckSquare,
   CircleAlert,
@@ -2627,53 +2626,6 @@ export default function Page() {
               </div>
             </div>
           )}
-
-          {viewMode === "home" ? (
-            <div style={styles.card}>
-              <div style={styles.sectionHead}>
-                <h2 style={styles.h2}>Proje Performansı</h2>
-                <BarChart3 size={18} color={palette.muted} />
-              </div>
-
-              <div style={{ display: "grid", gap: 12 }}>
-                {homeProjectStats.map((item) => {
-                  const meta = tabMeta[item.tab] || { icon: "📁", color: palette.blue };
-
-                  return (
-                    <div key={item.tab} style={styles.projectBarRow}>
-                      <div style={styles.projectBarHead}>
-                        <div>
-                          <div style={styles.projectBarTitle}>
-                            {meta.icon} {item.tab}
-                          </div>
-                          <div style={styles.projectBarMeta}>
-                            {item.kayit} kayıt · {item.odenen} ödeme
-                          </div>
-                        </div>
-                        <div style={styles.projectBarAmount}>{tl(item.toplam)}</div>
-                      </div>
-
-                      <div style={styles.progressWrapThin}>
-                        <div
-                          style={{
-                            ...styles.progressBar,
-                            width: `${item.oran}%`,
-                            background: `linear-gradient(90deg, ${meta.color}, var(--teal))`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {homeProjectStats.length === 0 ? (
-                  <div style={{ color: "var(--muted)", fontSize: 13 }}>
-                    Filtreye uygun proje bulunamadı.
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
 
           {viewMode === "home" ? (
             <div style={styles.card}>
