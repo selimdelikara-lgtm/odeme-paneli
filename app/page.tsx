@@ -374,6 +374,7 @@ export default function Page() {
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(true);
+  const [signupMode, setSignupMode] = useState(false);
 
   const [theme, setTheme] = useState<ThemeMode>(readStoredTheme);
 
@@ -1461,6 +1462,27 @@ export default function Page() {
     setMsg("Supabase ile giriş yapıldı.");
   }
 
+  async function authSignUp() {
+    if (!email.trim() || !authPassword.trim()) return;
+
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password: authPassword,
+      options: {
+        emailRedirectTo:
+          typeof window === "undefined" ? undefined : window.location.origin,
+      },
+    });
+
+    if (error) {
+      setMsg("Hesap oluşturulamadı: " + error.message);
+      return;
+    }
+
+    setSignupMode(false);
+    setMsg("Hesap oluşturuldu. E-posta doğrulaması açıksa kutunu kontrol et.");
+  }
+
   async function authResetPassword() {
     if (!email.trim()) {
       setMsg("?ifre s?f?rlama i?in ?nce e-posta adresini gir.");
@@ -1584,7 +1606,9 @@ export default function Page() {
           </div>
 
         <div style={styles.loginCard}>
-          <div style={styles.loginCardTitle}>{"Giri\u015f Yap"}</div>
+          <div style={styles.loginCardTitle}>
+            {signupMode ? "Hesap Oluştur" : "Giriş Yap"}
+          </div>
 
           <div style={styles.loginSection}>
             <div style={styles.loginLabel}>{"E-posta"}</div>
@@ -1625,12 +1649,12 @@ export default function Page() {
             </div>
             <button
               className="hover-button"
-              onClick={() => void authLogin()}
+              onClick={() => void (signupMode ? authSignUp() : authLogin())}
               style={styles.loginPrimaryAction}
             >
               <span style={styles.btnInner}>
                 <Mail size={16} />
-                {"Giri\u015f Yap"}
+                {signupMode ? "Hesap Oluştur" : "Giriş Yap"}
               </span>
             </button>
           </div>
@@ -1646,10 +1670,29 @@ export default function Page() {
               style={styles.googleIconBtn}
             >
               <span style={styles.googleMark}>
-                <span style={{ color: "#4285F4" }}>G</span>
+              <span style={{ color: "#4285F4" }}>G</span>
               </span>
             </button>
+            <button
+              className="hover-button"
+              onClick={() => setSignupMode(true)}
+              style={styles.mailIconBtn}
+              title="Normal e-posta ile hesap oluştur"
+            >
+              <Mail size={18} />
+            </button>
           </div>
+
+          {signupMode ? (
+            <button
+              type="button"
+              className="hover-button"
+              onClick={() => setSignupMode(false)}
+              style={styles.switchAuthLink}
+            >
+              Giriş ekranına dön
+            </button>
+          ) : null}
 
           {msg ? <div style={{ ...styles.msg, marginTop: 14 }}>{msg}</div> : null}
         </div>
@@ -3899,6 +3942,29 @@ const styles: Record<string, CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+  },
+  mailIconBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 999,
+    border: "1px solid rgba(255,255,255,0.18)",
+    background: "rgba(255,255,255,0.08)",
+    color: "#FFFFFF",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  switchAuthLink: {
+    marginTop: 14,
+    border: "none",
+    background: "transparent",
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+    textDecoration: "underline",
+    alignSelf: "center",
   },
   googleMark: {
     width: 22,
