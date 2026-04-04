@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { rateLimit } from "../_lib/rate-limit";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -15,6 +16,7 @@ export async function DELETE(request: Request) {
 
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const forwardedFor = request.headers.get("x-forwarded-for") || "unknown";
 
   if (!token) {
     return jsonError("Yetkilendirme bilgisi eksik.", 401);
@@ -35,6 +37,11 @@ export async function DELETE(request: Request) {
 
   if (userError || !user) {
     return jsonError("Kullanıcı doğrulanamadı.", 401);
+  }
+
+  const limiter = rateLimit(`account-delete:${forwardedFor}:${user.id}`, 3, 10 * 60 * 1000);
+  if (!limiter.ok) {
+    return jsonError("Çok fazla silme denemesi yapıldı. Biraz sonra tekrar dene.", 429);
   }
 
   const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
@@ -83,6 +90,26 @@ export async function DELETE(request: Request) {
 
   if (odemelerDeleteError) {
     return jsonError("Ödeme kayıtları silinemedi.", 500);
+  }
+
+  const { data: avatarFiles } = await adminClient.storage
+    .from("avatars")
+    .list(`${user.id}/profile`, {
+      limit: 20,
+    });
+
+  const avatarPaths = (avatarFiles || [])
+    .map((item) => `${user.id}/profile/${item.name}`)
+    .filter(Boolean);
+
+  if (avatarPaths.length) {
+    const { error: avatarDeleteError } = await adminClient.storage
+      .from("avatars")
+      .remove(avatarPaths);
+
+    if (avatarDeleteError) {
+      return jsonError("Profil fotoğrafı silinemedi.", 500);
+    }
   }
 
   const { error: adminDeleteError } = await adminClient.auth.admin.deleteUser(user.id);

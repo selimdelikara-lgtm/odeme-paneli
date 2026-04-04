@@ -379,7 +379,8 @@ export default function Page() {
   const [authPassword, setAuthPassword] = useState("");
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authUserId, setAuthUserId] = useState<string | null>(null);
-    const [rememberMe, setRememberMe] = useState(true);
+  const [authProviders, setAuthProviders] = useState<string[]>([]);
+  const [rememberMe, setRememberMe] = useState(true);
   const [signupMode, setSignupMode] = useState(false);
 
   const [theme, setTheme] = useState<ThemeMode>(readStoredTheme);
@@ -430,6 +431,7 @@ export default function Page() {
   const [uploadingInvoiceId, setUploadingInvoiceId] = useState<number | null>(null);
   const [settingsName, setSettingsName] = useState("");
   const [settingsAvatarUrl, setSettingsAvatarUrl] = useState<string | null>(null);
+  const [settingsCurrentPassword, setSettingsCurrentPassword] = useState("");
   const [settingsPassword, setSettingsPassword] = useState("");
   const [settingsPasswordRepeat, setSettingsPasswordRepeat] = useState("");
   const [settingsBusy, setSettingsBusy] = useState(false);
@@ -441,13 +443,27 @@ export default function Page() {
 
   const palette = theme === "dark" ? DARK : LIGHT;
 
-  const syncAuthProfile = (user: { email?: string | null; id?: string | null; user_metadata?: Record<string, unknown> } | null) => {
+  const syncAuthProfile = (
+    user: {
+      email?: string | null;
+      id?: string | null;
+      user_metadata?: Record<string, unknown>;
+      app_metadata?: Record<string, unknown>;
+    } | null
+  ) => {
     const metadata = (user?.user_metadata || {}) as Record<string, unknown>;
+    const appMeta = (user?.app_metadata || {}) as Record<string, unknown>;
+    const providers = Array.isArray(appMeta.providers)
+      ? appMeta.providers.filter((item): item is string => typeof item === "string")
+      : typeof appMeta.provider === "string"
+        ? [appMeta.provider]
+        : [];
     const displayName = typeof metadata.display_name === "string" ? metadata.display_name : "";
     const avatarUrl = typeof metadata.avatar_url === "string" ? metadata.avatar_url : null;
 
     setAuthEmail(user?.email || null);
     setAuthUserId(user?.id || null);
+    setAuthProviders(providers);
     setSettingsName(displayName);
     setSettingsAvatarUrl(avatarUrl);
   };
@@ -572,8 +588,10 @@ export default function Page() {
       } else {
         setAuthEmail(null);
         setAuthUserId(null);
+        setAuthProviders([]);
         setSettingsName("");
         setSettingsAvatarUrl(null);
+        setSettingsCurrentPassword("");
         setSettingsPassword("");
         setSettingsPasswordRepeat("");
         setData([]);
@@ -1246,25 +1264,32 @@ export default function Page() {
       setLastDeleted(rows);
     }
 
-    const promises = rows.map((row) => {
-      if (type === "invoice") {
-        return odemelerTable()
-          .update({ fatura_kesildi: true, odendi: false } as never)
-          .eq("id", row.id);
-      }
-      if (type === "paid") {
-        return odemelerTable()
-          .update({ fatura_kesildi: true, odendi: true } as never)
-          .eq("id", row.id);
-      }
-      return odemelerTable().delete().eq("id", row.id);
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      setMsg("Toplu işlem için oturum doğrulanamadı.");
+      return;
+    }
+
+    const response = await fetch("/api/odemeler/bulk", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        ids: rows.map((row) => row.id),
+        action: type,
+      }),
     });
 
-    const res = await Promise.all(promises);
-    const failed = res.find((r) => r.error);
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
 
-    if (failed?.error) {
-      setMsg("Toplu işlem başarısız: " + failed.error.message);
+    if (!response.ok) {
+      setMsg(payload.error || "Toplu işlem başarısız.");
       return;
     }
 
@@ -1627,6 +1652,7 @@ export default function Page() {
     }
     setAuthEmail(null);
     setAuthUserId(null);
+    setAuthProviders([]);
   }
 
   async function uploadProfilePhoto(file: File) {
@@ -1642,7 +1668,7 @@ export default function Page() {
     const path = `${authUserId}/profile/avatar-${safeName}`;
 
     const { error } = await supabase.storage
-      .from("faturalar")
+      .from("avatars")
       .upload(path, file, {
         upsert: true,
       });
@@ -1654,7 +1680,7 @@ export default function Page() {
     }
 
     const { data: publicUrlData } = supabase.storage
-      .from("faturalar")
+      .from("avatars")
       .getPublicUrl(path);
 
     const avatarUrl = publicUrlData.publicUrl;
@@ -1750,6 +1776,25 @@ export default function Page() {
       return;
     }
 
+    if (authProviders.includes("email")) {
+      if (!authEmail || !settingsCurrentPassword.trim()) {
+        setMsg("Hesabı kapatmak için mevcut şifreni gir.");
+        setSettingsBusy(false);
+        return;
+      }
+
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password: settingsCurrentPassword.trim(),
+      });
+
+      if (verifyError) {
+        setMsg("Mevcut şifre doğrulanamadı.");
+        setSettingsBusy(false);
+        return;
+      }
+    }
+
     const response = await fetch("/api/account", {
       method: "DELETE",
       headers: {
@@ -1766,6 +1811,7 @@ export default function Page() {
     }
 
     await supabase.auth.signOut();
+    setSettingsCurrentPassword("");
     setSettingsBusy(false);
     setMsg("Hesap ve tüm veriler silindi.");
   }
@@ -2076,8 +2122,21 @@ export default function Page() {
         </div>
         <div style={styles.settingsStack}>
           <div style={styles.settingsDangerText}>
-            Bu işlem panel verilerini siler ve oturumu kapatır. Auth hesabını tamamen silmez.
+            Bu işlem hesabı, panel verilerini ve yüklenen dosyaları kalıcı olarak siler.
           </div>
+          {authProviders.includes("email") ? (
+            <div>
+              <div style={styles.settingsMetaLabel}>Mevcut Şifre</div>
+              <input
+                className="soft-input"
+                type="password"
+                value={settingsCurrentPassword}
+                onChange={(e) => setSettingsCurrentPassword(e.target.value)}
+                placeholder="Mevcut şifre"
+                style={styles.input}
+              />
+            </div>
+          ) : null}
           <button
             className="hover-button"
             onClick={() => void closeAccountData()}
