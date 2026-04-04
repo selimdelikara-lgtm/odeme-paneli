@@ -146,8 +146,8 @@ export const HOME_PROJECT_COLUMN_ORDER_DEFAULT: HomeProjectColumnKey[] = [
 
 export const LIGHT = {
   appBg: "#050A14",
-  sidebarBg: "#0B1626",
-  contentBg: "#F5F7FB",
+  sidebarBg: "#102033",
+  contentBg: "#F3F7FD",
   card: "#FFFFFF",
   border: "#E6EBF2",
   text: "#1F2937",
@@ -169,8 +169,8 @@ export const LIGHT = {
 
 export const DARK = {
   appBg: "#030712",
-  sidebarBg: "#08101D",
-  contentBg: "#0B1220",
+  sidebarBg: "#0D1728",
+  contentBg: "#0E1624",
   card: "#111827",
   border: "#253041",
   text: "#E5E7EB",

@@ -2003,7 +2003,7 @@ export default function Page() {
 
     return (
       <td key={column} style={styles.td} className="no-print">
-        <div style={styles.rowActions}>
+        <div style={styles.rowActions} className="row-actions-fade">
           <button
             className="hover-button"
             onClick={() => editAc(row)}
@@ -2629,13 +2629,17 @@ export default function Page() {
         .sidebar-item:hover{background:rgba(255,255,255,.06)}
         .panel-row{transition:transform .18s ease, box-shadow .18s ease, background-color .22s ease}
         .panel-row:hover{transform:translateY(-2px) scale(1.003);box-shadow:0 8px 18px rgba(15,23,42,.08)}
+        .panel-row .row-actions-fade{opacity:0;pointer-events:none;transition:opacity .18s ease}
+        .panel-row:hover .row-actions-fade{opacity:1;pointer-events:auto}
         .status-button{transition:all .18s ease}
         .status-button:hover{transform:scale(1.015)}
         .status-button:active{transform:scale(.985)}
         @media (max-width: 980px){
           .app-shell{grid-template-columns:1fr !important}
           .app-sidebar{position:static !important;height:auto !important}
+          .panel-row .row-actions-fade{opacity:1 !important;pointer-events:auto !important}
           .app-content{padding:16px !important}
+          .form-layout{grid-template-columns:1fr !important}
           .app-top-bar{flex-direction:column !important;align-items:stretch !important}
           .top-search{width:100% !important;min-width:0 !important}
           .hero-card{padding:16px !important}
@@ -3068,7 +3072,7 @@ export default function Page() {
               </div>
             </div>
           ) : (
-            <div style={styles.quickGrid} className="quick-grid">
+<div style={styles.quickGrid} className="quick-grid">
               <div style={styles.quickCard}>
                 <div style={styles.quickTitle}>Sekme Özeti</div>
                 <div style={styles.quickBig}>{tl(toplam)}</div>
@@ -3098,26 +3102,51 @@ export default function Page() {
                   <span>Kalan</span>
                   <strong>{tl(kalan)}</strong>
                 </div>
+
+                <div style={styles.quickSummaryGrid}>
+                  <div style={styles.quickSummaryItem}>
+                    <div style={styles.quickSummaryLabel}>Tahsilat</div>
+                    <div style={styles.quickSummaryValue}>%{tahsilatYuzdesiAktif}</div>
+                  </div>
+                  <div style={styles.quickSummaryItem}>
+                    <div style={styles.quickSummaryLabel}>Ödenen</div>
+                    <div style={styles.quickSummaryValue}>{tl(odenen)}</div>
+                  </div>
+                </div>
               </div>
 
               <div style={styles.quickCard}>
                 <div style={styles.quickTitle}>Hızlı Bilgi</div>
-                <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
-                  <div style={styles.quickFooterRow}>
-                    <span>Ödeme Alınan</span>
-                    <strong>{odemesiAlinanAdet}</strong>
+                <div style={styles.iconStatGrid}>
+                  <div style={styles.iconStatBox}>
+                    <div style={styles.iconStatIcon}>
+                      <CheckCircle2 size={18} color={palette.teal} />
+                    </div>
+                    <div style={styles.iconStatNumber}>{odemesiAlinanAdet}</div>
+                    <div style={styles.iconStatLabel}>Ödeme</div>
                   </div>
-                  <div style={styles.quickFooterRow}>
-                    <span>Fatura Kesilen</span>
-                    <strong>{faturasiKesilenAdet}</strong>
+                  <div style={styles.iconStatBox}>
+                    <div style={styles.iconStatIcon}>
+                      <Receipt size={18} color={palette.amber} />
+                    </div>
+                    <div style={styles.iconStatNumber}>{faturasiKesilenAdet}</div>
+                    <div style={styles.iconStatLabel}>Fatura</div>
                   </div>
-                  <div style={styles.quickFooterRow}>
-                    <span>Bekleyen</span>
-                    <strong>{filteredActiveKayitlar.filter((x) => !x.odendi).length}</strong>
+                  <div style={styles.iconStatBox}>
+                    <div style={styles.iconStatIcon}>
+                      <Clock3 size={18} color={palette.red} />
+                    </div>
+                    <div style={styles.iconStatNumber}>
+                      {filteredActiveKayitlar.filter((x) => !x.odendi).length}
+                    </div>
+                    <div style={styles.iconStatLabel}>Bekleyen</div>
                   </div>
-                  <div style={styles.quickFooterRow}>
-                    <span>Seçili Kayıt</span>
-                    <strong>{selectedVisibleIds.length}</strong>
+                  <div style={styles.iconStatBox}>
+                    <div style={styles.iconStatIcon}>
+                      <CheckSquare size={18} color={palette.blue} />
+                    </div>
+                    <div style={styles.iconStatNumber}>{selectedVisibleIds.length}</div>
+                    <div style={styles.iconStatLabel}>Seçili</div>
                   </div>
                 </div>
               </div>
@@ -3266,108 +3295,120 @@ export default function Page() {
                   </div>
                 </div>
 
-                <div style={styles.formGrid}>
-                  <input
-                    className="soft-input"
-                    placeholder="PROJE"
-                    value={proje}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setProje(value);
-                      updateDraftField({ proje: value });
-                    }}
-                    style={styles.input}
-                  />
+<div style={styles.formLayout} className="form-layout">
+                  <div style={styles.formSection}>
+                    <div style={styles.formSectionTitle}>Genel Bilgiler</div>
+                    <div style={styles.formGrid}>
+                      <input
+                        className="soft-input"
+                        placeholder="PROJE"
+                        value={proje}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setProje(value);
+                          updateDraftField({ proje: value });
+                        }}
+                        style={styles.input}
+                      />
 
-                  <input
-                    className="soft-input"
-                    placeholder="Tutar"
-                    value={tutar}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setTutar(value);
-                      updateDraftField({ tutar: value });
-                    }}
-                    style={styles.input}
-                  />
+                      <input
+                        className="soft-input"
+                        placeholder="Tutar"
+                        value={tutar}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setTutar(value);
+                          updateDraftField({ tutar: value });
+                        }}
+                        style={styles.input}
+                      />
 
-                  <select
-                    className="soft-input"
-                    value={kdvli ? "kdvli" : "kdvsiz"}
-                    onChange={(e) => {
-                      const value = e.target.value === "kdvli";
-                      setKdvli(value);
-                      updateDraftField({ kdvli: value });
-                    }}
-                    style={styles.input}
-                  >
-                    <option value="kdvsiz">KDV’siz</option>
-                    <option value="kdvli">+ %20 KDV</option>
-                  </select>
+                      <select
+                        className="soft-input"
+                        value={kdvli ? "kdvli" : "kdvsiz"}
+                        onChange={(e) => {
+                          const value = e.target.value === "kdvli";
+                          setKdvli(value);
+                          updateDraftField({ kdvli: value });
+                        }}
+                        style={styles.input}
+                      >
+                        <option value="kdvsiz">KDV’siz</option>
+                        <option value="kdvli">+ %20 KDV</option>
+                      </select>
 
-                  <input
-                    className="soft-input"
-                    type="date"
-                    value={tarih}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setTarih(value);
-                      updateDraftField({ tarih: value });
-                    }}
-                    style={styles.input}
-                  />
+                      <input
+                        className="soft-input"
+                        type="date"
+                        value={tarih}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setTarih(value);
+                          updateDraftField({ tarih: value });
+                        }}
+                        style={styles.input}
+                      />
+                    </div>
+                  </div>
 
-                  <label style={styles.check}>
-                    <input
-                      type="checkbox"
-                      checked={faturaKesildi}
-                      onChange={(e) => {
-                        const value = e.target.checked;
-                        setFaturaKesildi(value);
-                        updateDraftField({ faturaKesildi: value });
-                      }}
-                    />
-                    Fatura Kesildi
-                  </label>
+                  <div style={styles.formSection}>
+                    <div style={styles.formSectionTitle}>Durum ve İşlem</div>
+                    <div style={styles.formChecks}>
+                      <label style={styles.check}>
+                        <input
+                          type="checkbox"
+                          checked={faturaKesildi}
+                          onChange={(e) => {
+                            const value = e.target.checked;
+                            setFaturaKesildi(value);
+                            updateDraftField({ faturaKesildi: value });
+                          }}
+                        />
+                        Fatura Kesildi
+                      </label>
 
-                  <label style={styles.check}>
-                    <input
-                      type="checkbox"
-                      checked={odemeAlindi}
-                      onChange={(e) => {
-                        const value = e.target.checked;
-                        const nextFaturaKesildi = value ? true : faturaKesildi;
-                        setOdemeAlindi(value);
-                        setFaturaKesildi(nextFaturaKesildi);
-                        updateDraftField({
-                          odemeAlindi: value,
-                          faturaKesildi: nextFaturaKesildi,
-                        });
-                      }}
-                    />
-                    Ödeme Alındı
-                  </label>
+                      <label style={styles.check}>
+                        <input
+                          type="checkbox"
+                          checked={odemeAlindi}
+                          onChange={(e) => {
+                            const value = e.target.checked;
+                            const nextFaturaKesildi = value ? true : faturaKesildi;
+                            setOdemeAlindi(value);
+                            setFaturaKesildi(nextFaturaKesildi);
+                            updateDraftField({
+                              odemeAlindi: value,
+                              faturaKesildi: nextFaturaKesildi,
+                            });
+                          }}
+                        />
+                        Ödeme Alındı
+                      </label>
+                    </div>
 
-                  <button
-                    className="hover-button"
-                    onClick={kaydet}
-                    style={styles.primaryBtn}
-                  >
-                    <span style={styles.btnInner}>
-                      <Plus size={16} />
-                      {editId ? "Güncelle" : "Kaydet"}
-                    </span>
-                  </button>
+                    <div style={styles.formActions}>
+                      <button
+                        className="hover-button"
+                        onClick={kaydet}
+                        style={styles.primaryBtn}
+                      >
+                        <span style={styles.btnInner}>
+                          <Plus size={16} />
+                          {editId ? "Güncelle" : "Kaydet"}
+                        </span>
+                      </button>
 
-                  {editId ? (
-                    <button
-                      className="hover-button"
-                      onClick={temizle}
-                      style={styles.secondaryBtn}
-                    >
-                      İptal
-                    </button>
-                  ) : null}
+                      {editId ? (
+                        <button
+                          className="hover-button"
+                          onClick={temizle}
+                          style={styles.secondaryBtn}
+                        >
+                          İptal
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -4098,7 +4139,7 @@ const styles: Record<string, CSSProperties> = {
   quickCard: {
     background: "var(--card)",
     border: "1px solid var(--border)",
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 18,
     boxShadow: "var(--shadow)",
     minHeight: 302,
@@ -4152,6 +4193,33 @@ const styles: Record<string, CSSProperties> = {
     color: "var(--text)",
     marginTop: 8,
   },
+  quickSummaryGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 10,
+    marginTop: "auto",
+    paddingTop: 16,
+  },
+  quickSummaryItem: {
+    border: "1px solid var(--border)",
+    borderRadius: 14,
+    background: "var(--slateSoft)",
+    padding: "12px 14px",
+  },
+  quickSummaryLabel: {
+    fontSize: 11,
+    color: "var(--muted)",
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  quickSummaryValue: {
+    marginTop: 6,
+    fontSize: 16,
+    fontWeight: 800,
+    color: "var(--text)",
+    lineHeight: 1.2,
+  },
   iconStatGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -4187,8 +4255,8 @@ const styles: Record<string, CSSProperties> = {
   card: {
     background: "var(--card)",
     border: "1px solid var(--border)",
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 16,
+    padding: 16,
     boxShadow: "var(--shadow)",
   },
   settingsGrid: {
@@ -4311,15 +4379,47 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 16,
     color: "var(--text)",
   },
+  formLayout: {
+    display: "grid",
+    gridTemplateColumns: "1.5fr 1fr",
+    gap: 14,
+    alignItems: "start",
+  },
+  formSection: {
+    display: "grid",
+    gap: 12,
+    padding: 14,
+    borderRadius: 14,
+    background: "var(--slateSoft)",
+    border: "1px solid var(--border)",
+  },
+  formSectionTitle: {
+    fontSize: 12,
+    fontWeight: 800,
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+    color: "var(--muted)",
+  },
   formGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-    gap: 8,
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 10,
+  },
+  formChecks: {
+    display: "grid",
+    gap: 10,
+  },
+  formActions: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+    alignItems: "center",
+    marginTop: 4,
   },
   input: {
     width: "100%",
-    padding: "10px 12px",
-    borderRadius: 10,
+    padding: "11px 12px",
+    borderRadius: 12,
     border: "1px solid var(--border)",
     background: "var(--card)",
     color: "var(--text)",
@@ -4516,7 +4616,7 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 800,
   },
   td: {
-    padding: "12px 12px",
+    padding: "16px 12px",
     color: "var(--text)",
     borderBottom: "1px solid var(--border)",
     verticalAlign: "middle",
@@ -4536,11 +4636,12 @@ const styles: Record<string, CSSProperties> = {
     gap: 8,
     alignItems: "center",
     flexWrap: "wrap",
+    justifyContent: "flex-end",
   },
   iconActionBtn: {
     width: 32,
     height: 32,
-    borderRadius: 10,
+    borderRadius: 12,
     border: "1px solid var(--border)",
     background: "var(--card)",
     color: "var(--text)",
@@ -4552,7 +4653,7 @@ const styles: Record<string, CSSProperties> = {
   iconDeleteBtn: {
     width: 32,
     height: 32,
-    borderRadius: 10,
+    borderRadius: 12,
     border: "1px solid var(--red)",
     background: "var(--redSoft)",
     color: "var(--red)",
