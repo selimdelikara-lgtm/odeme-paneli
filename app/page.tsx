@@ -2872,9 +2872,11 @@ export default function Page() {
           <div style={styles.heroCard} className="hero-card">
             <div style={styles.heroTopRow}>
               <div>
-                <div style={styles.heroLabel}>TOPLAM</div>
+                <div style={styles.heroLabel}>
+                  {viewMode === "home" ? "TOPLAM" : "GENEL TOPLAM"}
+                </div>
                 <div style={styles.heroValue} className="hero-value">
-                  {tl(viewMode === "home" ? tumToplam : toplam)}
+                  {tl(tumToplam)}
                 </div>
               </div>
               <div style={styles.heroActionGroup} className="hero-actions">
@@ -2939,7 +2941,7 @@ export default function Page() {
               <div>
                 <div style={styles.heroSubTitle}>ÖDENEN</div>
                 <div style={styles.heroSubValue}>
-                  {tl(viewMode === "home" ? tumOdenenTutar : odenen)}
+                  {tl(tumOdenenTutar)}
                 </div>
               </div>
 
@@ -2948,7 +2950,7 @@ export default function Page() {
               <div>
                 <div style={styles.heroSubTitle}>KALAN</div>
                 <div style={styles.heroSubValue}>
-                  {tl(viewMode === "home" ? tumKalanTutar : kalan)}
+                  {tl(tumKalanTutar)}
                 </div>
               </div>
             </div>
