@@ -1568,27 +1568,14 @@ export default function Page() {
           <div style={styles.loginOrbTwo} />
           <div style={styles.loginOrbThree} />
 
-          <div style={styles.badge}>?DED? M?</div>
-          <div style={styles.loginBrand}>?DED? M?</div>
-          <h1 style={styles.loginHeadline}>Tahsilat?n? tek panelden y?net.</h1>
-          <p style={styles.loginCopy}>Parac?klar geldi mi acep?</p>
-
-          <div style={styles.loginStatRow}>
-            <div style={styles.loginStatCard}>
-              <div style={styles.loginStatLabel}>Takip</div>
-              <div style={styles.loginStatValue}>Fatura + ?deme</div>
-            </div>
-            <div style={styles.loginStatCard}>
-              <div style={styles.loginStatLabel}>Ak??</div>
-              <div style={styles.loginStatValue}>Tek ekran</div>
-            </div>
-          </div>
+          <div style={styles.loginBrand}>{"\u00d6DEND\u0130 M\u0130?"}</div>
+          <h1 style={styles.loginHeadline}>{"Parac\u0131klar Geldi Mi Acep..."}</h1>
         </div>
 
         <div style={styles.loginCard}>
-          <div style={styles.loginCardTitle}>Hesab?na giri? yap</div>
+          <div style={styles.loginCardTitle}>{"Hesab\u0131na giri\u015f yap"}</div>
           <div style={styles.loginCardSub}>
-            Google veya e-posta/?ifre ile devam et.
+            {"Google veya e-posta/\u015fifre ile devam et."}
           </div>
 
           <button
@@ -1608,7 +1595,9 @@ export default function Page() {
 
           <div style={styles.loginSection}>
             <div style={styles.loginLabel}>
-              {authMode === "login" ? "E-posta ile giri?" : "Yeni hesap"}
+              {authMode === "login"
+                ? "E-posta ile giri\u015f"
+                : "Yeni hesap"}
             </div>
             <input
               className="soft-input"
@@ -1621,7 +1610,7 @@ export default function Page() {
             <input
               className="soft-input"
               type="password"
-              placeholder="?ifre"
+              placeholder={"\u015eifre"}
               value={authPassword}
               onChange={(e) => setAuthPassword(e.target.value)}
               style={styles.loginInput}
@@ -1633,7 +1622,9 @@ export default function Page() {
             >
               <span style={styles.btnInner}>
                 <Mail size={16} />
-                {authMode === "login" ? "Giri? Yap" : "Hesap Olu?tur"}
+                {authMode === "login"
+                  ? "Giri\u015f Yap"
+                  : "Hesap Olu\u015ftur"}
               </span>
             </button>
             <button
@@ -1641,7 +1632,9 @@ export default function Page() {
               onClick={() => setAuthMode((prev) => (prev === "login" ? "signup" : "login"))}
               style={styles.loginGhostAction}
             >
-              {authMode === "login" ? "Yeni hesap a?" : "Mevcut hesaba gir"}
+              {authMode === "login"
+                ? "Yeni hesap a\u00e7"
+                : "Mevcut hesaba gir"}
             </button>
           </div>
 
@@ -3733,18 +3726,22 @@ const styles: Record<string, CSSProperties> = {
   loginBrand: {
     position: "relative",
     color: "var(--white)",
-    fontSize: 30,
+    fontSize: 72,
     fontWeight: 900,
-    letterSpacing: "-0.8px",
+    letterSpacing: "-2px",
+    lineHeight: 0.98,
+    fontFamily: '"Arial Black", "Segoe UI Black", "Segoe UI", sans-serif',
+    textShadow: "4px 4px 0 rgba(111, 141, 255, 0.35)",
   },
   loginHeadline: {
     position: "relative",
     margin: 0,
-    color: "var(--white)",
-    fontSize: 44,
-    lineHeight: 1.05,
-    maxWidth: 360,
-    letterSpacing: "-1.3px",
+    color: "rgba(255,255,255,0.88)",
+    fontSize: 28,
+    lineHeight: 1.2,
+    maxWidth: 420,
+    letterSpacing: "-0.6px",
+    fontWeight: 700,
   },
   loginCopy: {
     position: "relative",
