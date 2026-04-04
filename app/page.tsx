@@ -966,7 +966,7 @@ export default function Page() {
 
     if (file.size > MAX_INVOICE_FILE_SIZE_BYTES) {
       setMsg(
-        `Fatura y?klenemedi: Dosya boyutu en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`
+        `Fatura yüklenemedi: Dosya boyutu en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`
       );
       return;
     }
@@ -981,7 +981,7 @@ export default function Page() {
       .upload(path, file, { upsert: false });
 
     if (error) {
-      setMsg("Fatura y?klenemedi: " + error.message);
+      setMsg("Fatura yüklenemedi: " + error.message);
       setUploadingInvoiceId(null);
       return;
     }
@@ -1012,7 +1012,7 @@ export default function Page() {
 
     if (attachmentError || !insertedAttachment) {
       await supabase.storage.from("faturalar").remove([path]);
-      setMsg("Fatura kayd? olu?turulamad?: " + (attachmentError?.message || "Bilinmeyen hata"));
+      setMsg("Fatura kaydı oluşturulamadı: " + (attachmentError?.message || "Bilinmeyen hata"));
       setUploadingInvoiceId(null);
       return;
     }
@@ -1024,7 +1024,7 @@ export default function Page() {
       [row.id]: [...(prev[row.id] || []), nextAttachment],
     }));
 
-    setMsg("Fatura y?klendi.");
+    setMsg("Fatura yüklendi.");
     setUploadingInvoiceId(null);
   };
 
@@ -1034,7 +1034,7 @@ export default function Page() {
       : await faturaEkleriTable().delete().eq("path", attachment.path);
 
     if (metadataDelete.error) {
-      setMsg("Fatura kayd? silinemedi: " + metadataDelete.error.message);
+      setMsg("Fatura kaydı silinemedi: " + metadataDelete.error.message);
       return;
     }
 
@@ -1050,7 +1050,7 @@ export default function Page() {
       [rowId]: (prev[rowId] || []).filter((item) => item.path !== attachment.path),
     }));
 
-    setMsg("Fatura kald?r?ld?.");
+    setMsg("Fatura kaldırıldı.");
   };
 
   const exportPDF = async () => {
@@ -1733,40 +1733,41 @@ export default function Page() {
     if (!authUserId) return;
 
     const confirmed = window.confirm(
-      "Bu işlem panel verilerini siler ve oturumu kapatır. Devam edilsin mi?"
+      "Bu işlem hesabı, panel verilerini ve yüklenen dosyaları kalıcı olarak siler. Devam edilsin mi?"
     );
     if (!confirmed) return;
 
     setSettingsBusy(true);
 
-    const attachmentsResult = await faturaEkleriTable().select("path").eq("user_id", authUserId);
-    const attachmentPaths = ((attachmentsResult.data || []) as Array<Record<string, unknown>>)
-      .map((item) => String(item.path || ""))
-      .filter(Boolean);
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    if (attachmentPaths.length) {
-      await supabase.storage.from("faturalar").remove(attachmentPaths);
-    }
-
-    const deleteAttachments = await faturaEkleriTable().delete().eq("user_id", authUserId);
-    if (deleteAttachments.error) {
-      setMsg("Fatura ekleri silinemedi: " + deleteAttachments.error.message);
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      setMsg("Hesap silme için oturum doğrulanamadı.");
       setSettingsBusy(false);
       return;
     }
 
-    const deleteRows = await odemelerTable().delete().eq("user_id", authUserId);
-    if (deleteRows.error) {
-      setMsg("Kayıtlar silinemedi: " + deleteRows.error.message);
+    const response = await fetch("/api/account", {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+    if (!response.ok) {
+      setMsg(payload.error || "Hesap silinemedi.");
       setSettingsBusy(false);
       return;
     }
 
     await supabase.auth.signOut();
     setSettingsBusy(false);
-    setMsg(
-      "Panel verileri silindi ve çıkış yapıldı. Auth hesabını tamamen kapatmak için yönetici işlemi gerekir."
-    );
+    setMsg("Hesap ve tüm veriler silindi.");
   }
 
   function yeniProjeOlustur() {
