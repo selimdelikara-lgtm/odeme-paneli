@@ -1651,7 +1651,9 @@ export default function Page() {
           </div>
 
           <div style={styles.loginDividerText}>
-            <span>{"Google ile devam et"}</span>
+            <span style={styles.loginDividerTextLine} />
+            <span>{"Veya hesap oluştur"}</span>
+            <span style={styles.loginDividerTextLine} />
           </div>
 
           <div style={styles.loginSocialRow}>
@@ -3844,6 +3846,12 @@ const styles: Record<string, CSSProperties> = {
     color: "rgba(255,255,255,0.68)",
     fontSize: 12,
     fontWeight: 700,
+    position: "relative",
+  },
+  loginDividerTextLine: {
+    flex: 1,
+    height: 1,
+    background: "rgba(255,255,255,0.18)",
   },
   loginSocialRow: {
     display: "flex",
