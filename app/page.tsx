@@ -45,11 +45,13 @@ import {
   DARK,
   DEFAULT_COLORS,
   LIGHT,
+  HOME_PROJECT_COLUMN_ORDER_DEFAULT,
   MAX_INVOICE_FILE_SIZE_BYTES,
   MAX_INVOICE_FILE_SIZE_MB,
   PROJECT_COLUMN_ORDER_DEFAULT,
   type DraftState,
   type DropPosition,
+  type HomeProjectColumnKey,
   type InvoiceAttachment,
   type Odeme,
   type PdfWindow,
@@ -268,6 +270,9 @@ export default function Page() {
   const [draggedColumn, setDraggedColumn] = useState<ProjectColumnKey | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<ProjectColumnKey | null>(null);
   const [columnDropPosition, setColumnDropPosition] = useState<DropPosition>("before");
+  const [draggedHomeColumn, setDraggedHomeColumn] = useState<HomeProjectColumnKey | null>(null);
+  const [dragOverHomeColumn, setDragOverHomeColumn] = useState<HomeProjectColumnKey | null>(null);
+  const [homeColumnDropPosition, setHomeColumnDropPosition] = useState<DropPosition>("before");
   const [sortKey, setSortKey] = useState<SortKey>("manual");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
@@ -299,6 +304,15 @@ export default function Page() {
     return PROJECT_COLUMN_ORDER_DEFAULT.every((key) => stored.includes(key))
       ? stored
       : PROJECT_COLUMN_ORDER_DEFAULT;
+  });
+  const [homeProjectColumnOrder, setHomeProjectColumnOrder] = useState<HomeProjectColumnKey[]>(() => {
+    const stored = readStoredState<HomeProjectColumnKey[]>(
+      "odeme-home-project-columns-v1",
+      HOME_PROJECT_COLUMN_ORDER_DEFAULT
+    );
+    return HOME_PROJECT_COLUMN_ORDER_DEFAULT.every((key) => stored.includes(key))
+      ? stored
+      : HOME_PROJECT_COLUMN_ORDER_DEFAULT;
   });
   const [invoiceMap, setInvoiceMap] = useState<Record<number, InvoiceAttachment[]>>({});
   const [invoiceTargetId, setInvoiceTargetId] = useState<number | null>(null);
@@ -427,6 +441,13 @@ export default function Page() {
       JSON.stringify(projectColumnOrder)
     );
   }, [projectColumnOrder]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "odeme-home-project-columns-v1",
+      JSON.stringify(homeProjectColumnOrder)
+    );
+  }, [homeProjectColumnOrder]);
 
   useEffect(() => {
     initialLoadRef.current = false;
@@ -1515,6 +1536,38 @@ export default function Page() {
     setColumnDropPosition(offset < rect.width / 2 ? "before" : "after");
   };
 
+  const moveHomeProjectColumn = (
+    source: HomeProjectColumnKey,
+    target: HomeProjectColumnKey,
+    position: DropPosition
+  ) => {
+    if (source === target) return;
+
+    setHomeProjectColumnOrder((prev) => {
+      const withoutSource = prev.filter((key) => key !== source);
+      const targetIndex = withoutSource.indexOf(target);
+      if (targetIndex === -1) return prev;
+
+      const insertAt = position === "before" ? targetIndex : targetIndex + 1;
+      const next = [...withoutSource];
+      next.splice(insertAt, 0, source);
+      return next;
+    });
+  };
+
+  const handleHomeColumnDragOver = (
+    event: DragEvent<HTMLTableCellElement>,
+    column: HomeProjectColumnKey
+  ) => {
+    if (!draggedHomeColumn || draggedHomeColumn === column) return;
+
+    event.preventDefault();
+    const rect = event.currentTarget.getBoundingClientRect();
+    const offset = event.clientX - rect.left;
+    setDragOverHomeColumn(column);
+    setHomeColumnDropPosition(offset < rect.width / 2 ? "before" : "after");
+  };
+
   const durumGorunum = (row: Odeme) => {
     if (row.odendi) {
       return {
@@ -1633,6 +1686,46 @@ export default function Page() {
       label: "İŞLEM",
       className: "no-print",
       style: { ...styles.th, width: 160 },
+    };
+  });
+
+  const homeProjectColumns = homeProjectColumnOrder.map((key) => {
+    if (key === "proje") {
+      return {
+        key,
+        label: "PROJE",
+        style: { ...styles.th, background: "var(--blueSoft)" },
+      };
+    }
+
+    if (key === "kayit") {
+      return {
+        key,
+        label: "KAYIT",
+        style: { ...styles.th, background: "var(--tealSoft)" },
+      };
+    }
+
+    if (key === "odeme") {
+      return {
+        key,
+        label: "ÖDEME",
+        style: { ...styles.th, background: "var(--amberSoft)" },
+      };
+    }
+
+    if (key === "fatura") {
+      return {
+        key,
+        label: "FATURA",
+        style: { ...styles.th, background: "var(--redSoft)" },
+      };
+    }
+
+    return {
+      key,
+      label: "TOPLAM",
+      style: { ...styles.th, background: "var(--slateSoft)" },
     };
   });
 
@@ -2960,7 +3053,7 @@ export default function Page() {
           {viewMode === "home" ? (
             <div style={styles.card}>
               <div style={styles.sectionHead}>
-                <h2 style={styles.h2}>Genel Proje Özeti</h2>
+                <h2 style={{ ...styles.h2, fontWeight: 900 }}>Genel Proje Özeti</h2>
                 <div style={{ color: "var(--muted)", fontSize: 13 }}>
                   {homeProjectStats.length} proje
                 </div>
@@ -2970,29 +3063,105 @@ export default function Page() {
                 <table style={styles.table}>
                   <thead>
                     <tr>
-                      <th style={{ ...styles.th, background: "var(--blueSoft)" }}>PROJE</th>
-                      <th style={{ ...styles.th, background: "var(--tealSoft)" }}>KAYIT</th>
-                      <th style={{ ...styles.th, background: "var(--amberSoft)" }}>ÖDEME</th>
-                      <th style={{ ...styles.th, background: "var(--redSoft)" }}>FATURA</th>
-                      <th style={{ ...styles.th, background: "var(--slateSoft)" }}>TOPLAM</th>
+                      {homeProjectColumns.map((column) => {
+                        const isColumnTarget =
+                          dragOverHomeColumn === column.key &&
+                          draggedHomeColumn !== null &&
+                          draggedHomeColumn !== column.key;
+
+                        return (
+                          <th
+                            key={column.key}
+                            draggable
+                            onDragStart={() => setDraggedHomeColumn(column.key)}
+                            onDragEnd={() => {
+                              setDraggedHomeColumn(null);
+                              setDragOverHomeColumn(null);
+                            }}
+                            onDragOver={(e) => handleHomeColumnDragOver(e, column.key)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              if (draggedHomeColumn) {
+                                moveHomeProjectColumn(
+                                  draggedHomeColumn,
+                                  column.key,
+                                  homeColumnDropPosition
+                                );
+                              }
+                              setDraggedHomeColumn(null);
+                              setDragOverHomeColumn(null);
+                            }}
+                            style={{
+                              ...column.style,
+                              cursor: "grab",
+                              borderLeft:
+                                isColumnTarget && homeColumnDropPosition === "before"
+                                  ? "4px solid var(--blue)"
+                                  : undefined,
+                              borderRight:
+                                isColumnTarget && homeColumnDropPosition === "after"
+                                  ? "4px solid var(--blue)"
+                                  : undefined,
+                              opacity:
+                                draggedHomeColumn === column.key ? 0.55 : column.style.opacity,
+                            }}
+                            title="Sürükleyerek yer değiştir"
+                          >
+                            {column.label}
+                          </th>
+                        );
+                      })}
                     </tr>
                   </thead>
 
                   <tbody>
-                      {homeProjectStats.map((item) => {
+                    {homeProjectStats.map((item) => {
                       const meta = tabMeta[item.tab] || { color: palette.blue };
 
                       return (
                         <tr key={item.tab}>
-                          <td style={{ ...styles.td, borderLeft: `5px solid ${meta.color}` }}>
-                            {item.tab}
-                          </td>
-                          <td style={styles.td}>{item.kayit}</td>
-                          <td style={styles.td}>{item.odenen}</td>
-                          <td style={styles.td}>{item.fatura}</td>
-                          <td style={{ ...styles.td, fontWeight: 700 }}>
-                            {tl(item.toplam)}
-                          </td>
+                          {homeProjectColumnOrder.map((column) => {
+                            if (column === "proje") {
+                              return (
+                                <td
+                                  key={column}
+                                  style={{ ...styles.td, borderLeft: `5px solid ${meta.color}` }}
+                                >
+                                  {item.tab}
+                                </td>
+                              );
+                            }
+
+                            if (column === "kayit") {
+                              return (
+                                <td key={column} style={styles.td}>
+                                  {item.kayit}
+                                </td>
+                              );
+                            }
+
+                            if (column === "odeme") {
+                              return (
+                                <td key={column} style={styles.td}>
+                                  {item.odenen}
+                                </td>
+                              );
+                            }
+
+                            if (column === "fatura") {
+                              return (
+                                <td key={column} style={styles.td}>
+                                  {item.fatura}
+                                </td>
+                              );
+                            }
+
+                            return (
+                              <td key={column} style={{ ...styles.td, fontWeight: 700 }}>
+                                {tl(item.toplam)}
+                              </td>
+                            );
+                          })}
                         </tr>
                       );
                     })}

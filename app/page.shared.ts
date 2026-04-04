@@ -54,6 +54,13 @@ export type ProjectColumnKey =
   | "tutar"
   | "islem";
 
+export type HomeProjectColumnKey =
+  | "proje"
+  | "kayit"
+  | "odeme"
+  | "fatura"
+  | "toplam";
+
 export type InvoiceAttachment = {
   id?: number;
   name: string;
@@ -127,6 +134,14 @@ export const PROJECT_COLUMN_ORDER_DEFAULT: ProjectColumnKey[] = [
   "fatura_tarihi",
   "tutar",
   "islem",
+];
+
+export const HOME_PROJECT_COLUMN_ORDER_DEFAULT: HomeProjectColumnKey[] = [
+  "proje",
+  "kayit",
+  "odeme",
+  "fatura",
+  "toplam",
 ];
 
 export const LIGHT = {
