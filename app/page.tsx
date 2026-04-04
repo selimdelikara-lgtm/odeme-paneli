@@ -4,18 +4,13 @@ import {
   Archive,
   CheckCircle2,
   CheckSquare,
-  CircleAlert,
   Clock3,
   Copy,
   Download,
   FileText,
   FolderKanban,
-  ImageUp,
-  KeyRound,
   LayoutDashboard,
-  LockKeyhole,
   LogOut,
-  Mail,
   Moon,
   Palette,
   Pencil,
@@ -28,24 +23,22 @@ import {
   SunMedium,
   Trash2,
   Upload,
-  UserRound,
   Wallet,
 } from "lucide-react";
 import {
   useCallback,
-  type CSSProperties,
-  type DragEvent,
-  type ReactNode,
   useEffect,
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
+  type DragEvent,
 } from "react";
 import {
   DARK,
   DEFAULT_COLORS,
-  LIGHT,
   HOME_PROJECT_COLUMN_ORDER_DEFAULT,
+  LIGHT,
   MAX_INVOICE_FILE_SIZE_BYTES,
   MAX_INVOICE_FILE_SIZE_MB,
   PROJECT_COLUMN_ORDER_DEFAULT,
@@ -60,186 +53,40 @@ import {
   type SortDirection,
   type SortKey,
   type StatusFilter,
-  type StoredState,
   type TabMenu,
   type TabMeta,
   type ThemeMode,
   type ViewMode,
 } from "./page.shared";
 import {
+  faturaEkleriTable,
+  isHomeProjectColumnKey,
+  isProjectColumnKey,
+  loadScript,
+  odemelerTable,
+  readStoredState,
+  readStoredTheme,
+  sanitizeFileName,
+  shortDate,
+  shortDateTime,
+  tl,
+} from "./page.helpers";
+import {
+  buildHomeProjectStats,
+  filterRows,
+  sortProjectRows,
+  summarizeRows,
+} from "./page.selectors";
+import {
   browserSupabase as supabase,
   setAuthStoragePreference,
 } from "@/lib/supabase";
+import { AnimatedMoney, AuthScreen, SettingsContent, Stat } from "./_components/PageBits";
 import type {
   FaturaEkiInsert,
   OdemeInsert,
   OdemeUpdate,
 } from "@/lib/database.types";
-
-const readStoredState = <T,>(key: string, fallback: T): StoredState<T> => {
-  if (typeof window === "undefined") return fallback;
-
-  const raw = window.localStorage.getItem(key);
-  if (!raw) return fallback;
-
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-};
-
-const readStoredTheme = (): ThemeMode => {
-  if (typeof window === "undefined") return "light";
-
-  const savedTheme = window.localStorage.getItem("odeme-theme-v1");
-  return savedTheme === "dark" ? "dark" : "light";
-};
-
-const sanitizeFileName = (name: string) =>
-  name.replace(/[^a-zA-Z0-9._-]/g, "-");
-
-const isProjectColumnKey = (value: string): value is ProjectColumnKey =>
-  PROJECT_COLUMN_ORDER_DEFAULT.includes(value as ProjectColumnKey);
-
-const isHomeProjectColumnKey = (value: string): value is HomeProjectColumnKey =>
-  HOME_PROJECT_COLUMN_ORDER_DEFAULT.includes(value as HomeProjectColumnKey);
-
-const odemelerTable = () =>
-  supabase.from("odemeler");
-
-const faturaEkleriTable = () =>
-  supabase.from("fatura_ekleri");
-
-const tl = (v: number) =>
-  new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: "TRY",
-    maximumFractionDigits: 0,
-  }).format(v);
-
-const shortDate = (v: string | null) => {
-  if (!v) return "—";
-  const d = new Date(v);
-  if (Number.isNaN(d.getTime())) return v;
-  return d.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
-};
-
-const shortDateTime = (v: string | null) => {
-  if (!v) return "—";
-  const d = new Date(v);
-  if (Number.isNaN(d.getTime())) return v;
-  return d.toLocaleString("tr-TR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-const dateValue = (v: string | null) => {
-  if (!v) return 0;
-  const t = new Date(v).getTime();
-  return Number.isNaN(t) ? 0 : t;
-};
-
-const durumScore = (i: Odeme) => (i.odendi ? 2 : i.fatura_kesildi ? 1 : 0);
-
-const loadScript = (src: string) =>
-  new Promise<void>((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) {
-      resolve();
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`Script yüklenemedi: ${src}`));
-    document.body.appendChild(script);
-  });
-
-function AnimatedMoney({
-  value,
-  strong = false,
-}: {
-  value: number;
-  strong?: boolean;
-}) {
-  const [shown, setShown] = useState(value);
-  const [flash, setFlash] = useState(false);
-  const prev = useRef(value);
-
-  useEffect(() => {
-    const start = prev.current;
-    const end = value;
-    if (start === end) return;
-
-    // Animation state is intentionally kicked off when the value changes.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setFlash(true);
-    const t = window.setTimeout(() => setFlash(false), 500);
-    const duration = 700;
-    const startTime = performance.now();
-
-    const run = (now: number) => {
-      const p = Math.min((now - startTime) / duration, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setShown(start + (end - start) * eased);
-      if (p < 1) requestAnimationFrame(run);
-      else prev.current = end;
-    };
-
-    requestAnimationFrame(run);
-    return () => window.clearTimeout(t);
-  }, [value]);
-
-  return (
-    <div
-      style={{
-        fontSize: strong ? 22 : 16,
-        fontWeight: strong ? 900 : 700,
-        color: strong ? "var(--blue)" : "var(--textSoft)",
-        letterSpacing: strong ? "-0.6px" : "-0.2px",
-        fontVariantNumeric: "tabular-nums",
-        transition: "all .25s ease",
-        padding: strong ? "2px 4px" : 0,
-        borderRadius: 10,
-        ...(flash
-          ? {
-              boxShadow:
-                "0 0 0 6px rgba(37,99,235,.08), 0 8px 24px rgba(37,99,235,.18)",
-            }
-          : {}),
-      }}
-    >
-      {tl(shown)}
-    </div>
-  );
-}
-
-function Stat({
-  title,
-  value,
-  icon,
-}: {
-  title: string;
-  value: string;
-  icon: ReactNode;
-}) {
-  return (
-    <div style={styles.stat}>
-      <div style={styles.statHead}>
-        <div style={{ fontSize: 12, color: "var(--muted)" }}>{title}</div>
-        <div style={styles.statIcon}>{icon}</div>
-      </div>
-      <div style={styles.statValue}>{value}</div>
-    </div>
-  );
-}
-
 export default function Page() {
   const [data, setData] = useState<Odeme[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("home");
@@ -657,100 +504,58 @@ export default function Page() {
 
   const aktifKayitlar = useMemo(() => {
     const rows = data.filter((i) => (i.grup || "") === aktifSekme);
-
-    if (sortKey === "manual") {
-      return [...rows].sort((a, b) => {
-        const sa = a.sira ?? 999999;
-        const sb = b.sira ?? 999999;
-        if (sa !== sb) return sa - sb;
-        return a.id - b.id;
-      });
-    }
-
-    return [...rows].sort((a, b) => {
-      let r = 0;
-      if (sortKey === "proje") r = (a.proje || "").localeCompare(b.proje || "", "tr");
-      if (sortKey === "durum") r = durumScore(a) - durumScore(b);
-      if (sortKey === "fatura_tarihi") r = dateValue(a.fatura_tarihi) - dateValue(b.fatura_tarihi);
-      if (sortKey === "tutar") r = Number(a.tutar || 0) - Number(b.tutar || 0);
-      return sortDirection === "asc" ? r : -r;
-    });
+    return sortProjectRows(rows, sortKey, sortDirection);
   }, [data, aktifSekme, sortKey, sortDirection]);
 
-  const filterRows = (rows: Odeme[]) =>
-    rows.filter((row) => {
-      const q = searchTerm.trim().toLowerCase();
-      const projeValue = (row.proje || "").toLowerCase();
-      const grupValue = (row.grup || "").toLowerCase();
+  const filteredHomeRows = useMemo(
+    () =>
+      filterRows(homeBaseRows, {
+        searchTerm,
+        statusFilter,
+        dateFrom,
+        dateTo,
+      }),
+    [homeBaseRows, searchTerm, statusFilter, dateFrom, dateTo]
+  );
 
-      const matchSearch = !q || projeValue.includes(q) || grupValue.includes(q);
+  const filteredActiveKayitlar = useMemo(
+    () =>
+      filterRows(aktifKayitlar, {
+        searchTerm,
+        statusFilter,
+        dateFrom,
+        dateTo,
+      }),
+    [aktifKayitlar, searchTerm, statusFilter, dateFrom, dateTo]
+  );
 
-      const matchStatus =
-        statusFilter === "all"
-          ? true
-          : statusFilter === "paid"
-            ? Boolean(row.odendi)
-            : statusFilter === "invoiced"
-              ? Boolean(!row.odendi && row.fatura_kesildi)
-              : Boolean(!row.odendi && !row.fatura_kesildi);
+  const activeSummary = useMemo(
+    () => summarizeRows(filteredActiveKayitlar),
+    [filteredActiveKayitlar]
+  );
+  const homeSummary = useMemo(
+    () => summarizeRows(filteredHomeRows),
+    [filteredHomeRows]
+  );
 
-      const rowDate = dateValue(row.fatura_tarihi);
-      const fromDate = dateFrom ? new Date(dateFrom).getTime() : null;
-      const toDate = dateTo ? new Date(dateTo).getTime() : null;
+  const toplam = activeSummary.toplam;
+  const odenen = activeSummary.odenen;
+  const odemesiAlinanAdet = activeSummary.tumOdeme;
+  const faturasiKesilenAdet = activeSummary.tumFatura;
+  const kalan = activeSummary.kalan;
+  const tahsilatYuzdesiAktif = activeSummary.tahsilatYuzdesi;
 
-      const matchFrom = fromDate === null ? true : rowDate >= fromDate;
-      const matchTo = toDate === null ? true : rowDate <= toDate;
+  const tumToplam = homeSummary.toplam;
+  const tumOdeme = homeSummary.tumOdeme;
+  const tumFatura = homeSummary.tumFatura;
+  const tumOdenenTutar = homeSummary.odenen;
+  const tumKalanTutar = homeSummary.kalan;
+  const tahsilatYuzdesiGenel = homeSummary.tahsilatYuzdesi;
 
-      return matchSearch && matchStatus && matchFrom && matchTo;
-    });
-
-  const filteredHomeRows = filterRows(homeBaseRows);
-
-  const filteredActiveKayitlar = filterRows(aktifKayitlar);
-
-  const toplam = filteredActiveKayitlar.reduce((sum, x) => sum + Number(x.tutar || 0), 0);
-  const odenen = filteredActiveKayitlar
-    .filter((x) => x.odendi)
-    .reduce((sum, x) => sum + Number(x.tutar || 0), 0);
-  const odemesiAlinanAdet = filteredActiveKayitlar.filter((x) => x.odendi).length;
-  const faturasiKesilenAdet = filteredActiveKayitlar.filter(
-    (x) => !x.odendi && x.fatura_kesildi
-  ).length;
-  const kalan = toplam - odenen;
-  const tahsilatYuzdesiAktif = toplam > 0 ? Math.round((odenen / toplam) * 100) : 0;
-
-  const tumToplam = filteredHomeRows.reduce((sum, x) => sum + Number(x.tutar || 0), 0);
-  const tumOdeme = filteredHomeRows.filter((x) => x.odendi).length;
-  const tumFatura = filteredHomeRows.filter((x) => !x.odendi && x.fatura_kesildi).length;
-  const tumOdenenTutar = filteredHomeRows
-    .filter((x) => x.odendi)
-    .reduce((sum, x) => sum + Number(x.tutar || 0), 0);
-  const tumKalanTutar = tumToplam - tumOdenenTutar;
-  const tahsilatYuzdesiGenel =
-    tumToplam > 0 ? Math.round((tumOdenenTutar / tumToplam) * 100) : 0;
-
-  const homeProjectStats = gorunenSekmeler
-    .map((tab) => {
-      const rows = filteredHomeRows.filter((x) => (x.grup || "") === tab);
-      const toplamTab = rows.reduce((sum, x) => sum + Number(x.tutar || 0), 0);
-      const odenenTab = rows
-        .filter((x) => x.odendi)
-        .reduce((sum, x) => sum + Number(x.tutar || 0), 0);
-
-      const oran = toplamTab > 0 ? Math.round((odenenTab / toplamTab) * 100) : 0;
-
-      return {
-        tab,
-        kayit: rows.length,
-        odenen: rows.filter((x) => x.odendi).length,
-        fatura: rows.filter((x) => !x.odendi && x.fatura_kesildi).length,
-        toplam: toplamTab,
-        oran,
-      };
-    })
-    .filter((item) => item.kayit > 0)
-    .sort((a, b) => b.toplam - a.toplam);
-
+  const homeProjectStats = useMemo(
+    () => buildHomeProjectStats(gorunenSekmeler, filteredHomeRows),
+    [gorunenSekmeler, filteredHomeRows]
+  );
   const selectedVisibleIds = filteredActiveKayitlar
     .filter((row) => selectedIds.includes(row.id))
     .map((row) => row.id);
@@ -2343,273 +2148,49 @@ export default function Page() {
   }
 
   const renderAuthScreen = () => (
-    <div style={{ ...styles.loginWrap, ...themeVars }} className="login-wrap">
-      <div style={styles.loginShell} className="login-shell">
-        <div style={styles.loginShowcase} className="login-showcase">
-          <div style={styles.loginOrbOne} />
-          <div style={styles.loginOrbTwo} />
-          <div style={styles.loginOrbThree} />
-
-          <div style={styles.loginBrand} className="login-brand">{"\u00d6DED\u0130 M\u0130"}</div>
-          <h1 style={styles.loginHeadline} className="login-headline">{"Parac\u0131klar Geldi Mi Acep..."}</h1>
-          </div>
-
-        <div style={styles.loginCard} className="login-card">
-          <div style={styles.loginCardTitle}>
-            {signupMode ? "Hesap Oluştur" : "Giriş Yap"}
-          </div>
-
-          <div style={styles.loginSection}>
-            <div style={styles.loginLabel}>{"E-posta"}</div>
-            <input
-              className="soft-input"
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={styles.loginInput}
-            />
-            <div style={styles.loginLabel}>{"\u015eifre"}</div>
-            <input
-              className="soft-input"
-              type="password"
-              placeholder={"\u015eifre"}
-              value={authPassword}
-              onChange={(e) => setAuthPassword(e.target.value)}
-              style={styles.loginInput}
-            />
-            <div style={styles.loginMetaRow}>
-              <label style={styles.rememberMeLabel}>
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                <span>{"Beni Hatırla"}</span>
-              </label>
-              <button
-                type="button"
-                className="hover-button"
-                onClick={() => void authResetPassword()}
-                style={styles.forgotLink}
-              >
-                {"\u015eifremi Unuttum"}
-              </button>
-            </div>
-            <button
-              className="hover-button"
-              onClick={() => void (signupMode ? authSignUp() : authLogin())}
-              style={styles.loginPrimaryAction}
-            >
-              <span style={styles.btnInner}>
-                <Mail size={16} />
-                {signupMode ? "Hesap Oluştur" : "Giriş Yap"}
-              </span>
-            </button>
-          </div>
-
-          <div style={styles.loginDividerText}>
-            <span style={styles.loginDividerTextLine} />
-            <span>{"Veya hesap oluştur"}</span>
-            <span style={styles.loginDividerTextLine} />
-          </div>
-
-          <div style={styles.loginSocialRow}>
-            <button
-              className="hover-button"
-              onClick={() => void authLoginWithGoogle()}
-              style={styles.googleIconBtn}
-            >
-              <span style={styles.googleMark}>
-              <span style={{ color: "#4285F4" }}>G</span>
-              </span>
-            </button>
-            <button
-              className="hover-button"
-              onClick={() => setSignupMode(true)}
-              style={styles.mailIconBtn}
-              title="Normal e-posta ile hesap oluştur"
-            >
-              <Mail size={18} />
-            </button>
-          </div>
-
-          {signupMode ? (
-            <button
-              type="button"
-              className="hover-button"
-              onClick={() => setSignupMode(false)}
-              style={styles.switchAuthLink}
-            >
-              Giriş ekranına dön
-            </button>
-          ) : null}
-
-          {msg ? <div style={{ ...styles.msg, marginTop: 14 }}>{msg}</div> : null}
-        </div>
-      </div>
-    </div>
+    <AuthScreen
+      themeVars={themeVars}
+      signupMode={signupMode}
+      setSignupMode={setSignupMode}
+      email={email}
+      setEmail={setEmail}
+      authPassword={authPassword}
+      setAuthPassword={setAuthPassword}
+      rememberMe={rememberMe}
+      setRememberMe={setRememberMe}
+      authResetPassword={authResetPassword}
+      authSignUp={authSignUp}
+      authLogin={authLogin}
+      authLoginWithGoogle={authLoginWithGoogle}
+      msg={msg}
+      styles={styles}
+    />
   );
 
   const renderSettingsContent = () => (
-    <div style={styles.settingsGrid}>
-      <div style={styles.settingsCard}>
-        <div style={styles.sectionHead}>
-          <h2 style={styles.h2}>Hesap Ayarları</h2>
-          <Settings2 size={18} color={palette.muted} />
-        </div>
-
-        <div style={styles.settingsProfileRow}>
-          <div style={styles.settingsAvatar}>
-            {settingsAvatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={settingsAvatarUrl}
-                alt="Profil fotoğrafı"
-                style={styles.settingsAvatarImage}
-              />
-            ) : (
-              <span>{(settingsName || authEmail || "U").slice(0, 1).toUpperCase()}</span>
-            )}
-          </div>
-
-          <div style={{ display: "grid", gap: 10 }}>
-            <div>
-              <div style={styles.settingsMetaLabel}>Görünen Ad</div>
-              <input
-                className="soft-input"
-                value={settingsName}
-                onChange={(e) => setSettingsName(e.target.value)}
-                placeholder="Ad Soyad"
-                style={styles.input}
-              />
-            </div>
-            <div>
-              <div style={styles.settingsMetaLabel}>E-posta</div>
-              <div style={styles.settingsEmail}>{authEmail || "—"}</div>
-            </div>
-            <div style={styles.settingsButtonRow}>
-              <button
-                className="hover-button"
-                onClick={() => profileInputRef.current?.click()}
-                style={styles.settingsGhostBtn}
-                disabled={settingsBusy}
-              >
-                <span style={styles.btnInner}>
-                  <ImageUp size={15} />
-                  Fotoğraf Yükle
-                </span>
-              </button>
-              <button
-                className="hover-button"
-                onClick={() => void saveProfileSettings()}
-                style={styles.primaryBtn}
-                disabled={settingsBusy}
-              >
-                <span style={styles.btnInner}>
-                  <UserRound size={15} />
-                  Profili Kaydet
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div style={styles.settingsCard}>
-        <div style={styles.sectionHead}>
-          <h2 style={styles.h2}>Güvenlik</h2>
-          <LockKeyhole size={18} color={palette.muted} />
-        </div>
-
-        <div style={styles.settingsStack}>
-          <div>
-            <div style={styles.settingsMetaLabel}>Yeni Şifre</div>
-            <input
-              className="soft-input"
-              type="password"
-              value={settingsPassword}
-              onChange={(e) => setSettingsPassword(e.target.value)}
-              placeholder="Yeni şifre"
-              style={styles.input}
-            />
-          </div>
-          <div>
-            <div style={styles.settingsMetaLabel}>Yeni Şifre Tekrar</div>
-            <input
-              className="soft-input"
-              type="password"
-              value={settingsPasswordRepeat}
-              onChange={(e) => setSettingsPasswordRepeat(e.target.value)}
-              placeholder="Yeni şifre tekrar"
-              style={styles.input}
-            />
-          </div>
-          <div style={styles.settingsButtonRow}>
-            <button
-              className="hover-button"
-              onClick={() => void changePassword()}
-              style={styles.secondaryBtn}
-              disabled={settingsBusy}
-            >
-              <span style={styles.btnInner}>
-                <KeyRound size={15} />
-                Şifreyi Güncelle
-              </span>
-            </button>
-            <button
-              className="hover-button"
-              onClick={() => void authResetPassword()}
-              style={styles.settingsGhostBtn}
-              disabled={settingsBusy}
-            >
-              <span style={styles.btnInner}>
-                <Mail size={15} />
-                Sıfırlama Bağlantısı Gönder
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ ...styles.settingsCard, ...styles.settingsDangerCard }}>
-        <div style={styles.sectionHead}>
-          <h2 style={{ ...styles.h2, color: "var(--red)" }}>Tehlikeli Alan</h2>
-          <CircleAlert size={18} color={palette.red} />
-        </div>
-        <div style={styles.settingsStack}>
-          <div style={styles.settingsDangerText}>
-            Bu işlem hesabı, panel verilerini ve yüklenen dosyaları kalıcı olarak siler.
-          </div>
-          {authProviders.includes("email") ? (
-            <div>
-              <div style={styles.settingsMetaLabel}>Mevcut Şifre</div>
-              <input
-                className="soft-input"
-                type="password"
-                value={settingsCurrentPassword}
-                onChange={(e) => setSettingsCurrentPassword(e.target.value)}
-                placeholder="Mevcut şifre"
-                style={styles.input}
-              />
-            </div>
-          ) : null}
-          <button
-            className="hover-button"
-            onClick={() => void closeAccountData()}
-            style={styles.deleteBtn}
-            disabled={settingsBusy}
-          >
-            <span style={styles.btnInner}>
-              <Trash2 size={15} />
-              Hesabı Kapat
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
+    <SettingsContent
+      mutedColor={palette.muted}
+      redColor={palette.red}
+      styles={styles}
+      settingsAvatarUrl={settingsAvatarUrl}
+      settingsName={settingsName}
+      setSettingsName={setSettingsName}
+      authEmail={authEmail}
+      profileInputRef={profileInputRef}
+      settingsBusy={settingsBusy}
+      saveProfileSettings={saveProfileSettings}
+      settingsPassword={settingsPassword}
+      setSettingsPassword={setSettingsPassword}
+      settingsPasswordRepeat={settingsPasswordRepeat}
+      setSettingsPasswordRepeat={setSettingsPasswordRepeat}
+      changePassword={changePassword}
+      authResetPassword={authResetPassword}
+      authProviders={authProviders}
+      settingsCurrentPassword={settingsCurrentPassword}
+      setSettingsCurrentPassword={setSettingsCurrentPassword}
+      closeAccountData={closeAccountData}
+    />
   );
-
   if (!authUserId) {
     return renderAuthScreen();
   }
@@ -2960,21 +2541,25 @@ export default function Page() {
             {viewMode === "home" ? (
               <>
                 <Stat
+                  styles={styles}
                   title="Toplam Kayıt"
                   value={String(filteredHomeRows.length)}
                   icon={<FolderKanban size={16} color={palette.blue} />}
                 />
                 <Stat
+                  styles={styles}
                   title="Ödeme Alındı"
                   value={String(tumOdeme)}
                   icon={<CheckCircle2 size={16} color={palette.teal} />}
                 />
                 <Stat
+                  styles={styles}
                   title="Fatura Kesildi"
                   value={String(tumFatura)}
                   icon={<Receipt size={16} color={palette.amber} />}
                 />
                 <Stat
+                  styles={styles}
                   title="Toplam Tutar"
                   value={tl(tumToplam)}
                   icon={<Wallet size={16} color={palette.blue} />}
@@ -2983,21 +2568,25 @@ export default function Page() {
             ) : (
               <>
                 <Stat
+                  styles={styles}
                   title="Toplam Kayıt"
                   value={String(filteredActiveKayitlar.length)}
                   icon={<FolderKanban size={16} color={aktifTabMeta.color} />}
                 />
                 <Stat
+                  styles={styles}
                   title="Ödeme Alındı"
                   value={String(odemesiAlinanAdet)}
                   icon={<CheckCircle2 size={16} color={palette.teal} />}
                 />
                 <Stat
+                  styles={styles}
                   title="Fatura Kesildi"
                   value={String(faturasiKesilenAdet)}
                   icon={<Receipt size={16} color={palette.amber} />}
                 />
                 <Stat
+                  styles={styles}
                   title="Kalan Tahsilat"
                   value={tl(kalan)}
                   icon={<Clock3 size={16} color={palette.red} />}
@@ -5031,3 +4620,5 @@ const styles: Record<string, CSSProperties> = {
     letterSpacing: 1,
   },
 };
+
+

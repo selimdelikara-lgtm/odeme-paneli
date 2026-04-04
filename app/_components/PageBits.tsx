@@ -1,0 +1,462 @@
+"use client";
+
+import {
+  CircleAlert,
+  ImageUp,
+  KeyRound,
+  LockKeyhole,
+  Mail,
+  Settings2,
+  Trash2,
+  UserRound,
+} from "lucide-react";
+import {
+  type ChangeEvent,
+  type CSSProperties,
+  type Dispatch,
+  type MutableRefObject,
+  type ReactNode,
+  type SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { tl } from "../page.helpers";
+
+export function AnimatedMoney({
+  value,
+  strong = false,
+}: {
+  value: number;
+  strong?: boolean;
+}) {
+  const [shown, setShown] = useState(value);
+  const [flash, setFlash] = useState(false);
+  const prev = useRef(value);
+
+  useEffect(() => {
+    const start = prev.current;
+    const end = value;
+    if (start === end) return;
+
+    // Animation state intentionally toggles from the effect when the value changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFlash(true);
+    const t = window.setTimeout(() => setFlash(false), 500);
+    const duration = 700;
+    const startTime = performance.now();
+
+    const run = (now: number) => {
+      const p = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setShown(start + (end - start) * eased);
+      if (p < 1) requestAnimationFrame(run);
+      else prev.current = end;
+    };
+
+    requestAnimationFrame(run);
+    return () => window.clearTimeout(t);
+  }, [value]);
+
+  return (
+    <div
+      style={{
+        fontSize: strong ? 22 : 16,
+        fontWeight: strong ? 900 : 700,
+        color: strong ? "var(--blue)" : "var(--textSoft)",
+        letterSpacing: strong ? "-0.6px" : "-0.2px",
+        fontVariantNumeric: "tabular-nums",
+        transition: "all .25s ease",
+        padding: strong ? "2px 4px" : 0,
+        borderRadius: 10,
+        ...(flash
+          ? {
+              boxShadow:
+                "0 0 0 6px rgba(37,99,235,.08), 0 8px 24px rgba(37,99,235,.18)",
+            }
+          : {}),
+      }}
+    >
+      {tl(shown)}
+    </div>
+  );
+}
+
+export function Stat({
+  title,
+  value,
+  icon,
+  styles,
+}: {
+  title: string;
+  value: string;
+  icon: ReactNode;
+  styles: Record<string, CSSProperties>;
+}) {
+  return (
+    <div style={styles.stat}>
+      <div style={styles.statHead}>
+        <div style={{ fontSize: 12, color: "var(--muted)" }}>{title}</div>
+        <div style={styles.statIcon}>{icon}</div>
+      </div>
+      <div style={styles.statValue}>{value}</div>
+    </div>
+  );
+}
+
+type AuthScreenProps = {
+  themeVars: CSSProperties;
+  signupMode: boolean;
+  setSignupMode: Dispatch<SetStateAction<boolean>>;
+  email: string;
+  setEmail: Dispatch<SetStateAction<string>>;
+  authPassword: string;
+  setAuthPassword: Dispatch<SetStateAction<string>>;
+  rememberMe: boolean;
+  setRememberMe: Dispatch<SetStateAction<boolean>>;
+  authResetPassword: () => Promise<void>;
+  authSignUp: () => Promise<void>;
+  authLogin: () => Promise<void>;
+  authLoginWithGoogle: () => Promise<void>;
+  msg: string;
+  styles: Record<string, CSSProperties>;
+};
+
+export function AuthScreen({
+  themeVars,
+  signupMode,
+  setSignupMode,
+  email,
+  setEmail,
+  authPassword,
+  setAuthPassword,
+  rememberMe,
+  setRememberMe,
+  authResetPassword,
+  authSignUp,
+  authLogin,
+  authLoginWithGoogle,
+  msg,
+  styles,
+}: AuthScreenProps) {
+  return (
+    <div style={{ ...styles.loginWrap, ...themeVars }} className="login-wrap">
+      <div style={styles.loginShell} className="login-shell">
+        <div style={styles.loginShowcase} className="login-showcase">
+          <div style={styles.loginOrbOne} />
+          <div style={styles.loginOrbTwo} />
+          <div style={styles.loginOrbThree} />
+
+          <div style={styles.loginBrand} className="login-brand">
+            ÖDEDİ Mİ
+          </div>
+          <h1 style={styles.loginHeadline} className="login-headline">
+            Paracıklar Geldi Mi Acep...
+          </h1>
+        </div>
+
+        <div style={styles.loginCard} className="login-card">
+          <div style={styles.loginCardTitle}>
+            {signupMode ? "Hesap Oluştur" : "Giriş Yap"}
+          </div>
+
+          <div style={styles.loginSection}>
+            <div style={styles.loginLabel}>E-posta</div>
+            <input
+              className="soft-input"
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={styles.loginInput}
+            />
+            <div style={styles.loginLabel}>Şifre</div>
+            <input
+              className="soft-input"
+              type="password"
+              placeholder="Şifre"
+              value={authPassword}
+              onChange={(e) => setAuthPassword(e.target.value)}
+              style={styles.loginInput}
+            />
+            <div style={styles.loginMetaRow}>
+              <label style={styles.rememberMeLabel}>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <span>Beni Hatırla</span>
+              </label>
+              <button
+                type="button"
+                className="hover-button"
+                onClick={() => void authResetPassword()}
+                style={styles.forgotLink}
+              >
+                Şifremi Unuttum
+              </button>
+            </div>
+            <button
+              className="hover-button"
+              onClick={() => void (signupMode ? authSignUp() : authLogin())}
+              style={styles.loginPrimaryAction}
+            >
+              <span style={styles.btnInner}>
+                <Mail size={16} />
+                {signupMode ? "Hesap Oluştur" : "Giriş Yap"}
+              </span>
+            </button>
+          </div>
+
+          <div style={styles.loginDividerText}>
+            <span style={styles.loginDividerTextLine} />
+            <span>Veya hesap oluştur</span>
+            <span style={styles.loginDividerTextLine} />
+          </div>
+
+          <div style={styles.loginSocialRow}>
+            <button
+              className="hover-button"
+              onClick={() => void authLoginWithGoogle()}
+              style={styles.googleIconBtn}
+            >
+              <span style={styles.googleMark}>
+                <span style={{ color: "#4285F4" }}>G</span>
+              </span>
+            </button>
+            <button
+              className="hover-button"
+              onClick={() => setSignupMode(true)}
+              style={styles.mailIconBtn}
+              title="Normal e-posta ile hesap oluştur"
+            >
+              <Mail size={18} />
+            </button>
+          </div>
+
+          {signupMode ? (
+            <button
+              type="button"
+              className="hover-button"
+              onClick={() => setSignupMode(false)}
+              style={styles.switchAuthLink}
+            >
+              Giriş ekranına dön
+            </button>
+          ) : null}
+
+          {msg ? <div style={{ ...styles.msg, marginTop: 14 }}>{msg}</div> : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type SettingsContentProps = {
+  mutedColor: string;
+  redColor: string;
+  styles: Record<string, CSSProperties>;
+  settingsAvatarUrl: string | null;
+  settingsName: string;
+  setSettingsName: Dispatch<SetStateAction<string>>;
+  authEmail: string | null;
+  profileInputRef: MutableRefObject<HTMLInputElement | null>;
+  settingsBusy: boolean;
+  saveProfileSettings: () => Promise<void>;
+  settingsPassword: string;
+  setSettingsPassword: Dispatch<SetStateAction<string>>;
+  settingsPasswordRepeat: string;
+  setSettingsPasswordRepeat: Dispatch<SetStateAction<string>>;
+  changePassword: () => Promise<void>;
+  authResetPassword: () => Promise<void>;
+  authProviders: string[];
+  settingsCurrentPassword: string;
+  setSettingsCurrentPassword: Dispatch<SetStateAction<string>>;
+  closeAccountData: () => Promise<void>;
+};
+
+export function SettingsContent({
+  mutedColor,
+  redColor,
+  styles,
+  settingsAvatarUrl,
+  settingsName,
+  setSettingsName,
+  authEmail,
+  profileInputRef,
+  settingsBusy,
+  saveProfileSettings,
+  settingsPassword,
+  setSettingsPassword,
+  settingsPasswordRepeat,
+  setSettingsPasswordRepeat,
+  changePassword,
+  authResetPassword,
+  authProviders,
+  settingsCurrentPassword,
+  setSettingsCurrentPassword,
+  closeAccountData,
+}: SettingsContentProps) {
+  return (
+    <div style={styles.settingsGrid}>
+      <div style={styles.settingsCard}>
+        <div style={styles.sectionHead}>
+          <h2 style={styles.h2}>Hesap Ayarları</h2>
+          <Settings2 size={18} color={mutedColor} />
+        </div>
+
+        <div style={styles.settingsProfileRow}>
+          <div style={styles.settingsAvatar}>
+            {settingsAvatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={settingsAvatarUrl}
+                alt="Profil fotoğrafı"
+                style={styles.settingsAvatarImage}
+              />
+            ) : (
+              <span>{(settingsName || authEmail || "U").slice(0, 1).toUpperCase()}</span>
+            )}
+          </div>
+
+          <div style={{ display: "grid", gap: 10 }}>
+            <div>
+              <div style={styles.settingsMetaLabel}>Görünen Ad</div>
+              <input
+                className="soft-input"
+                value={settingsName}
+                onChange={(e) => setSettingsName(e.target.value)}
+                placeholder="Ad Soyad"
+                style={styles.input}
+              />
+            </div>
+            <div>
+              <div style={styles.settingsMetaLabel}>E-posta</div>
+              <div style={styles.settingsEmail}>{authEmail || "—"}</div>
+            </div>
+            <div style={styles.settingsButtonRow}>
+              <button
+                className="hover-button"
+                onClick={() => profileInputRef.current?.click()}
+                style={styles.settingsGhostBtn}
+                disabled={settingsBusy}
+              >
+                <span style={styles.btnInner}>
+                  <ImageUp size={15} />
+                  Fotoğraf Yükle
+                </span>
+              </button>
+              <button
+                className="hover-button"
+                onClick={() => void saveProfileSettings()}
+                style={styles.primaryBtn}
+                disabled={settingsBusy}
+              >
+                <span style={styles.btnInner}>
+                  <UserRound size={15} />
+                  Profili Kaydet
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={styles.settingsCard}>
+        <div style={styles.sectionHead}>
+          <h2 style={styles.h2}>Güvenlik</h2>
+          <LockKeyhole size={18} color={mutedColor} />
+        </div>
+
+        <div style={styles.settingsStack}>
+          <div>
+            <div style={styles.settingsMetaLabel}>Yeni Şifre</div>
+            <input
+              className="soft-input"
+              type="password"
+              value={settingsPassword}
+              onChange={(e) => setSettingsPassword(e.target.value)}
+              placeholder="Yeni şifre"
+              style={styles.input}
+            />
+          </div>
+          <div>
+            <div style={styles.settingsMetaLabel}>Yeni Şifre Tekrar</div>
+            <input
+              className="soft-input"
+              type="password"
+              value={settingsPasswordRepeat}
+              onChange={(e) => setSettingsPasswordRepeat(e.target.value)}
+              placeholder="Yeni şifre tekrar"
+              style={styles.input}
+            />
+          </div>
+          <div style={styles.settingsButtonRow}>
+            <button
+              className="hover-button"
+              onClick={() => void changePassword()}
+              style={styles.secondaryBtn}
+              disabled={settingsBusy}
+            >
+              <span style={styles.btnInner}>
+                <KeyRound size={15} />
+                Şifreyi Güncelle
+              </span>
+            </button>
+            <button
+              className="hover-button"
+              onClick={() => void authResetPassword()}
+              style={styles.settingsGhostBtn}
+              disabled={settingsBusy}
+            >
+              <span style={styles.btnInner}>
+                <Mail size={15} />
+                Sıfırlama Bağlantısı Gönder
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ ...styles.settingsCard, ...styles.settingsDangerCard }}>
+        <div style={styles.sectionHead}>
+          <h2 style={{ ...styles.h2, color: "var(--red)" }}>Tehlikeli Alan</h2>
+          <CircleAlert size={18} color={redColor} />
+        </div>
+        <div style={styles.settingsStack}>
+          <div style={styles.settingsDangerText}>
+            Bu işlem hesabı, panel verilerini ve yüklenen dosyaları kalıcı olarak
+            siler.
+          </div>
+          {authProviders.includes("email") ? (
+            <div>
+              <div style={styles.settingsMetaLabel}>Mevcut Şifre</div>
+              <input
+                className="soft-input"
+                type="password"
+                value={settingsCurrentPassword}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setSettingsCurrentPassword(e.target.value)
+                }
+                placeholder="Mevcut şifre"
+                style={styles.input}
+              />
+            </div>
+          ) : null}
+          <button
+            className="hover-button"
+            onClick={() => void closeAccountData()}
+            style={styles.deleteBtn}
+            disabled={settingsBusy}
+          >
+            <span style={styles.btnInner}>
+              <Trash2 size={15} />
+              Hesabı Kapat
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
