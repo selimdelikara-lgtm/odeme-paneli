@@ -18,7 +18,6 @@ import {
   Moon,
   Palette,
   Pencil,
-  Phone,
   Plus,
   Receipt,
   RotateCcw,
@@ -376,9 +375,6 @@ export default function Page() {
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
-  const [phone, setPhone] = useState("");
-  const [phoneCode, setPhoneCode] = useState("");
-  const [phoneCodeSent, setPhoneCodeSent] = useState(false);
 
   const [theme, setTheme] = useState<ThemeMode>(readStoredTheme);
 
@@ -1487,72 +1483,6 @@ export default function Page() {
     }
   }
 
-  async function authLoginWithApple() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "apple",
-      options: {
-        redirectTo:
-          typeof window === "undefined" ? undefined : window.location.origin,
-      },
-    });
-
-    if (error) {
-      setMsg("Apple girişi başlatılamadı: " + error.message);
-    }
-  }
-
-  async function authLoginWithFacebook() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "facebook",
-      options: {
-        redirectTo:
-          typeof window === "undefined" ? undefined : window.location.origin,
-      },
-    });
-
-    if (error) {
-      setMsg("Facebook girişi başlatılamadı: " + error.message);
-    }
-  }
-
-  async function authSendPhoneCode() {
-    if (!phone.trim()) return;
-
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: phone.trim(),
-      options: {
-        shouldCreateUser: true,
-      },
-    });
-
-    if (error) {
-      setMsg("Telefon doğrulama kodu gönderilemedi: " + error.message);
-      return;
-    }
-
-    setPhoneCodeSent(true);
-    setMsg("Telefon doğrulama kodu gönderildi.");
-  }
-
-  async function authVerifyPhoneCode() {
-    if (!phone.trim() || !phoneCode.trim()) return;
-
-    const { error } = await supabase.auth.verifyOtp({
-      phone: phone.trim(),
-      token: phoneCode.trim(),
-      type: "sms",
-    });
-
-    if (error) {
-      setMsg("Telefon kodu doğrulanamadı: " + error.message);
-      return;
-    }
-
-    setPhoneCode("");
-    setPhoneCodeSent(false);
-    setMsg("Telefon ile giriş yapıldı.");
-  }
-
   async function cikisYap() {
     if (authEmail) {
       await supabase.auth.signOut();
@@ -1632,125 +1562,91 @@ export default function Page() {
 
   const renderAuthScreen = () => (
     <div style={{ ...styles.loginWrap, ...themeVars }}>
-      <div style={styles.loginCard}>
-        <div style={styles.badge}>ÖDEDİ Mİ</div>
-        <h1 style={{ fontSize: 28, margin: "12px 0 8px", color: "var(--text)" }}>
-          ÖDEDİ Mİ Paneli
-        </h1>
-        <p style={{ color: "var(--muted)", marginBottom: 14 }}>
-          Google veya e-posta/şifre ile giriş yap.
-        </p>
+      <div style={styles.loginShell}>
+        <div style={styles.loginShowcase}>
+          <div style={styles.loginOrbOne} />
+          <div style={styles.loginOrbTwo} />
+          <div style={styles.loginOrbThree} />
 
-        <div style={styles.loginSection}>
-          <div style={styles.loginLabel}>Google</div>
+          <div style={styles.badge}>?DED? M?</div>
+          <div style={styles.loginBrand}>?DED? M?</div>
+          <h1 style={styles.loginHeadline}>Tahsilat?n? tek panelden y?net.</h1>
+          <p style={styles.loginCopy}>Parac?klar geldi mi acep?</p>
+
+          <div style={styles.loginStatRow}>
+            <div style={styles.loginStatCard}>
+              <div style={styles.loginStatLabel}>Takip</div>
+              <div style={styles.loginStatValue}>Fatura + ?deme</div>
+            </div>
+            <div style={styles.loginStatCard}>
+              <div style={styles.loginStatLabel}>Ak??</div>
+              <div style={styles.loginStatValue}>Tek ekran</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={styles.loginCard}>
+          <div style={styles.loginCardTitle}>Hesab?na giri? yap</div>
+          <div style={styles.loginCardSub}>
+            Google veya e-posta/?ifre ile devam et.
+          </div>
+
           <button
             className="hover-button"
             onClick={() => void authLoginWithGoogle()}
-            style={{ ...styles.primaryBtn, width: "100%", marginTop: 12 }}
+            style={styles.googleBtn}
           >
-            <span style={styles.btnInner}>
-              <span style={styles.authBrandIcon}>G</span>
-              Google ile Giriş Yap
+            <span style={styles.googleMark}>
+              <span style={{ color: "#4285F4" }}>G</span>
             </span>
+            Google ile devam et
           </button>
-          <button
-            className="hover-button"
-            onClick={() => void authLoginWithApple()}
-            style={{ ...styles.secondaryBtn, width: "100%", marginTop: 8 }}
-          >
-            <span style={styles.btnInner}>
-              <span style={styles.authBrandIcon}>A</span>
-              Apple ile Devam Et
-            </span>
-          </button>
-          <button
-            className="hover-button"
-            onClick={() => void authLoginWithFacebook()}
-            style={{ ...styles.secondaryBtn, width: "100%", marginTop: 8 }}
-          >
-            <span style={styles.btnInner}>
-              <span style={styles.authBrandIcon}>f</span>
-              Facebook ile Devam Et
-            </span>
-          </button>
-        </div>
 
-        <div style={styles.loginDivider} />
-
-        <div style={styles.loginSection}>
-          <div style={styles.loginLabel}>
-            {authMode === "login" ? "E-posta ile Giriş" : "Yeni Hesap"}
+          <div style={styles.loginDividerText}>
+            <span>veya e-posta ile</span>
           </div>
-          <input
-            className="soft-input"
-            type="email"
-            placeholder="E-posta"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={styles.input}
-          />
-          <input
-            className="soft-input"
-            type="password"
-            placeholder="Şifre"
-            value={authPassword}
-            onChange={(e) => setAuthPassword(e.target.value)}
-            style={{ ...styles.input, marginTop: 8 }}
-          />
-          <button
-            className="hover-button"
-            onClick={() => void (authMode === "login" ? authLogin() : authSignUp())}
-            style={{ ...styles.secondaryBtn, width: "100%", marginTop: 12 }}
-          >
-            <span style={styles.btnInner}>
-              <Mail size={16} />
-              {authMode === "login" ? "Giriş Yap" : "Hesap Oluştur"}
-            </span>
-          </button>
-          <button
-            className="hover-button"
-            onClick={() => setAuthMode((prev) => (prev === "login" ? "signup" : "login"))}
-            style={{ ...styles.secondaryBtn, width: "100%", marginTop: 8 }}
-          >
-            {authMode === "login" ? "Yeni hesap aç" : "Mevcut hesaba gir"}
-          </button>
-        </div>
 
-        <div style={styles.loginDivider} />
-
-        <div style={styles.loginSection}>
-          <div style={styles.loginLabel}>Telefon ile Giriş</div>
-          <input
-            className="soft-input"
-            type="tel"
-            placeholder="+905551112233"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            style={styles.input}
-          />
-          {phoneCodeSent ? (
+          <div style={styles.loginSection}>
+            <div style={styles.loginLabel}>
+              {authMode === "login" ? "E-posta ile giri?" : "Yeni hesap"}
+            </div>
             <input
               className="soft-input"
-              type="text"
-              placeholder="SMS kodu"
-              value={phoneCode}
-              onChange={(e) => setPhoneCode(e.target.value)}
-              style={{ ...styles.input, marginTop: 8 }}
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={styles.loginInput}
             />
-          ) : null}
-          <button
-            className="hover-button"
-            onClick={() => void (phoneCodeSent ? authVerifyPhoneCode() : authSendPhoneCode())}
-            style={{ ...styles.secondaryBtn, width: "100%", marginTop: 12 }}
-          >
-            <span style={styles.btnInner}>
-              <Phone size={16} />
-              {phoneCodeSent ? "Kodu Doğrula" : "SMS Kodu Gönder"}
-            </span>
-          </button>
-        </div>
+            <input
+              className="soft-input"
+              type="password"
+              placeholder="?ifre"
+              value={authPassword}
+              onChange={(e) => setAuthPassword(e.target.value)}
+              style={styles.loginInput}
+            />
+            <button
+              className="hover-button"
+              onClick={() => void (authMode === "login" ? authLogin() : authSignUp())}
+              style={styles.loginPrimaryAction}
+            >
+              <span style={styles.btnInner}>
+                <Mail size={16} />
+                {authMode === "login" ? "Giri? Yap" : "Hesap Olu?tur"}
+              </span>
+            </button>
+            <button
+              className="hover-button"
+              onClick={() => setAuthMode((prev) => (prev === "login" ? "signup" : "login"))}
+              style={styles.loginGhostAction}
+            >
+              {authMode === "login" ? "Yeni hesap a?" : "Mevcut hesaba gir"}
+            </button>
+          </div>
 
-        {msg ? <div style={{ ...styles.msg, marginTop: 14 }}>{msg}</div> : null}
+          {msg ? <div style={{ ...styles.msg, marginTop: 14 }}>{msg}</div> : null}
+        </div>
       </div>
     </div>
   );
@@ -3779,56 +3675,216 @@ const styles: Record<string, CSSProperties> = {
   },
   loginWrap: {
     minHeight: "100vh",
-    background: "var(--appBg)",
+    background: "linear-gradient(135deg, #a4b0ff 0%, #c8cfff 100%)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
     fontFamily: 'Inter, "SF Pro Display", Arial, sans-serif',
   },
+  loginShell: {
+    width: "100%",
+    maxWidth: 1180,
+    minHeight: 640,
+    display: "grid",
+    gridTemplateColumns: "1.1fr .9fr",
+    overflow: "hidden",
+    borderRadius: 28,
+    background: "#0B1546",
+    boxShadow: "0 32px 90px rgba(15, 23, 66, 0.34)",
+  },
+  loginShowcase: {
+    position: "relative",
+    overflow: "hidden",
+    padding: "48px 44px",
+    background: "linear-gradient(180deg, #0C1C5A 0%, #09143D 100%)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    gap: 24,
+  },
+  loginOrbOne: {
+    position: "absolute",
+    width: 420,
+    height: 420,
+    borderRadius: 999,
+    border: "58px solid rgba(128, 104, 255, 0.18)",
+    top: -150,
+    left: -170,
+  },
+  loginOrbTwo: {
+    position: "absolute",
+    width: 480,
+    height: 480,
+    borderRadius: 999,
+    border: "52px solid rgba(118, 82, 255, 0.14)",
+    bottom: -250,
+    right: -120,
+  },
+  loginOrbThree: {
+    position: "absolute",
+    width: 260,
+    height: 260,
+    borderRadius: 999,
+    background: "radial-gradient(circle, rgba(104,195,255,.32) 0%, rgba(104,195,255,0) 72%)",
+    bottom: -20,
+    left: 40,
+  },
+  loginBrand: {
+    position: "relative",
+    color: "var(--white)",
+    fontSize: 30,
+    fontWeight: 900,
+    letterSpacing: "-0.8px",
+  },
+  loginHeadline: {
+    position: "relative",
+    margin: 0,
+    color: "var(--white)",
+    fontSize: 44,
+    lineHeight: 1.05,
+    maxWidth: 360,
+    letterSpacing: "-1.3px",
+  },
+  loginCopy: {
+    position: "relative",
+    margin: 0,
+    color: "rgba(255,255,255,0.74)",
+    fontSize: 18,
+    fontWeight: 500,
+  },
+  loginStatRow: {
+    position: "relative",
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 12,
+    marginTop: 28,
+  },
+  loginStatCard: {
+    borderRadius: 18,
+    padding: "16px 18px",
+    background: "rgba(255,255,255,0.08)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    backdropFilter: "blur(12px)",
+  },
+  loginStatLabel: {
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 12,
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  loginStatValue: {
+    marginTop: 6,
+    color: "var(--white)",
+    fontSize: 18,
+    fontWeight: 800,
+  },
   loginCard: {
     width: "100%",
-    maxWidth: 420,
-    background: "var(--card)",
-    border: "1px solid var(--border)",
-    borderRadius: 16,
-    padding: 24,
-    boxShadow: "var(--shadow)",
+    background: "#FFFFFF",
+    padding: "48px 40px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+  },
+  loginCardTitle: {
+    color: "#111827",
+    fontSize: 30,
+    fontWeight: 900,
+    letterSpacing: "-0.8px",
+  },
+  loginCardSub: {
+    color: "#6B7280",
+    fontSize: 14,
+    marginTop: 8,
+    marginBottom: 20,
   },
   loginSection: {
     display: "grid",
-    gap: 8,
+    gap: 10,
   },
   loginLabel: {
     fontSize: 13,
     fontWeight: 800,
-    color: "var(--text)",
+    color: "#111827",
   },
-  loginDivider: {
-    height: 1,
-    background: "var(--border)",
-    margin: "16px 0",
+  loginInput: {
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: 12,
+    border: "1px solid #E5E7EB",
+    background: "#FFFFFF",
+    color: "#111827",
+    fontSize: 14,
+    outline: "none",
   },
-  badge: {
-    display: "inline-block",
-    padding: "6px 10px",
-    borderRadius: 999,
-    background: "var(--blueSoft)",
-    color: "var(--blue)",
+  loginPrimaryAction: {
+    padding: "12px 14px",
+    borderRadius: 12,
+    border: "none",
+    background: "linear-gradient(135deg, #2563EB, #1D4ED8)",
+    color: "#FFFFFF",
     fontWeight: 800,
-    fontSize: 11,
+    fontSize: 14,
+    cursor: "pointer",
+    marginTop: 6,
   },
-  authBrandIcon: {
-    width: 18,
-    height: 18,
+  loginGhostAction: {
+    padding: "12px 14px",
+    borderRadius: 12,
+    border: "1px solid #E5E7EB",
+    background: "#FFFFFF",
+    color: "#111827",
+    fontWeight: 700,
+    fontSize: 14,
+    cursor: "pointer",
+  },
+  loginDividerText: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    margin: "18px 0",
+    color: "#9CA3AF",
+    fontSize: 12,
+    fontWeight: 700,
+  },
+  googleBtn: {
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: 12,
+    border: "1px solid #E5E7EB",
+    background: "#FFFFFF",
+    color: "#111827",
+    fontWeight: 800,
+    fontSize: 14,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  googleMark: {
+    width: 22,
+    height: 22,
     borderRadius: 999,
-    background: "rgba(255,255,255,0.16)",
-    color: "var(--white)",
+    background: "conic-gradient(from 45deg, #4285F4 0deg 90deg, #34A853 90deg 180deg, #FBBC05 180deg 270deg, #EA4335 270deg 360deg)",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 900,
     lineHeight: 1,
+  },
+  badge: {
+    display: "inline-block",
+    width: "fit-content",
+    padding: "7px 12px",
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.08)",
+    color: "#C7D2FE",
+    fontWeight: 800,
+    fontSize: 11,
+    letterSpacing: 1,
   },
 };
