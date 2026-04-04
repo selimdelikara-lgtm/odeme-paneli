@@ -2343,7 +2343,7 @@ export default function Page() {
   }
 
   const renderAuthScreen = () => (
-    <div style={{ ...styles.loginWrap, ...themeVars }}>
+    <div style={{ ...styles.loginWrap, ...themeVars }} className="login-wrap">
       <div style={styles.loginShell} className="login-shell">
         <div style={styles.loginShowcase} className="login-showcase">
           <div style={styles.loginOrbOne} />
@@ -2641,21 +2641,24 @@ export default function Page() {
           .hero-card{padding:16px !important}
           .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
           .quick-grid{grid-template-columns:1fr !important}
-          .login-shell{grid-template-columns:1fr !important;min-height:auto !important}
+          .login-wrap{padding:16px !important}
+          .login-shell{display:block !important;grid-template-columns:1fr !important;min-height:auto !important;max-width:760px !important;width:100% !important}
           .login-showcase{padding:32px 24px !important;min-height:280px !important}
-          .login-card{max-width:none !important;border-radius:0 !important}
+          .login-card{max-width:none !important;border-radius:0 !important;width:100% !important}
         }
         @media (max-width: 720px){
           .app-content{padding:12px !important}
           .hero-card{border-radius:14px !important}
           .hero-value{font-size:32px !important}
           .hero-actions{justify-content:flex-start !important}
-          .login-brand{font-size:54px !important}
-          .login-headline{font-size:22px !important;max-width:none !important}
+          .login-wrap{padding:12px !important}
+          .login-shell{border-radius:20px !important;max-width:100% !important}
+          .login-showcase{padding:24px 20px !important;min-height:190px !important;justify-content:flex-end !important}
+          .login-card{padding:28px 22px !important}
+          .login-brand{font-size:46px !important;letter-spacing:-1px !important;max-width:180px !important}
+          .login-headline{font-size:20px !important;max-width:240px !important}
           .stats-grid{grid-template-columns:1fr !important}
           .quick-grid{gap:10px !important}
-          .login-showcase{padding:28px 20px !important;min-height:220px !important}
-          .login-shell{border-radius:20px !important}
         }
         @media (max-width: 560px){
           .app-sidebar{padding:14px !important}
@@ -2664,11 +2667,18 @@ export default function Page() {
           .hero-card{padding:14px !important}
           .hero-value{font-size:28px !important}
           .hero-actions{width:100% !important}
-          .login-brand{font-size:42px !important}
-          .login-headline{font-size:18px !important}
-          .login-shell{border-radius:18px !important}
-          .login-showcase{padding:22px 18px !important;min-height:180px !important}
-          .login-card{padding:24px 18px !important}
+          .login-wrap{padding:0 !important}
+          .login-shell{border-radius:0 !important;box-shadow:none !important;min-height:100vh !important}
+          .login-showcase{padding:20px 16px !important;min-height:150px !important}
+          .login-card{padding:24px 16px !important}
+          .login-brand{font-size:38px !important;max-width:150px !important}
+          .login-headline{font-size:16px !important;max-width:200px !important}
+        }
+        @media (max-width: 420px){
+          .login-showcase{padding:18px 14px !important;min-height:132px !important}
+          .login-card{padding:20px 14px !important}
+          .login-brand{font-size:34px !important;max-width:132px !important}
+          .login-headline{font-size:14px !important;max-width:170px !important}
         }
         @media print{
           *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important}
