@@ -67,6 +67,7 @@ type TabMenu = {
   x: number;
   y: number;
   tabName: string;
+  mode: "menu" | "colors";
 };
 
 type DraftState = {
@@ -84,7 +85,6 @@ type RowMeta = {
 };
 
 type TabMeta = {
-  icon: string;
   color: string;
 };
 
@@ -144,7 +144,6 @@ const supabaseKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   "sb_publishable_4M8RAgm3SzrWEMrxm8HDUw_3fRU8cMr";
 
-const DEFAULT_ICONS = ["🎬", "💼", "🚴", "🎯", "📦", "🧾", "💡", "🎥", "📁"];
 const DEFAULT_COLORS = [
   "#2563EB",
   "#0F766E",
@@ -155,6 +154,18 @@ const DEFAULT_COLORS = [
   "#4F46E5",
   "#EA580C",
   "#16A34A",
+  "#E11D48",
+  "#9333EA",
+  "#0EA5E9",
+  "#14B8A6",
+  "#84CC16",
+  "#F97316",
+  "#F59E0B",
+  "#64748B",
+  "#111827",
+  "#EC4899",
+  "#22C55E",
+  "#06B6D4",
 ];
 const MAX_INVOICE_FILE_SIZE_MB = 1;
 const MAX_INVOICE_FILE_SIZE_BYTES = MAX_INVOICE_FILE_SIZE_MB * 1024 * 1024;
@@ -414,6 +425,7 @@ export default function Page() {
     x: 0,
     y: 0,
     tabName: "",
+    mode: "menu",
   });
 
   const [draggedId, setDraggedId] = useState<number | null>(null);
@@ -684,7 +696,6 @@ export default function Page() {
         const tab = row.grup || "";
         if (tab && !next[tab]) {
           next[tab] = {
-            icon: DEFAULT_ICONS[index % DEFAULT_ICONS.length],
             color: DEFAULT_COLORS[index % DEFAULT_COLORS.length],
           };
         }
@@ -1694,11 +1705,7 @@ export default function Page() {
     };
   };
 
-  const aktifTabMeta =
-    tabMeta[aktifSekme] || {
-      icon: "📁",
-      color: "var(--blue)",
-    };
+  const aktifTabMeta = tabMeta[aktifSekme] || { color: "var(--blue)" };
 
   const projectColumns = projectColumnOrder.map((key) => {
     if (key === "select") {
@@ -2324,7 +2331,6 @@ export default function Page() {
       return {
         ...prev,
         [clean]: {
-          icon: DEFAULT_ICONS[Object.keys(prev).length % DEFAULT_ICONS.length],
           color: DEFAULT_COLORS[Object.keys(prev).length % DEFAULT_COLORS.length],
         },
       };
@@ -2352,18 +2358,7 @@ export default function Page() {
   }
 
   function sekmeGorunumDuzenle(tabName: string) {
-    const current = tabMeta[tabName] || { icon: "📁", color: "#2563EB" };
-    const yeniIcon = window.prompt("Emoji/ikon gir", current.icon) || current.icon;
-    const yeniColor =
-      window.prompt("Renk hex gir (#2563EB gibi)", current.color) || current.color;
-
-    setTabMeta((prev) => ({
-      ...prev,
-      [tabName]: {
-        icon: yeniIcon.trim() || current.icon,
-        color: yeniColor.trim() || current.color,
-      },
-    }));
+    setTabMenu((prev) => ({ ...prev, visible: true, mode: "colors", tabName }));
   }
 
   function sekmeArsivDurumunuDegistir(tabName: string) {
@@ -2739,6 +2734,7 @@ export default function Page() {
                       x: e.clientX,
                       y: e.clientY,
                       tabName: tab,
+                      mode: "menu",
                     });
                   }}
                   style={
@@ -3072,9 +3068,7 @@ export default function Page() {
               <div style={styles.quickCard}>
                 <div style={styles.quickTitle}>Sekme Özeti</div>
                 <div style={styles.quickBig}>{tl(toplam)}</div>
-                <div style={styles.quickMuted}>
-                  {aktifTabMeta.icon} bu sekmenin toplamı
-                </div>
+                <div style={styles.quickMuted}>Bu sekmenin toplamı</div>
 
                 <div style={styles.progressWrap}>
                   <div
@@ -3148,13 +3142,13 @@ export default function Page() {
                   </thead>
 
                   <tbody>
-                    {homeProjectStats.map((item) => {
-                      const meta = tabMeta[item.tab] || { icon: "📁", color: palette.blue };
+                      {homeProjectStats.map((item) => {
+                      const meta = tabMeta[item.tab] || { color: palette.blue };
 
                       return (
                         <tr key={item.tab}>
                           <td style={{ ...styles.td, borderLeft: `5px solid ${meta.color}` }}>
-                            {meta.icon} {item.tab}
+                            {item.tab}
                           </td>
                           <td style={styles.td}>{item.kayit}</td>
                           <td style={styles.td}>{item.odenen}</td>
@@ -3387,9 +3381,7 @@ export default function Page() {
                 </div>
 
                 <div style={styles.sectionHead}>
-                  <h2 style={styles.h2}>
-                    {aktifTabMeta.icon} Kayıtlar
-                  </h2>
+                  <h2 style={styles.h2}>Kayıtlar</h2>
                   <div style={{ color: "var(--muted)", fontSize: 13 }}>
                     {sortKey === "manual"
                       ? "SIRA alanından sürükle bırak yap"
@@ -3584,63 +3576,106 @@ export default function Page() {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            className="hover-button"
-            style={styles.contextBtn}
-            onClick={async () => {
-              setTabMenu((p) => ({ ...p, visible: false }));
-              await sekmeYenidenAdlandir(tabMenu.tabName);
-            }}
-          >
-            <span style={styles.btnInner}>
-              <Pencil size={14} />
-              Ad Değiştir
-            </span>
-          </button>
+          {tabMenu.mode === "menu" ? (
+            <>
+              <button
+                className="hover-button"
+                style={styles.contextBtn}
+                onClick={async () => {
+                  setTabMenu((p) => ({ ...p, visible: false }));
+                  await sekmeYenidenAdlandir(tabMenu.tabName);
+                }}
+              >
+                <span style={styles.btnInner}>
+                  <Pencil size={14} />
+                  Ad Değiştir
+                </span>
+              </button>
 
-          <button
-            className="hover-button"
-            style={styles.contextBtn}
-            onClick={() => {
-              setTabMenu((p) => ({ ...p, visible: false }));
-              sekmeGorunumDuzenle(tabMenu.tabName);
-            }}
-          >
-            <span style={styles.btnInner}>
-              <Palette size={14} />
-              Renk / Emoji
-            </span>
-          </button>
+              <button
+                className="hover-button"
+                style={styles.contextBtn}
+                onClick={() => {
+                  sekmeGorunumDuzenle(tabMenu.tabName);
+                }}
+              >
+                <span style={styles.btnInner}>
+                  <Palette size={14} />
+                  Renk Seç
+                </span>
+              </button>
 
-          <button
-            className="hover-button"
-            style={styles.contextBtn}
-            onClick={() => {
-              setTabMenu((p) => ({ ...p, visible: false }));
-              sekmeArsivDurumunuDegistir(tabMenu.tabName);
-            }}
-          >
-            <span style={styles.btnInner}>
-              <Archive size={14} />
-              {archivedTabs.includes(tabMenu.tabName)
-                ? "Arşivden Çıkar"
-                : "Sekmeyi Arşivle"}
-            </span>
-          </button>
+              <button
+                className="hover-button"
+                style={styles.contextBtn}
+                onClick={() => {
+                  setTabMenu((p) => ({ ...p, visible: false }));
+                  sekmeArsivDurumunuDegistir(tabMenu.tabName);
+                }}
+              >
+                <span style={styles.btnInner}>
+                  <Archive size={14} />
+                  {archivedTabs.includes(tabMenu.tabName)
+                    ? "Arşivden Çıkar"
+                    : "Sekmeyi Arşivle"}
+                </span>
+              </button>
 
-          <button
-            className="hover-button"
-            style={{ ...styles.contextBtn, color: "var(--red)" }}
-            onClick={async () => {
-              setTabMenu((p) => ({ ...p, visible: false }));
-              await sekmeSil(tabMenu.tabName);
-            }}
-          >
-            <span style={styles.btnInner}>
-              <Trash2 size={14} />
-              Sekmeyi Sil
-            </span>
-          </button>
+              <button
+                className="hover-button"
+                style={{ ...styles.contextBtn, color: "var(--red)" }}
+                onClick={async () => {
+                  setTabMenu((p) => ({ ...p, visible: false }));
+                  await sekmeSil(tabMenu.tabName);
+                }}
+              >
+                <span style={styles.btnInner}>
+                  <Trash2 size={14} />
+                  Sekmeyi Sil
+                </span>
+              </button>
+            </>
+          ) : (
+            <div style={styles.colorPickerWrap}>
+              <div style={styles.colorPickerHead}>
+                <div style={styles.colorPickerTitle}>Renk Seç</div>
+                <button
+                  type="button"
+                  style={styles.colorPickerBackBtn}
+                  onClick={() => setTabMenu((prev) => ({ ...prev, mode: "menu" }))}
+                >
+                  Geri
+                </button>
+              </div>
+
+              <div style={styles.colorPickerGrid}>
+                {DEFAULT_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => {
+                      setTabMeta((prev) => ({
+                        ...prev,
+                        [tabMenu.tabName]: {
+                          color,
+                        },
+                      }));
+                      setTabMenu((prev) => ({ ...prev, visible: false, mode: "menu" }));
+                    }}
+                    style={{
+                      ...styles.colorSwatch,
+                      background: color,
+                      boxShadow:
+                        (tabMeta[tabMenu.tabName]?.color || "") === color
+                          ? "0 0 0 3px rgba(37,99,235,.22)"
+                          : undefined,
+                    }}
+                    title={color}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : null}
     </div>
@@ -4437,6 +4472,43 @@ const styles: Record<string, CSSProperties> = {
     color: "var(--text)",
     fontSize: 13,
     fontWeight: 700,
+  },
+  colorPickerWrap: {
+    display: "grid",
+    gap: 10,
+  },
+  colorPickerHead: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    padding: "6px 6px 2px",
+  },
+  colorPickerTitle: {
+    fontSize: 13,
+    fontWeight: 800,
+    color: "var(--text)",
+  },
+  colorPickerBackBtn: {
+    border: "none",
+    background: "transparent",
+    color: "var(--blue)",
+    fontSize: 12,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  colorPickerGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+    gap: 8,
+    padding: 6,
+  },
+  colorSwatch: {
+    width: 28,
+    height: 28,
+    borderRadius: 999,
+    border: "2px solid rgba(255,255,255,.72)",
+    cursor: "pointer",
   },
   loginWrap: {
     minHeight: "100vh",
