@@ -1106,6 +1106,64 @@ export default function Page() {
     setMsg("Fatura kaldırıldı.");
   };
 
+  const deleteInvoicesForRows = async (rowIds: number[]) => {
+    if (!rowIds.length) return { error: null as string | null };
+
+    const { data: attachments, error: attachmentsError } = await faturaEkleriTable()
+      .select("id, odeme_id, path")
+      .in("odeme_id", rowIds);
+
+    if (attachmentsError) {
+      return { error: "Fatura kayıtları alınamadı: " + attachmentsError.message };
+    }
+
+    const typedAttachments = ((attachments || []) as Array<{
+      id: number | null;
+      odeme_id: number | null;
+      path: string | null;
+    }>).filter((item) => item.path);
+
+    const attachmentPaths = typedAttachments
+      .map((item) => item.path || "")
+      .filter(Boolean);
+
+    if (attachmentPaths.length) {
+      const { error: storageError } = await supabase.storage
+        .from("faturalar")
+        .remove(attachmentPaths);
+
+      if (storageError) {
+        return { error: "Fatura dosyaları silinemedi: " + storageError.message };
+      }
+    }
+
+    if (typedAttachments.length) {
+      const attachmentIds = typedAttachments
+        .map((item) => item.id)
+        .filter((item): item is number => typeof item === "number");
+
+      if (attachmentIds.length) {
+        const { error: deleteError } = await faturaEkleriTable()
+          .delete()
+          .in("id", attachmentIds);
+
+        if (deleteError) {
+          return { error: "Fatura kayıtları silinemedi: " + deleteError.message };
+        }
+      }
+    }
+
+    setInvoiceMap((prev) => {
+      const next = { ...prev };
+      rowIds.forEach((rowId) => {
+        delete next[rowId];
+      });
+      return next;
+    });
+
+    return { error: null as string | null };
+  };
+
   const exportPDF = async () => {
     try {
       setMsg("PDF hazırlanıyor...");
@@ -1389,18 +1447,19 @@ export default function Page() {
 
   async function kayitSil(id: number) {
     const row = data.find((x) => x.id === id) || null;
+
+    const invoiceDelete = await deleteInvoicesForRows([id]);
+    if (invoiceDelete.error) {
+      setMsg(invoiceDelete.error);
+      return;
+    }
+
     const { error } = await odemelerTable().delete().eq("id", id);
 
     if (error) {
       setMsg("Kayıt silinemedi: " + error.message);
       return;
     }
-
-    setInvoiceMap((prev) => {
-      const next = { ...prev };
-      delete next[id];
-      return next;
-    });
 
     if (row) setLastDeleted([row]);
     if (editId === id) temizle();
@@ -1415,6 +1474,12 @@ export default function Page() {
     if (!onay) return;
 
     const rows = data.filter((x) => (x.grup || "") === tabName);
+    const invoiceDelete = await deleteInvoicesForRows(rows.map((row) => row.id));
+    if (invoiceDelete.error) {
+      setMsg(invoiceDelete.error);
+      return;
+    }
+
     const res = await Promise.all(
       rows.map((x) => odemelerTable().delete().eq("id", x.id))
     );
@@ -1424,14 +1489,6 @@ export default function Page() {
       setMsg("Sekme silinemedi: " + failed.error.message);
       return;
     }
-
-    setInvoiceMap((prev) => {
-      const next = { ...prev };
-      rows.forEach((row) => {
-        delete next[row.id];
-      });
-      return next;
-    });
 
     const kalanSekmeler = sekmeler.filter((s) => s !== tabName);
 
