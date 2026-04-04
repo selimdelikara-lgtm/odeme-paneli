@@ -11,7 +11,6 @@ import {
   UserRound,
 } from "lucide-react";
 import {
-  type ChangeEvent,
   type CSSProperties,
   type Dispatch,
   type MutableRefObject,
@@ -430,8 +429,7 @@ export function SettingsContent({
         </div>
         <div style={styles.settingsStack}>
           <div style={styles.settingsDangerText}>
-            Bu işlem hesabı, panel verilerini ve yüklenen dosyaları kalıcı olarak
-            siler.
+            Bu işlem hesabı, panel verilerini ve yüklenen dosyaları kalıcı olarak siler.
           </div>
           {authProviders.includes("email") ? (
             <div>
@@ -440,9 +438,7 @@ export function SettingsContent({
                 className="soft-input"
                 type="password"
                 value={settingsCurrentPassword}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setSettingsCurrentPassword(e.target.value)
-                }
+                onChange={(e) => setSettingsCurrentPassword(e.target.value)}
                 placeholder="Mevcut şifre"
                 style={styles.input}
               />
