@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Archive,
@@ -331,17 +331,17 @@ export default function Page() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
-        const nextPassword = window.prompt("Yeni Ã…Å¸ifreni gir");
+        const nextPassword = window.prompt("Yeni Ãƒâ€¦Ã…Â¸ifreni gir");
 
         if (nextPassword && nextPassword.trim()) {
           void supabase.auth
             .updateUser({ password: nextPassword.trim() })
             .then(({ error }) => {
               if (error) {
-                setMsg("Ã…Âifre gÃƒÂ¼ncellenemedi: " + error.message);
+                setMsg("Ãƒâ€¦Ã‚Âifre gÃƒÆ’Ã‚Â¼ncellenemedi: " + error.message);
                 return;
               }
-              setMsg("Ã…Âifren gÃƒÂ¼ncellendi. Yeni Ã…Å¸ifrenle giriÃ…Å¸ yapabilirsin.");
+              setMsg("Ãƒâ€¦Ã‚Âifren gÃƒÆ’Ã‚Â¼ncellendi. Yeni Ãƒâ€¦Ã…Â¸ifrenle giriÃƒâ€¦Ã…Â¸ yapabilirsin.");
             });
         }
       }
@@ -380,7 +380,7 @@ export default function Page() {
       .order("id", { ascending: true });
 
     if (error) {
-      setMsg("Veriler alÃ„Â±namadÃ„Â±: " + error.message);
+      setMsg("Veriler alÃƒâ€Ã‚Â±namadÃƒâ€Ã‚Â±: " + error.message);
       setLoading(false);
       return;
     }
@@ -602,7 +602,7 @@ export default function Page() {
       sekme: row.grup || "",
       proje: row.proje || "",
       durum: row.odendi
-        ? "Ãƒâ€“deme alÃ„Â±ndÃ„Â±"
+        ? "ÃƒÆ’Ã¢â‚¬â€œdeme alÃƒâ€Ã‚Â±ndÃƒâ€Ã‚Â±"
         : row.fatura_kesildi
           ? "Fatura kesildi"
           : "Bekliyor",
@@ -648,8 +648,8 @@ export default function Page() {
     const rows = getExportRows();
     const title =
       viewMode === "home"
-        ? "Ãƒâ€“DEDÃ„Â° MÃ„Â° Genel Ãƒâ€“zet"
-        : `${aktifSekme || "Proje"} Ãƒâ€“zeti`;
+        ? "ÃƒÆ’Ã¢â‚¬â€œDEDÃƒâ€Ã‚Â° MÃƒâ€Ã‚Â° Genel ÃƒÆ’Ã¢â‚¬â€œzet"
+        : `${aktifSekme || "Proje"} ÃƒÆ’Ã¢â‚¬â€œzeti`;
     const html = `<!DOCTYPE html>
 <html lang="tr">
   <head>
@@ -716,7 +716,7 @@ export default function Page() {
 
     if (file.size > MAX_INVOICE_FILE_SIZE_BYTES) {
       setMsg(
-        `Fatura yÃƒÂ¼klenemedi: Dosya boyutu en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`
+        `Fatura yÃƒÆ’Ã‚Â¼klenemedi: Dosya boyutu en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`
       );
       return;
     }
@@ -731,7 +731,7 @@ export default function Page() {
       .upload(path, file, { upsert: false });
 
     if (error) {
-      setMsg("Fatura yÃƒÂ¼klenemedi: " + error.message);
+      setMsg("Fatura yÃƒÆ’Ã‚Â¼klenemedi: " + error.message);
       setUploadingInvoiceId(null);
       return;
     }
@@ -762,7 +762,7 @@ export default function Page() {
 
     if (attachmentError || !insertedAttachment) {
       await supabase.storage.from("faturalar").remove([path]);
-      setMsg("Fatura kaydÃ„Â± oluÃ…Å¸turulamadÃ„Â±: " + (attachmentError?.message || "Bilinmeyen hata"));
+      setMsg("Fatura kaydÃƒâ€Ã‚Â± oluÃƒâ€¦Ã…Â¸turulamadÃƒâ€Ã‚Â±: " + (attachmentError?.message || "Bilinmeyen hata"));
       setUploadingInvoiceId(null);
       return;
     }
@@ -774,7 +774,7 @@ export default function Page() {
       [row.id]: [...(prev[row.id] || []), nextAttachment],
     }));
 
-    setMsg("Fatura yÃƒÂ¼klendi.");
+    setMsg("Fatura yÃƒÆ’Ã‚Â¼klendi.");
     setUploadingInvoiceId(null);
   };
 
@@ -784,7 +784,7 @@ export default function Page() {
       : await faturaEkleriTable().delete().eq("path", attachment.path);
 
     if (metadataDelete.error) {
-      setMsg("Fatura kaydÃ„Â± silinemedi: " + metadataDelete.error.message);
+      setMsg("Fatura kaydÃƒâ€Ã‚Â± silinemedi: " + metadataDelete.error.message);
       return;
     }
 
@@ -800,7 +800,7 @@ export default function Page() {
       [rowId]: (prev[rowId] || []).filter((item) => item.path !== attachment.path),
     }));
 
-    setMsg("Fatura kaldÃ„Â±rÃ„Â±ldÃ„Â±.");
+    setMsg("Fatura kaldÃƒâ€Ã‚Â±rÃƒâ€Ã‚Â±ldÃƒâ€Ã‚Â±.");
   };
 
   const deleteInvoicesForRows = async (rowIds: number[]) => {
@@ -811,7 +811,7 @@ export default function Page() {
       .in("odeme_id", rowIds);
 
     if (attachmentsError) {
-      return { error: "Fatura kayÃ„Â±tlarÃ„Â± alÃ„Â±namadÃ„Â±: " + attachmentsError.message };
+      return { error: "Fatura kayÃƒâ€Ã‚Â±tlarÃƒâ€Ã‚Â± alÃƒâ€Ã‚Â±namadÃƒâ€Ã‚Â±: " + attachmentsError.message };
     }
 
     const typedAttachments = ((attachments || []) as Array<{
@@ -830,7 +830,7 @@ export default function Page() {
         .remove(attachmentPaths);
 
       if (storageError) {
-        return { error: "Fatura dosyalarÃ„Â± silinemedi: " + storageError.message };
+        return { error: "Fatura dosyalarÃƒâ€Ã‚Â± silinemedi: " + storageError.message };
       }
     }
 
@@ -845,7 +845,7 @@ export default function Page() {
           .in("id", attachmentIds);
 
         if (deleteError) {
-          return { error: "Fatura kayÃ„Â±tlarÃ„Â± silinemedi: " + deleteError.message };
+          return { error: "Fatura kayÃƒâ€Ã‚Â±tlarÃƒâ€Ã‚Â± silinemedi: " + deleteError.message };
         }
       }
     }
@@ -863,7 +863,7 @@ export default function Page() {
 
   const exportPDF = async () => {
     try {
-      setMsg("PDF hazÃ„Â±rlanÃ„Â±yor...");
+      setMsg("PDF hazÃƒâ€Ã‚Â±rlanÃƒâ€Ã‚Â±yor...");
 
       await loadScript(
         "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
@@ -874,7 +874,7 @@ export default function Page() {
 
       const target = exportRef.current;
       if (!target) {
-        setMsg("PDF alanÃ„Â± bulunamadÃ„Â±.");
+        setMsg("PDF alanÃƒâ€Ã‚Â± bulunamadÃƒâ€Ã‚Â±.");
         return;
       }
 
@@ -883,7 +883,7 @@ export default function Page() {
       const jsPDF = pdfWindow.jspdf?.jsPDF;
 
       if (!html2canvas || !jsPDF) {
-        setMsg("PDF araÃƒÂ§larÃ„Â± yÃƒÂ¼klenemedi.");
+        setMsg("PDF araÃƒÆ’Ã‚Â§larÃƒâ€Ã‚Â± yÃƒÆ’Ã‚Â¼klenemedi.");
         return;
       }
 
@@ -920,7 +920,7 @@ export default function Page() {
       );
       setMsg("PDF indirildi.");
     } catch (error) {
-      setMsg(error instanceof Error ? error.message : "PDF oluÃ…Å¸turulamadÃ„Â±.");
+      setMsg(error instanceof Error ? error.message : "PDF oluÃƒâ€¦Ã…Â¸turulamadÃƒâ€Ã‚Â±.");
     }
   };
 
@@ -962,7 +962,7 @@ export default function Page() {
       : await odemelerTable().insert([payload]);
 
     if (res.error) {
-      setMsg("KayÃ„Â±t kaydedilemedi: " + res.error.message);
+      setMsg("KayÃƒâ€Ã‚Â±t kaydedilemedi: " + res.error.message);
       return;
     }
 
@@ -977,7 +977,7 @@ export default function Page() {
     }
 
     temizle();
-    setMsg(editId ? "KayÃ„Â±t gÃƒÂ¼ncellendi." : "KayÃ„Â±t eklendi.");
+    setMsg(editId ? "KayÃƒâ€Ã‚Â±t gÃƒÆ’Ã‚Â¼ncellendi." : "KayÃƒâ€Ã‚Â±t eklendi.");
     await yukle();
   }
 
@@ -992,7 +992,7 @@ export default function Page() {
     const { error } = await odemelerTable().insert([
       {
         user_id: authUserId,
-        proje: `${row.proje || "Yeni KayÃ„Â±t"} Kopya`,
+        proje: `${row.proje || "Yeni KayÃƒâ€Ã‚Â±t"} Kopya`,
         tutar: row.tutar,
         odendi: row.odendi,
         grup: row.grup,
@@ -1004,11 +1004,11 @@ export default function Page() {
     ] satisfies OdemeInsert[]);
 
     if (error) {
-      setMsg("Kopyalama baÃ…Å¸arÃ„Â±sÃ„Â±z: " + error.message);
+      setMsg("Kopyalama baÃƒâ€¦Ã…Â¸arÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±z: " + error.message);
       return;
     }
 
-    setMsg("KayÃ„Â±t ÃƒÂ§oÃ„Å¸altÃ„Â±ldÃ„Â±.");
+    setMsg("KayÃƒâ€Ã‚Â±t ÃƒÆ’Ã‚Â§oÃƒâ€Ã…Â¸altÃƒâ€Ã‚Â±ldÃƒâ€Ã‚Â±.");
     await yukle();
   }
 
@@ -1027,7 +1027,7 @@ export default function Page() {
       .eq("id", row.id);
 
     if (error) {
-      setMsg("Durum gÃƒÂ¼ncellenemedi: " + error.message);
+      setMsg("Durum gÃƒÆ’Ã‚Â¼ncellenemedi: " + error.message);
       return;
     }
 
@@ -1051,7 +1051,7 @@ export default function Page() {
     if (!rows.length) return;
 
     if (type === "delete") {
-      const confirmed = window.confirm(`${rows.length} kayÃ„Â±t silinsin mi?`);
+      const confirmed = window.confirm(`${rows.length} kayÃƒâ€Ã‚Â±t silinsin mi?`);
       if (!confirmed) return;
       setLastDeleted(rows);
     }
@@ -1062,7 +1062,7 @@ export default function Page() {
 
     const accessToken = session?.access_token;
     if (!accessToken) {
-      setMsg("Toplu iÃ…Å¸lem iÃƒÂ§in oturum doÃ„Å¸rulanamadÃ„Â±.");
+      setMsg("Toplu iÃƒâ€¦Ã…Â¸lem iÃƒÆ’Ã‚Â§in oturum doÃƒâ€Ã…Â¸rulanamadÃƒâ€Ã‚Â±.");
       return;
     }
 
@@ -1081,7 +1081,7 @@ export default function Page() {
     const payload = (await response.json().catch(() => ({}))) as { error?: string };
 
     if (!response.ok) {
-      setMsg(payload.error || "Toplu iÃ…Å¸lem baÃ…Å¸arÃ„Â±sÃ„Â±z.");
+      setMsg(payload.error || "Toplu iÃƒâ€¦Ã…Â¸lem baÃƒâ€¦Ã…Â¸arÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±z.");
       return;
     }
 
@@ -1110,10 +1110,10 @@ export default function Page() {
     setSelectedIds([]);
     setMsg(
       type === "invoice"
-        ? "SeÃƒÂ§ilen kayÃ„Â±tlar fatura kesildi olarak gÃƒÂ¼ncellendi."
+        ? "SeÃƒÆ’Ã‚Â§ilen kayÃƒâ€Ã‚Â±tlar fatura kesildi olarak gÃƒÆ’Ã‚Â¼ncellendi."
         : type === "paid"
-          ? "SeÃƒÂ§ilen kayÃ„Â±tlar ÃƒÂ¶dendi olarak gÃƒÂ¼ncellendi."
-          : "SeÃƒÂ§ilen kayÃ„Â±tlar silindi."
+          ? "SeÃƒÆ’Ã‚Â§ilen kayÃƒâ€Ã‚Â±tlar ÃƒÆ’Ã‚Â¶dendi olarak gÃƒÆ’Ã‚Â¼ncellendi."
+          : "SeÃƒÆ’Ã‚Â§ilen kayÃƒâ€Ã‚Â±tlar silindi."
     );
     await yukle();
   }
@@ -1136,12 +1136,12 @@ export default function Page() {
     const { error } = await odemelerTable().insert(payload);
 
     if (error) {
-      setMsg("Geri alma baÃ…Å¸arÃ„Â±sÃ„Â±z: " + error.message);
+      setMsg("Geri alma baÃƒâ€¦Ã…Â¸arÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±z: " + error.message);
       return;
     }
 
     setLastDeleted(null);
-    setMsg("Silinen kayÃ„Â±tlar geri yÃƒÂ¼klendi.");
+    setMsg("Silinen kayÃƒâ€Ã‚Â±tlar geri yÃƒÆ’Ã‚Â¼klendi.");
     await yukle();
   }
 
@@ -1157,19 +1157,19 @@ export default function Page() {
     const { error } = await odemelerTable().delete().eq("id", id);
 
     if (error) {
-      setMsg("KayÃ„Â±t silinemedi: " + error.message);
+      setMsg("KayÃƒâ€Ã‚Â±t silinemedi: " + error.message);
       return;
     }
 
     if (row) setLastDeleted([row]);
     if (editId === id) temizle();
-    setMsg("KayÃ„Â±t silindi.");
+    setMsg("KayÃƒâ€Ã‚Â±t silindi.");
     await yukle();
   }
 
   async function sekmeSil(tabName: string) {
     const onay = window.confirm(
-      `${tabName} sekmesindeki tÃƒÂ¼m kayÃ„Â±tlar silinecek. Emin misin?`
+      `${tabName} sekmesindeki tÃƒÆ’Ã‚Â¼m kayÃƒâ€Ã‚Â±tlar silinecek. Emin misin?`
     );
     if (!onay) return;
 
@@ -1206,7 +1206,7 @@ export default function Page() {
   }
 
   async function sekmeYenidenAdlandir(tabName: string) {
-    const yeniAd = window.prompt("Sekmenin yeni adÃ„Â± ne olsun?", tabName);
+    const yeniAd = window.prompt("Sekmenin yeni adÃƒâ€Ã‚Â± ne olsun?", tabName);
     if (!yeniAd || !yeniAd.trim()) return;
 
     const rows = data.filter((x) => (x.grup || "") === tabName);
@@ -1221,7 +1221,7 @@ export default function Page() {
     const failed = res.find((r) => r.error);
 
     if (failed?.error) {
-      setMsg("Sekme adÃ„Â± gÃƒÂ¼ncellenemedi: " + failed.error.message);
+      setMsg("Sekme adÃƒâ€Ã‚Â± gÃƒÆ’Ã‚Â¼ncellenemedi: " + failed.error.message);
       return;
     }
 
@@ -1242,7 +1242,7 @@ export default function Page() {
       openProjectTab(yeniAd.trim());
     }
 
-    setMsg("Sekme adÃ„Â± gÃƒÂ¼ncellendi.");
+    setMsg("Sekme adÃƒâ€Ã‚Â± gÃƒÆ’Ã‚Â¼ncellendi.");
     await yukle();
   }
 
@@ -1283,7 +1283,7 @@ export default function Page() {
 
     const failed = res.find((r) => r.error);
     if (failed?.error) {
-      setMsg("SÃ„Â±ralama kaydedilemedi: " + failed.error.message);
+      setMsg("SÃƒâ€Ã‚Â±ralama kaydedilemedi: " + failed.error.message);
       await yukle();
     }
   }
@@ -1331,8 +1331,8 @@ export default function Page() {
   };
 
   const arrow = (key: SortKey) => {
-    if (sortKey !== key) return "Ã¢â€ â€¢";
-    return sortDirection === "asc" ? "Ã¢â€ â€˜" : "Ã¢â€ â€œ";
+    if (sortKey !== key) return "ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Â¢";
+    return sortDirection === "asc" ? "ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ" : "ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Å“";
   };
 
   const moveProjectColumn = (
@@ -1422,7 +1422,7 @@ export default function Page() {
   const durumGorunum = (row: Odeme) => {
     if (row.odendi) {
       return {
-        text: "Ödeme alındı",
+        text: "Ã–deme alÄ±ndÄ±",
         bg: theme === "dark" ? "rgba(60, 193, 139, 0.18)" : "#EAF8F0",
         color: theme === "dark" ? "#9BE4BF" : "#2A8B62",
         rowBg: theme === "dark" ? "#0C1813" : "#FBFEFC",
@@ -1439,7 +1439,7 @@ export default function Page() {
     }
 
     return {
-      text: "Henüz kesilmedi",
+      text: "HenÃ¼z kesilmedi",
       bg: theme === "dark" ? "rgba(244, 114, 182, 0.14)" : "#FDEEF3",
       color: theme === "dark" ? "#F4A4C7" : "#C25A84",
       rowBg: theme === "dark" ? "#181017" : "#FFF9FB",
@@ -1452,7 +1452,7 @@ export default function Page() {
     if (key === "select") {
       return {
         key,
-        label: "SEÃƒâ€¡",
+        label: "SEÃƒÆ’Ã¢â‚¬Â¡",
         className: "no-print",
         style: { ...styles.th, width: 52 },
       };
@@ -1461,7 +1461,7 @@ export default function Page() {
     if (key === "sira") {
       return {
         key,
-        label: `SIRA ${sortKey === "manual" ? "Ã¢â€”Â" : ""}`,
+        label: `SIRA ${sortKey === "manual" ? "ÃƒÂ¢Ã¢â‚¬â€Ã‚Â" : ""}`,
         className: "",
         style: {
           ...styles.th,
@@ -1507,7 +1507,7 @@ export default function Page() {
     if (key === "fatura_tarihi") {
       return {
         key,
-        label: `FATURA TARÃ„Â°HÃ„Â° ${arrow("fatura_tarihi")}`,
+        label: `FATURA TARÃƒâ€Ã‚Â°HÃƒâ€Ã‚Â° ${arrow("fatura_tarihi")}`,
         className: "",
         style: {
           ...styles.th,
@@ -1534,7 +1534,7 @@ export default function Page() {
 
     return {
       key,
-      label: "Ã„Â°Ã…ÂLEM",
+      label: "Ãƒâ€Ã‚Â°Ãƒâ€¦Ã‚ÂLEM",
       className: "no-print",
       style: { ...styles.th, width: 160 },
     };
@@ -1560,7 +1560,7 @@ export default function Page() {
     if (key === "odeme") {
       return {
         key,
-        label: "Ãƒâ€“DEME",
+        label: "ÃƒÆ’Ã¢â‚¬â€œDEME",
         style: { ...styles.th, background: "var(--amberSoft)" },
       };
     }
@@ -1600,7 +1600,7 @@ export default function Page() {
             type="button"
             onClick={() => toggleSelected(row.id)}
             style={styles.checkboxBtn}
-            title="KaydÃ„Â± seÃƒÂ§"
+            title="KaydÃƒâ€Ã‚Â± seÃƒÆ’Ã‚Â§"
           >
             {selectedIds.includes(row.id) ? (
               <CheckSquare size={18} color={palette.blue} />
@@ -1633,11 +1633,11 @@ export default function Page() {
           }}
           title={
             sortKey === "manual"
-              ? "SÃƒÂ¼rÃƒÂ¼kle"
-              : "Manuel sÃ„Â±ralama iÃƒÂ§in SIRA baÃ…Å¸lÃ„Â±Ã„Å¸Ã„Â±na tÃ„Â±kla"
+              ? "SÃƒÆ’Ã‚Â¼rÃƒÆ’Ã‚Â¼kle"
+              : "Manuel sÃƒâ€Ã‚Â±ralama iÃƒÆ’Ã‚Â§in SIRA baÃƒâ€¦Ã…Â¸lÃƒâ€Ã‚Â±Ãƒâ€Ã…Â¸Ãƒâ€Ã‚Â±na tÃƒâ€Ã‚Â±kla"
           }
         >
-          {isDragSource ? "Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢" : "Ã¢â€°Â¡"}
+          {isDragSource ? "ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢" : "ÃƒÂ¢Ã¢â‚¬Â°Ã‚Â¡"}
         </td>
       );
     }
@@ -1647,7 +1647,7 @@ export default function Page() {
         <td
           key={column}
           onDoubleClick={() => editAc(row)}
-          title="DÃƒÂ¼zenlemek iÃƒÂ§in ÃƒÂ§ift tÃ„Â±kla"
+          title="DÃƒÆ’Ã‚Â¼zenlemek iÃƒÆ’Ã‚Â§in ÃƒÆ’Ã‚Â§ift tÃƒâ€Ã‚Â±kla"
           style={{
             ...styles.td,
             borderLeft: `5px solid ${aktifTabMeta.color}`,
@@ -1663,7 +1663,7 @@ export default function Page() {
             />
           ) : (
             <div>
-              <div style={{ fontWeight: 800 }}>{row.proje || "Ã¢â‚¬â€"}</div>
+              <div style={{ fontWeight: 800 }}>{row.proje || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</div>
               {invoices.length > 0 ? (
                 <div style={styles.invoiceList}>
                   {invoices.map((attachment) => (
@@ -1680,7 +1680,7 @@ export default function Page() {
                         type="button"
                         onClick={() => void removeInvoice(row.id, attachment)}
                         style={styles.invoiceRemoveBtn}
-                        title="FaturayÃ„Â± kaldÃ„Â±r"
+                        title="FaturayÃƒâ€Ã‚Â± kaldÃƒâ€Ã‚Â±r"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -1689,10 +1689,10 @@ export default function Page() {
                 </div>
               ) : null}
               <div style={styles.metaText}>
-                OluÃ…Å¸turma: {shortDateTime(meta?.createdAt || null)}
+                OluÃƒâ€¦Ã…Â¸turma: {shortDateTime(meta?.createdAt || null)}
               </div>
               <div style={styles.metaText}>
-                GÃƒÂ¼ncelleme: {shortDateTime(meta?.updatedAt || null)}
+                GÃƒÆ’Ã‚Â¼ncelleme: {shortDateTime(meta?.updatedAt || null)}
               </div>
             </div>
           )}
@@ -1716,9 +1716,9 @@ export default function Page() {
               }}
               style={styles.input}
             >
-              <option value="bekliyor">HenÃƒÂ¼z kesilmedi</option>
+              <option value="bekliyor">HenÃƒÆ’Ã‚Â¼z kesilmedi</option>
               <option value="fatura">Fatura kesildi</option>
-              <option value="odeme">Ãƒâ€“deme alÃ„Â±ndÃ„Â±</option>
+              <option value="odeme">ÃƒÆ’Ã¢â‚¬â€œdeme alÃƒâ€Ã‚Â±ndÃƒâ€Ã‚Â±</option>
             </select>
           ) : (
             <button
@@ -1750,7 +1750,7 @@ export default function Page() {
         <td
           key={column}
           onDoubleClick={() => editAc(row)}
-          title="DÃƒÂ¼zenlemek iÃƒÂ§in ÃƒÂ§ift tÃ„Â±kla"
+          title="DÃƒÆ’Ã‚Â¼zenlemek iÃƒÆ’Ã‚Â§in ÃƒÆ’Ã‚Â§ift tÃƒâ€Ã‚Â±kla"
           style={{ ...styles.td, cursor: "pointer" }}
         >
           {editing ? (
@@ -1773,7 +1773,7 @@ export default function Page() {
         <td
           key={column}
           onDoubleClick={() => editAc(row)}
-          title="DÃƒÂ¼zenlemek iÃƒÂ§in ÃƒÂ§ift tÃ„Â±kla"
+          title="DÃƒÆ’Ã‚Â¼zenlemek iÃƒÆ’Ã‚Â§in ÃƒÆ’Ã‚Â§ift tÃƒâ€Ã‚Â±kla"
           style={{
             ...styles.td,
             cursor: "pointer",
@@ -1801,19 +1801,19 @@ export default function Page() {
                 onChange={(e) => setKdvli(e.target.value === "kdvli")}
                 style={styles.input}
               >
-                <option value="kdvsiz">KDVÃ¢â‚¬â„¢siz</option>
+                <option value="kdvsiz">KDVÃƒÂ¢Ã¢â€šÂ¬Ã¢â€Â¢siz</option>
                 <option value="kdvli">+ %20 KDV</option>
               </select>
               <button className="hover-button" onClick={kaydet} style={styles.secondaryBtn}>
                 Kaydet
               </button>
               <button className="hover-button" onClick={temizle} style={styles.deleteBtn}>
-                Ã„Â°ptal
+                Ãƒâ€Ã‚Â°ptal
               </button>
             </div>
           ) : (
             <div>
-              <div>{row.tutar ? tl(Number(row.tutar)) : "Ã¢â‚¬â€"}</div>
+              <div>{row.tutar ? tl(Number(row.tutar)) : "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</div>
               {row.kdvli ? <div style={styles.metaText}>+ %20 KDV</div> : null}
             </div>
           )}
@@ -1828,7 +1828,7 @@ export default function Page() {
             className="hover-button"
             onClick={() => editAc(row)}
             style={styles.iconActionBtn}
-            title="DÃƒÂ¼zenle"
+            title="DÃƒÆ’Ã‚Â¼zenle"
           >
             <Pencil size={15} />
           </button>
@@ -1836,7 +1836,7 @@ export default function Page() {
             className="hover-button"
             onClick={() => void kaydiKopyala(row)}
             style={styles.iconActionBtn}
-            title="Ãƒâ€¡oÃ„Å¸alt"
+            title="ÃƒÆ’Ã¢â‚¬Â¡oÃƒâ€Ã…Â¸alt"
           >
             <Copy size={15} />
           </button>
@@ -1844,7 +1844,7 @@ export default function Page() {
             className="hover-button"
             onClick={() => openInvoicePicker(row.id)}
             style={styles.iconActionBtn}
-            title="Fatura yÃƒÂ¼kle"
+            title="Fatura yÃƒÆ’Ã‚Â¼kle"
             disabled={uploadingInvoiceId === row.id}
           >
             <Upload size={15} />
@@ -1872,11 +1872,11 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Supabase giriÃ…Å¸ baÃ…Å¸arÃ„Â±sÃ„Â±z: " + error.message);
+      setMsg("Supabase giriÃƒâ€¦Ã…Â¸ baÃƒâ€¦Ã…Â¸arÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±z: " + error.message);
       return;
     }
 
-    setMsg("Supabase ile giriÃ…Å¸ yapÃ„Â±ldÃ„Â±.");
+    setMsg("Supabase ile giriÃƒâ€¦Ã…Â¸ yapÃƒâ€Ã‚Â±ldÃƒâ€Ã‚Â±.");
   }
 
   async function authSignUp() {
@@ -1893,17 +1893,17 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Hesap oluÃ…Å¸turulamadÃ„Â±: " + error.message);
+      setMsg("Hesap oluÃƒâ€¦Ã…Â¸turulamadÃƒâ€Ã‚Â±: " + error.message);
       return;
     }
 
     setSignupMode(false);
-    setMsg("Hesap oluÃ…Å¸turuldu. E-posta doÃ„Å¸rulamasÃ„Â± aÃƒÂ§Ã„Â±ksa kutunu kontrol et.");
+    setMsg("Hesap oluÃƒâ€¦Ã…Â¸turuldu. E-posta doÃƒâ€Ã…Â¸rulamasÃƒâ€Ã‚Â± aÃƒÆ’Ã‚Â§Ãƒâ€Ã‚Â±ksa kutunu kontrol et.");
   }
 
   async function authResetPassword() {
     if (!email.trim()) {
-      setMsg("Ã…Âifre sÃ„Â±fÃ„Â±rlama iÃƒÂ§in ÃƒÂ¶nce e-posta adresini gir.");
+      setMsg("Ãƒâ€¦Ã‚Âifre sÃƒâ€Ã‚Â±fÃƒâ€Ã‚Â±rlama iÃƒÆ’Ã‚Â§in ÃƒÆ’Ã‚Â¶nce e-posta adresini gir.");
       return;
     }
 
@@ -1913,11 +1913,11 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Ã…Âifre sÃ„Â±fÃ„Â±rlama e-postasÃ„Â± gÃƒÂ¶nderilemedi: " + error.message);
+      setMsg("Ãƒâ€¦Ã‚Âifre sÃƒâ€Ã‚Â±fÃƒâ€Ã‚Â±rlama e-postasÃƒâ€Ã‚Â± gÃƒÆ’Ã‚Â¶nderilemedi: " + error.message);
       return;
     }
 
-    setMsg("Ã…Âifre sÃ„Â±fÃ„Â±rlama baÃ„Å¸lantÃ„Â±sÃ„Â± e-posta adresine gÃƒÂ¶nderildi.");
+    setMsg("Ãƒâ€¦Ã‚Âifre sÃƒâ€Ã‚Â±fÃƒâ€Ã‚Â±rlama baÃƒâ€Ã…Â¸lantÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â± e-posta adresine gÃƒÆ’Ã‚Â¶nderildi.");
   }
 
   async function authLoginWithGoogle() {
@@ -1931,7 +1931,7 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Google giriÃ…Å¸i baÃ…Å¸latÃ„Â±lamadÃ„Â±: " + error.message);
+      setMsg("Google giriÃƒâ€¦Ã…Â¸i baÃƒâ€¦Ã…Â¸latÃƒâ€Ã‚Â±lamadÃƒâ€Ã‚Â±: " + error.message);
     }
   }
 
@@ -1948,7 +1948,7 @@ export default function Page() {
     if (!authUserId) return;
 
     if (file.size > MAX_INVOICE_FILE_SIZE_BYTES) {
-      setMsg(`Profil fotoÃ„Å¸rafÃ„Â± en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`);
+      setMsg(`Profil fotoÃƒâ€Ã…Â¸rafÃƒâ€Ã‚Â± en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`);
       return;
     }
 
@@ -1963,7 +1963,7 @@ export default function Page() {
       });
 
     if (error) {
-      setMsg("Profil fotoÃ„Å¸rafÃ„Â± yÃƒÂ¼klenemedi: " + error.message);
+      setMsg("Profil fotoÃƒâ€Ã…Â¸rafÃƒâ€Ã‚Â± yÃƒÆ’Ã‚Â¼klenemedi: " + error.message);
       setSettingsBusy(false);
       return;
     }
@@ -1981,13 +1981,13 @@ export default function Page() {
     });
 
     if (profileError) {
-      setMsg("Profil gÃƒÂ¼ncellenemedi: " + profileError.message);
+      setMsg("Profil gÃƒÆ’Ã‚Â¼ncellenemedi: " + profileError.message);
       setSettingsBusy(false);
       return;
     }
 
     setSettingsAvatarUrl(avatarUrl);
-    setMsg("Profil fotoÃ„Å¸rafÃ„Â± gÃƒÂ¼ncellendi.");
+    setMsg("Profil fotoÃƒâ€Ã…Â¸rafÃƒâ€Ã‚Â± gÃƒÆ’Ã‚Â¼ncellendi.");
     setSettingsBusy(false);
   }
 
@@ -2007,23 +2007,23 @@ export default function Page() {
       return;
     }
 
-    setMsg("Hesap ayarlarÃ„Â± kaydedildi.");
+    setMsg("Hesap ayarlarÃƒâ€Ã‚Â± kaydedildi.");
     setSettingsBusy(false);
   }
 
   async function changePassword() {
     if (!settingsPassword.trim()) {
-      setMsg("Yeni Ã…Å¸ifre alanÃ„Â± boÃ…Å¸ olamaz.");
+      setMsg("Yeni Ãƒâ€¦Ã…Â¸ifre alanÃƒâ€Ã‚Â± boÃƒâ€¦Ã…Â¸ olamaz.");
       return;
     }
 
     if (settingsPassword.trim().length < 6) {
-      setMsg("Yeni Ã…Å¸ifre en az 6 karakter olmalÃ„Â±.");
+      setMsg("Yeni Ãƒâ€¦Ã…Â¸ifre en az 6 karakter olmalÃƒâ€Ã‚Â±.");
       return;
     }
 
     if (settingsPassword !== settingsPasswordRepeat) {
-      setMsg("Ã…Âifre tekrar alanÃ„Â± eÃ…Å¸leÃ…Å¸miyor.");
+      setMsg("Ãƒâ€¦Ã‚Âifre tekrar alanÃƒâ€Ã‚Â± eÃƒâ€¦Ã…Â¸leÃƒâ€¦Ã…Â¸miyor.");
       return;
     }
 
@@ -2033,14 +2033,14 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Ã…Âifre deÃ„Å¸iÃ…Å¸tirilemedi: " + error.message);
+      setMsg("Ãƒâ€¦Ã‚Âifre deÃƒâ€Ã…Â¸iÃƒâ€¦Ã…Â¸tirilemedi: " + error.message);
       setSettingsBusy(false);
       return;
     }
 
     setSettingsPassword("");
     setSettingsPasswordRepeat("");
-    setMsg("Ã…Âifre gÃƒÂ¼ncellendi.");
+    setMsg("Ãƒâ€¦Ã‚Âifre gÃƒÆ’Ã‚Â¼ncellendi.");
     setSettingsBusy(false);
   }
 
@@ -2048,7 +2048,7 @@ export default function Page() {
     if (!authUserId) return;
 
     const confirmed = window.confirm(
-      "Bu iÃ…Å¸lem hesabÃ„Â±, panel verilerini ve yÃƒÂ¼klenen dosyalarÃ„Â± kalÃ„Â±cÃ„Â± olarak siler. Devam edilsin mi?"
+      "Bu iÃƒâ€¦Ã…Â¸lem hesabÃƒâ€Ã‚Â±, panel verilerini ve yÃƒÆ’Ã‚Â¼klenen dosyalarÃƒâ€Ã‚Â± kalÃƒâ€Ã‚Â±cÃƒâ€Ã‚Â± olarak siler. Devam edilsin mi?"
     );
     if (!confirmed) return;
 
@@ -2060,14 +2060,14 @@ export default function Page() {
 
     const accessToken = session?.access_token;
     if (!accessToken) {
-      setMsg("Hesap silme iÃƒÂ§in oturum doÃ„Å¸rulanamadÃ„Â±.");
+      setMsg("Hesap silme iÃƒÆ’Ã‚Â§in oturum doÃƒâ€Ã…Â¸rulanamadÃƒâ€Ã‚Â±.");
       setSettingsBusy(false);
       return;
     }
 
     if (authProviders.includes("email")) {
       if (!authEmail || !settingsCurrentPassword.trim()) {
-        setMsg("HesabÃ„Â± kapatmak iÃƒÂ§in mevcut Ã…Å¸ifreni gir.");
+        setMsg("HesabÃƒâ€Ã‚Â± kapatmak iÃƒÆ’Ã‚Â§in mevcut Ãƒâ€¦Ã…Â¸ifreni gir.");
         setSettingsBusy(false);
         return;
       }
@@ -2078,7 +2078,7 @@ export default function Page() {
       });
 
       if (verifyError) {
-        setMsg("Mevcut Ã…Å¸ifre doÃ„Å¸rulanamadÃ„Â±.");
+        setMsg("Mevcut Ãƒâ€¦Ã…Â¸ifre doÃƒâ€Ã…Â¸rulanamadÃƒâ€Ã‚Â±.");
         setSettingsBusy(false);
         return;
       }
@@ -2102,11 +2102,11 @@ export default function Page() {
     await supabase.auth.signOut();
     setSettingsCurrentPassword("");
     setSettingsBusy(false);
-    setMsg("Hesap ve tÃƒÂ¼m veriler silindi.");
+    setMsg("Hesap ve tÃƒÆ’Ã‚Â¼m veriler silindi.");
   }
 
   function yeniProjeOlustur() {
-    const ad = window.prompt("Proje adÃ„Â±");
+    const ad = window.prompt("Proje adÃƒâ€Ã‚Â±");
     if (!ad || !ad.trim()) return;
 
     const clean = ad.trim();
@@ -2346,7 +2346,7 @@ export default function Page() {
                       ? styles.activeTab
                       : styles.tab
                   }
-                  title="SaÃ„Å¸ tÃ„Â±k: sekme seÃƒÂ§enekleri"
+                  title="SaÃƒâ€Ã…Â¸ tÃƒâ€Ã‚Â±k: sekme seÃƒÆ’Ã‚Â§enekleri"
                 >
                   <span style={styles.sidebarTabInner}>
                     <span
@@ -2370,7 +2370,7 @@ export default function Page() {
             >
               <span style={styles.sidebarTabInner}>
                 <Settings2 size={16} />
-                Hesap AyarlarÃ„Â±
+                Hesap AyarlarÃƒâ€Ã‚Â±
               </span>
             </button>
             <button
@@ -2380,7 +2380,7 @@ export default function Page() {
             >
               <span style={styles.btnInner}>
                 <Archive size={16} />
-                {showArchivedTabs ? "Aktifleri GÃƒÂ¶ster" : "ArÃ…Å¸ivleri GÃƒÂ¶ster"}
+                {showArchivedTabs ? "Aktifleri GÃƒÆ’Ã‚Â¶ster" : "ArÃƒâ€¦Ã…Â¸ivleri GÃƒÆ’Ã‚Â¶ster"}
               </span>
             </button>
           </div>
@@ -2393,15 +2393,15 @@ export default function Page() {
                 {viewMode === "home"
                   ? "Ana Sayfa"
                   : viewMode === "settings"
-                    ? "Hesap AyarlarÃ„Â±"
+                    ? "Hesap AyarlarÃƒâ€Ã‚Â±"
                     : aktifSekme || "Proje"}
               </h1>
               <div style={styles.pageSubtitle}>
                 {viewMode === "home"
-                  ? "Tahsilat ve fatura takibinin genel ÃƒÂ¶zeti"
+                  ? "Tahsilat ve fatura takibinin genel ÃƒÆ’Ã‚Â¶zeti"
                   : viewMode === "settings"
-                    ? "Profil, gÃƒÂ¼venlik ve hesap iÃ…Å¸lemleri"
-                    : "Sekme detaylarÃ„Â±"}
+                    ? "Profil, gÃƒÆ’Ã‚Â¼venlik ve hesap iÃƒâ€¦Ã…Â¸lemleri"
+                    : "Sekme detaylarÃƒâ€Ã‚Â±"}
               </div>
             </div>
 
@@ -2430,7 +2430,7 @@ export default function Page() {
               >
                 <span style={styles.btnInner}>
                   {theme === "light" ? <Moon size={16} /> : <SunMedium size={16} />}
-                  {theme === "light" ? "KaranlÃ„Â±k Tema" : "AÃƒÂ§Ã„Â±k Tema"}
+                  {theme === "light" ? "KaranlÃƒâ€Ã‚Â±k Tema" : "AÃƒÆ’Ã‚Â§Ãƒâ€Ã‚Â±k Tema"}
                 </span>
               </button>
 
@@ -2441,7 +2441,7 @@ export default function Page() {
               >
                 <span style={styles.btnInner}>
                   <LogOut size={16} />
-                  Ãƒâ€¡Ã„Â±kÃ„Â±Ã…Å¸ Yap
+                  ÃƒÆ’Ã¢â‚¬Â¡Ãƒâ€Ã‚Â±kÃƒâ€Ã‚Â±Ãƒâ€¦Ã…Â¸ Yap
                 </span>
               </button>
             </div>
@@ -2490,7 +2490,7 @@ export default function Page() {
                 >
                   <span style={styles.heroExportToggleInner}>
                     <Download size={14} />
-                    DÃ„Â±Ã…Å¸a Aktar
+                    DÃƒâ€Ã‚Â±Ãƒâ€¦Ã…Â¸a Aktar
                     <ChevronDown size={14} />
                   </span>
                 </button>
@@ -2582,7 +2582,7 @@ export default function Page() {
 
             <div style={styles.heroSubRow}>
               <div>
-                <div style={styles.heroSubTitle}>Ã–DENEN</div>
+                <div style={styles.heroSubTitle}>Ãƒâ€“DENEN</div>
                 <div style={styles.heroSubValue}>
                   {tl(tumOdenenTutar)}
                 </div>
@@ -2604,14 +2604,14 @@ export default function Page() {
               <>
                 <Stat
                   styles={styles}
-                  title="Toplam KayÄ±t"
+                  title="Toplam KayÃ„Â±t"
                   value={String(filteredHomeRows.length)}
                   icon={<FolderKanban size={16} color={palette.blue} />}
                   iconWrapStyle={styles.statIconBlue}
                 />
                 <Stat
                   styles={styles}
-                  title="Ã–deme AlÄ±ndÄ±"
+                  title="Ãƒâ€“deme AlÃ„Â±ndÃ„Â±"
                   value={String(tumOdeme)}
                   icon={<CheckCircle2 size={16} color={palette.teal} />}
                   iconWrapStyle={styles.statIconTeal}
@@ -2635,14 +2635,14 @@ export default function Page() {
               <>
                 <Stat
                   styles={styles}
-                  title="Toplam KayÄ±t"
+                  title="Toplam KayÃ„Â±t"
                   value={String(filteredActiveKayitlar.length)}
                   icon={<FolderKanban size={16} color={aktifTabMeta.color} />}
                   iconWrapStyle={styles.statIconBlue}
                 />
                 <Stat
                   styles={styles}
-                  title="Ã–deme AlÄ±ndÄ±"
+                  title="Ãƒâ€“deme AlÃ„Â±ndÃ„Â±"
                   value={String(odemesiAlinanAdet)}
                   icon={<CheckCircle2 size={16} color={palette.teal} />}
                   iconWrapStyle={styles.statIconTeal}
@@ -2668,9 +2668,9 @@ export default function Page() {
           {viewMode === "home" ? (
             <div style={styles.quickGrid} className="quick-grid">
               <div style={styles.quickCard}>
-                <div style={styles.quickTitle}>Tahsilat Ã–zeti</div>
+                <div style={styles.quickTitle}>Tahsilat Ãƒâ€“zeti</div>
                 <div style={styles.quickBig}>{tl(tumOdenenTutar)}</div>
-                <div style={styles.quickMuted}>Filtreye gÃ¶re tahsil edilen tutar</div>
+                <div style={styles.quickMuted}>Filtreye gÃƒÂ¶re tahsil edilen tutar</div>
 
                 <div style={styles.progressWrap}>
                   <div
@@ -2682,7 +2682,7 @@ export default function Page() {
                 </div>
 
                 <div style={styles.quickFooterRow}>
-                  <span>Tahsilat OranÄ±</span>
+                  <span>Tahsilat OranÃ„Â±</span>
                   <strong>%{tahsilatYuzdesiGenel}</strong>
                 </div>
 
@@ -2693,7 +2693,7 @@ export default function Page() {
               </div>
 
               <div style={styles.quickCard}>
-                <div style={styles.quickTitle}>HÄ±zlÄ± Durum</div>
+                <div style={styles.quickTitle}>HÃ„Â±zlÃ„Â± Durum</div>
 
                 <div style={styles.iconStatGrid}>
                   <div style={styles.iconStatBox}>
@@ -2709,7 +2709,7 @@ export default function Page() {
                       <CheckCircle2 size={18} color={palette.teal} />
                     </div>
                     <div style={styles.iconStatNumber}>{tumOdeme}</div>
-                    <div style={styles.iconStatLabel}>Ã–deme</div>
+                    <div style={styles.iconStatLabel}>Ãƒâ€“deme</div>
                   </div>
 
                   <div style={styles.iconStatBox}>
@@ -2734,10 +2734,10 @@ export default function Page() {
             </div>
           ) : (
 <div style={styles.quickGrid} className="quick-grid">
-              <div style={styles.quickCard}>
-                <div style={styles.quickTitle}>Sekme Ã–zeti</div>
-                <div style={styles.quickBig}>{tl(toplam)}</div>
-                <div style={styles.quickMuted}>Bu sekmenin toplamÄ±</div>
+              <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
+                <div style={styles.quickTitle}>{"Sekme ?zeti"}</div>
+                <div style={styles.projectSummaryAmount}>{tl(toplam)}</div>
+                <div style={styles.quickMuted}>{"Bu sekmenin toplam?"}</div>
 
                 <div style={styles.progressWrap}>
                   <div
@@ -2749,65 +2749,40 @@ export default function Page() {
                   />
                 </div>
 
-                <div style={styles.quickFooterRow}>
-                  <span>Tahsilat OranÄ±</span>
+                <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
+                  <span>{"Tahsilat Oran?"}</span>
                   <strong>%{tahsilatYuzdesiAktif}</strong>
                 </div>
 
-                <div style={styles.quickFooterRow}>
-                  <span>Ã–denen</span>
+                <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
+                  <span>{"?denen"}</span>
                   <strong>{tl(odenen)}</strong>
                 </div>
 
-                <div style={styles.quickFooterRow}>
+                <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
                   <span>Kalan</span>
                   <strong>{tl(kalan)}</strong>
                 </div>
-
-                <div style={styles.quickSummaryGrid}>
-                  <div style={styles.quickSummaryItem}>
-                    <div style={styles.quickSummaryLabel}>Tahsilat</div>
-                    <div style={styles.quickSummaryValue}>%{tahsilatYuzdesiAktif}</div>
-                  </div>
-                  <div style={styles.quickSummaryItem}>
-                    <div style={styles.quickSummaryLabel}>Ã–denen</div>
-                    <div style={styles.quickSummaryValue}>{tl(odenen)}</div>
-                  </div>
-                </div>
               </div>
 
-              <div style={styles.quickCard}>
-                <div style={styles.quickTitle}>HÄ±zlÄ± Bilgi</div>
-                <div style={styles.iconStatGrid}>
-                  <div style={styles.iconStatBox}>
-                    <div style={{ ...styles.iconStatIcon, ...styles.statIconTeal }}>
-                      <CheckCircle2 size={18} color={palette.teal} />
-                    </div>
-                    <div style={styles.iconStatNumber}>{odemesiAlinanAdet}</div>
-                    <div style={styles.iconStatLabel}>Ã–deme</div>
+              <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
+                <div style={styles.quickTitle}>{"H?zl? Bilgi"}</div>
+                <div style={styles.projectInfoList}>
+                  <div style={styles.projectInfoRow}>
+                    <span>{"?deme Al?nan"}</span>
+                    <strong>{odemesiAlinanAdet}</strong>
                   </div>
-                  <div style={styles.iconStatBox}>
-                    <div style={{ ...styles.iconStatIcon, ...styles.statIconAmber }}>
-                      <Receipt size={18} color={palette.amber} />
-                    </div>
-                    <div style={styles.iconStatNumber}>{faturasiKesilenAdet}</div>
-                    <div style={styles.iconStatLabel}>Fatura</div>
+                  <div style={styles.projectInfoRow}>
+                    <span>{"Fatura Kesilen"}</span>
+                    <strong>{faturasiKesilenAdet}</strong>
                   </div>
-                  <div style={styles.iconStatBox}>
-                    <div style={{ ...styles.iconStatIcon, ...styles.statIconRed }}>
-                      <Clock3 size={18} color={palette.red} />
-                    </div>
-                    <div style={styles.iconStatNumber}>
-                      {filteredActiveKayitlar.filter((x) => !x.odendi).length}
-                    </div>
-                    <div style={styles.iconStatLabel}>Bekleyen</div>
+                  <div style={styles.projectInfoRow}>
+                    <span>Bekleyen</span>
+                    <strong>{filteredActiveKayitlar.filter((x) => !x.odendi).length}</strong>
                   </div>
-                  <div style={styles.iconStatBox}>
-                    <div style={{ ...styles.iconStatIcon, ...styles.statIconBlue }}>
-                      <CheckSquare size={18} color={palette.blue} />
-                    </div>
-                    <div style={styles.iconStatNumber}>{selectedVisibleIds.length}</div>
-                    <div style={styles.iconStatLabel}>SeÃ§ili</div>
+                  <div style={styles.projectInfoRow}>
+                    <span>{"Se?ili Kay?t"}</span>
+                    <strong>{selectedVisibleIds.length}</strong>
                   </div>
                 </div>
               </div>
@@ -2817,7 +2792,7 @@ export default function Page() {
           {viewMode === "home" ? (
             <div style={styles.card}>
               <div style={styles.sectionHead}>
-                <h2 style={{ ...styles.h2, fontWeight: 900 }}>Genel Proje Ã–zeti</h2>
+                <h2 style={{ ...styles.h2, fontWeight: 900 }}>Genel Proje Ãƒâ€“zeti</h2>
                 <div style={{ color: "var(--muted)", fontSize: 13 }}>
                   {homeProjectStats.length} proje
                 </div>
@@ -2882,7 +2857,7 @@ export default function Page() {
                               opacity:
                                 draggedHomeColumn === column.key ? 0.55 : column.style.opacity,
                             }}
-                            title="SÃƒÂ¼rÃƒÂ¼kleyerek yer deÃ„Å¸iÃ…Å¸tir"
+                            title="SÃƒÆ’Ã‚Â¼rÃƒÆ’Ã‚Â¼kleyerek yer deÃƒâ€Ã…Â¸iÃƒâ€¦Ã…Â¸tir"
                           >
                             {column.label}
                           </th>
@@ -2950,7 +2925,7 @@ export default function Page() {
             <>
               <div style={styles.card}>
                 <div style={styles.sectionHead}>
-                  <h2 style={styles.h2}>KayÃ„Â±t Ekle / GÃƒÂ¼ncelle</h2>
+                  <h2 style={styles.h2}>KayÃƒâ€Ã‚Â±t Ekle / GÃƒÆ’Ã‚Â¼ncelle</h2>
                   <div style={{ color: "var(--muted)", fontSize: 12 }}>
                     Taslak otomatik kaydediliyor
                   </div>
@@ -2994,7 +2969,7 @@ export default function Page() {
                         }}
                         style={styles.input}
                       >
-                        <option value="kdvsiz">KDVÃ¢â‚¬â„¢siz</option>
+                        <option value="kdvsiz">KDVÃƒÂ¢Ã¢â€šÂ¬Ã¢â€Â¢siz</option>
                         <option value="kdvli">+ %20 KDV</option>
                       </select>
 
@@ -3013,7 +2988,7 @@ export default function Page() {
                   </div>
 
                   <div style={styles.formSection}>
-                    <div style={styles.formSectionTitle}>Durum ve Ã„Â°Ã…Å¸lem</div>
+                    <div style={styles.formSectionTitle}>Durum ve Ãƒâ€Ã‚Â°Ãƒâ€¦Ã…Â¸lem</div>
                     <div style={styles.formChecks}>
                       <label style={styles.check}>
                         <input
@@ -3043,7 +3018,7 @@ export default function Page() {
                             });
                           }}
                         />
-                        Ãƒâ€“deme AlÃ„Â±ndÃ„Â±
+                        ÃƒÆ’Ã¢â‚¬â€œdeme AlÃƒâ€Ã‚Â±ndÃƒâ€Ã‚Â±
                       </label>
                     </div>
 
@@ -3055,7 +3030,7 @@ export default function Page() {
                       >
                         <span style={styles.btnInner}>
                           <Plus size={16} />
-                          {editId ? "GÃƒÂ¼ncelle" : "Kaydet"}
+                          {editId ? "GÃƒÆ’Ã‚Â¼ncelle" : "Kaydet"}
                         </span>
                       </button>
 
@@ -3065,7 +3040,7 @@ export default function Page() {
                           onClick={temizle}
                           style={styles.secondaryBtn}
                         >
-                          Ã„Â°ptal
+                          Ãƒâ€Ã‚Â°ptal
                         </button>
                       ) : null}
                     </div>
@@ -3075,9 +3050,9 @@ export default function Page() {
 
               <div style={styles.card} className="no-print">
                 <div style={styles.bulkHead}>
-                  <div style={styles.bulkTitle}>Toplu Ã„Â°Ã…Å¸lem</div>
+                  <div style={styles.bulkTitle}>Toplu Ãƒâ€Ã‚Â°Ãƒâ€¦Ã…Â¸lem</div>
                   <div style={{ color: "var(--muted)", fontSize: 13 }}>
-                    {selectedVisibleIds.length} kayÃ„Â±t seÃƒÂ§ili
+                    {selectedVisibleIds.length} kayÃƒâ€Ã‚Â±t seÃƒÆ’Ã‚Â§ili
                   </div>
                 </div>
 
@@ -3093,7 +3068,7 @@ export default function Page() {
                       ) : (
                         <Square size={16} />
                       )}
-                      {allFilteredSelected ? "SeÃƒÂ§imi KaldÃ„Â±r" : "TÃƒÂ¼mÃƒÂ¼nÃƒÂ¼ SeÃƒÂ§"}
+                      {allFilteredSelected ? "SeÃƒÆ’Ã‚Â§imi KaldÃƒâ€Ã‚Â±r" : "TÃƒÆ’Ã‚Â¼mÃƒÆ’Ã‚Â¼nÃƒÆ’Ã‚Â¼ SeÃƒÆ’Ã‚Â§"}
                     </span>
                   </button>
 
@@ -3115,7 +3090,7 @@ export default function Page() {
                   >
                     <span style={styles.btnInner}>
                       <CheckCircle2 size={16} />
-                      Ãƒâ€“dendi Yap
+                      ÃƒÆ’Ã¢â‚¬â€œdendi Yap
                     </span>
                   </button>
 
@@ -3126,7 +3101,7 @@ export default function Page() {
                   >
                     <span style={styles.btnInner}>
                       <Trash2 size={16} />
-                      SeÃƒÂ§ilileri Sil
+                      SeÃƒÆ’Ã‚Â§ilileri Sil
                     </span>
                   </button>
                 </div>
@@ -3136,7 +3111,7 @@ export default function Page() {
 
               {lastDeleted?.length ? (
                 <div style={styles.undoBar} className="no-print">
-                  <span>{lastDeleted.length} kayÃ„Â±t silindi.</span>
+                  <span>{lastDeleted.length} kayÃƒâ€Ã‚Â±t silindi.</span>
                   <button
                     className="hover-button"
                     onClick={() => void undoDelete()}
@@ -3165,7 +3140,7 @@ export default function Page() {
                   </div>
 
                   <div style={styles.miniHighlight}>
-                    <div style={styles.miniLabelStrong}>Ãƒâ€“denen</div>
+                    <div style={styles.miniLabelStrong}>ÃƒÆ’Ã¢â‚¬â€œdenen</div>
                     <AnimatedMoney value={odenen} strong />
                   </div>
 
@@ -3176,17 +3151,17 @@ export default function Page() {
                 </div>
 
                 <div style={styles.sectionHead}>
-                  <h2 style={styles.h2}>KayÃ„Â±tlar</h2>
+                  <h2 style={styles.h2}>KayÃƒâ€Ã‚Â±tlar</h2>
                   <div style={{ color: "var(--muted)", fontSize: 13 }}>
                     {sortKey === "manual"
-                      ? "SIRA alanÃ„Â±ndan sÃƒÂ¼rÃƒÂ¼kle bÃ„Â±rak yap"
-                      : "BaÃ…Å¸lÃ„Â±Ã„Å¸a tÃ„Â±klayarak sÃ„Â±ralama deÃ„Å¸iÃ…Å¸ir"}
+                      ? "SIRA alanÃƒâ€Ã‚Â±ndan sÃƒÆ’Ã‚Â¼rÃƒÆ’Ã‚Â¼kle bÃƒâ€Ã‚Â±rak yap"
+                      : "BaÃƒâ€¦Ã…Â¸lÃƒâ€Ã‚Â±Ãƒâ€Ã…Â¸a tÃƒâ€Ã‚Â±klayarak sÃƒâ€Ã‚Â±ralama deÃƒâ€Ã…Â¸iÃƒâ€¦Ã…Â¸ir"}
                   </div>
                 </div>
 
                 {draggedId !== null && sortKey === "manual" ? (
                   <div style={styles.dragNotice} className="no-print">
-                    KaydÃ„Â± bÃ„Â±rakacaÃ„Å¸Ã„Â±n satÃ„Â±r mavi ÃƒÂ§izgiyle iÃ…Å¸aretlenir. ÃƒÅ“st ÃƒÂ§izgi ÃƒÂ¼ste, alt ÃƒÂ§izgi alta bÃ„Â±rakÃ„Â±r.
+                    KaydÃƒâ€Ã‚Â± bÃƒâ€Ã‚Â±rakacaÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±n satÃƒâ€Ã‚Â±r mavi ÃƒÆ’Ã‚Â§izgiyle iÃƒâ€¦Ã…Â¸aretlenir. ÃƒÆ’Ã…â€œst ÃƒÆ’Ã‚Â§izgi ÃƒÆ’Ã‚Â¼ste, alt ÃƒÆ’Ã‚Â§izgi alta bÃƒâ€Ã‚Â±rakÃƒâ€Ã‚Â±r.
                   </div>
                 ) : null}
 
@@ -3262,7 +3237,7 @@ export default function Page() {
                                 opacity:
                                   draggedColumn === column.key ? 0.55 : column.style.opacity,
                               }}
-                              title="SÃƒÂ¼rÃƒÂ¼kleyerek yer deÃ„Å¸iÃ…Å¸tir"
+                              title="SÃƒÆ’Ã‚Â¼rÃƒÆ’Ã‚Â¼kleyerek yer deÃƒâ€Ã…Â¸iÃƒâ€¦Ã…Â¸tir"
                             >
                               {column.label}
                             </th>
@@ -3349,7 +3324,7 @@ export default function Page() {
                         fontSize: 13,
                       }}
                     >
-                      Filtreye uygun kayÃ„Â±t yok.
+                      Filtreye uygun kayÃƒâ€Ã‚Â±t yok.
                     </div>
                   ) : null}
                 </div>
@@ -3362,7 +3337,7 @@ export default function Page() {
 
           {loading ? (
             <div style={{ color: "var(--muted)", fontSize: 13 }}>
-              Veriler yÃƒÂ¼kleniyor...
+              Veriler yÃƒÆ’Ã‚Â¼kleniyor...
             </div>
           ) : null}
         </main>
@@ -3396,7 +3371,7 @@ export default function Page() {
               >
                 <span style={styles.btnInner}>
                   <Pencil size={14} />
-                  Ad DeÃ„Å¸iÃ…Å¸tir
+                  Ad DeÃƒâ€Ã…Â¸iÃƒâ€¦Ã…Â¸tir
                 </span>
               </button>
 
@@ -3409,7 +3384,7 @@ export default function Page() {
               >
                 <span style={styles.btnInner}>
                   <Palette size={14} />
-                  Renk SeÃƒÂ§
+                  Renk SeÃƒÆ’Ã‚Â§
                 </span>
               </button>
 
@@ -3424,8 +3399,8 @@ export default function Page() {
                 <span style={styles.btnInner}>
                   <Archive size={14} />
                   {archivedTabs.includes(tabMenu.tabName)
-                    ? "ArÃ…Å¸ivden Ãƒâ€¡Ã„Â±kar"
-                    : "Sekmeyi ArÃ…Å¸ivle"}
+                    ? "ArÃƒâ€¦Ã…Â¸ivden ÃƒÆ’Ã¢â‚¬Â¡Ãƒâ€Ã‚Â±kar"
+                    : "Sekmeyi ArÃƒâ€¦Ã…Â¸ivle"}
                 </span>
               </button>
 
@@ -3446,7 +3421,7 @@ export default function Page() {
           ) : (
             <div style={styles.colorPickerWrap}>
               <div style={styles.colorPickerHead}>
-                <div style={styles.colorPickerTitle}>Renk SeÃƒÂ§</div>
+                <div style={styles.colorPickerTitle}>Renk SeÃƒÆ’Ã‚Â§</div>
                 <button
                   type="button"
                   style={styles.colorPickerBackBtn}
@@ -3839,6 +3814,10 @@ const styles: Record<string, CSSProperties> = {
     display: "flex",
     flexDirection: "column",
   },
+  projectSummaryCard: {
+    minHeight: 238,
+    padding: 18,
+  },
   quickTitle: {
     fontSize: 14,
     fontWeight: 800,
@@ -3856,6 +3835,14 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 12,
     color: "var(--muted)",
     marginTop: 4,
+  },
+  projectSummaryAmount: {
+    fontSize: 34,
+    fontWeight: 900,
+    color: "var(--text)",
+    marginTop: 8,
+    letterSpacing: "-0.8px",
+    fontVariantNumeric: "tabular-nums",
   },
   progressWrap: {
     height: 10,
@@ -3885,6 +3872,24 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 13,
     color: "var(--text)",
     marginTop: 8,
+  },
+  projectSummaryRow: {
+    marginTop: 10,
+  },
+  projectInfoList: {
+    display: "grid",
+    gap: 0,
+    marginTop: 12,
+  },
+  projectInfoRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    padding: "11px 0",
+    fontSize: 14,
+    color: "var(--textSoft)",
+    borderBottom: "1px solid rgba(148,163,184,0.16)",
   },
   quickSummaryGrid: {
     display: "grid",
