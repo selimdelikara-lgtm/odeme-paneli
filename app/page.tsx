@@ -575,10 +575,6 @@ export default function Page() {
     .filter((row) => selectedIds.includes(row.id))
     .map((row) => row.id);
 
-  const allFilteredSelected =
-    filteredActiveKayitlar.length > 0 &&
-    selectedVisibleIds.length === filteredActiveKayitlar.length;
-
   const temizle = () => {
     setProje("");
     setTutar("");
@@ -1044,80 +1040,6 @@ export default function Page() {
     setData((prev) => prev.map((x) => (x.id === row.id ? { ...x, ...next } : x)));
   }
 
-  async function bulkUpdate(type: "invoice" | "paid" | "delete") {
-    const rows = filteredActiveKayitlar.filter((row) =>
-      selectedVisibleIds.includes(row.id)
-    );
-    if (!rows.length) return;
-
-    if (type === "delete") {
-      const confirmed = window.confirm(`${rows.length} kayÃƒâ€Ã‚Â±t silinsin mi?`);
-      if (!confirmed) return;
-      setLastDeleted(rows);
-    }
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    const accessToken = session?.access_token;
-    if (!accessToken) {
-      setMsg("Toplu iÃƒâ€¦Ã…Â¸lem iÃƒÆ’Ã‚Â§in oturum doÃƒâ€Ã…Â¸rulanamadÃƒâ€Ã‚Â±.");
-      return;
-    }
-
-    const response = await fetch("/api/odemeler/bulk", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        ids: rows.map((row) => row.id),
-        action: type,
-      }),
-    });
-
-    const payload = (await response.json().catch(() => ({}))) as { error?: string };
-
-    if (!response.ok) {
-      setMsg(payload.error || "Toplu iÃƒâ€¦Ã…Â¸lem baÃƒâ€¦Ã…Â¸arÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±z.");
-      return;
-    }
-
-    if (type === "delete") {
-      setInvoiceMap((prev) => {
-        const next = { ...prev };
-        rows.forEach((row) => {
-          delete next[row.id];
-        });
-        return next;
-      });
-    } else {
-      const now = new Date().toISOString();
-      setRowMeta((prev) => {
-        const next = { ...prev };
-        rows.forEach((row) => {
-          next[row.id] = {
-            createdAt: next[row.id]?.createdAt || now,
-            updatedAt: now,
-          };
-        });
-        return next;
-      });
-    }
-
-    setSelectedIds([]);
-    setMsg(
-      type === "invoice"
-        ? "SeÃƒÆ’Ã‚Â§ilen kayÃƒâ€Ã‚Â±tlar fatura kesildi olarak gÃƒÆ’Ã‚Â¼ncellendi."
-        : type === "paid"
-          ? "SeÃƒÆ’Ã‚Â§ilen kayÃƒâ€Ã‚Â±tlar ÃƒÆ’Ã‚Â¶dendi olarak gÃƒÆ’Ã‚Â¼ncellendi."
-          : "SeÃƒÆ’Ã‚Â§ilen kayÃƒâ€Ã‚Â±tlar silindi."
-    );
-    await yukle();
-  }
-
   async function undoDelete() {
     if (!lastDeleted?.length || !authUserId) return;
 
@@ -1304,14 +1226,6 @@ export default function Page() {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
-  };
-
-  const toggleSelectAll = () => {
-    if (allFilteredSelected) {
-      setSelectedIds([]);
-      return;
-    }
-    setSelectedIds(filteredActiveKayitlar.map((row) => row.id));
   };
 
   const sortToggle = (key: SortKey) => {
@@ -2582,7 +2496,7 @@ export default function Page() {
 
             <div style={styles.heroSubRow}>
               <div>
-                <div style={styles.heroSubTitle}>Ãƒâ€“DENEN</div>
+                <div style={styles.heroSubTitle}>ÖDENEN</div>
                 <div style={styles.heroSubValue}>
                   {tl(tumOdenenTutar)}
                 </div>
@@ -2604,14 +2518,14 @@ export default function Page() {
               <>
                 <Stat
                   styles={styles}
-                  title="Toplam KayÃ„Â±t"
+                  title="Toplam Kayıt"
                   value={String(filteredHomeRows.length)}
                   icon={<FolderKanban size={16} color={palette.blue} />}
                   iconWrapStyle={styles.statIconBlue}
                 />
                 <Stat
                   styles={styles}
-                  title="Ãƒâ€“deme AlÃ„Â±ndÃ„Â±"
+                  title="Ödeme Alındı"
                   value={String(tumOdeme)}
                   icon={<CheckCircle2 size={16} color={palette.teal} />}
                   iconWrapStyle={styles.statIconTeal}
@@ -2635,14 +2549,14 @@ export default function Page() {
               <>
                 <Stat
                   styles={styles}
-                  title="Toplam KayÃ„Â±t"
+                  title="Toplam Kayıt"
                   value={String(filteredActiveKayitlar.length)}
                   icon={<FolderKanban size={16} color={aktifTabMeta.color} />}
                   iconWrapStyle={styles.statIconBlue}
                 />
                 <Stat
                   styles={styles}
-                  title="Ãƒâ€“deme AlÃ„Â±ndÃ„Â±"
+                  title="Ödeme Alındı"
                   value={String(odemesiAlinanAdet)}
                   icon={<CheckCircle2 size={16} color={palette.teal} />}
                   iconWrapStyle={styles.statIconTeal}
@@ -2667,10 +2581,10 @@ export default function Page() {
 
           {viewMode === "home" ? (
             <div style={styles.quickGrid} className="quick-grid">
-              <div style={styles.quickCard}>
-                <div style={styles.quickTitle}>Tahsilat Ãƒâ€“zeti</div>
-                <div style={styles.quickBig}>{tl(tumOdenenTutar)}</div>
-                <div style={styles.quickMuted}>Filtreye gÃƒÂ¶re tahsil edilen tutar</div>
+              <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
+                <div style={styles.quickTitle}>Tahsilat Özeti</div>
+                <div style={styles.projectSummaryAmount}>{tl(tumOdenenTutar)}</div>
+                <div style={styles.quickMuted}>Filtreye göre tahsil edilen tutar</div>
 
                 <div style={styles.progressWrap}>
                   <div
@@ -2681,63 +2595,45 @@ export default function Page() {
                   />
                 </div>
 
-                <div style={styles.quickFooterRow}>
-                  <span>Tahsilat OranÃ„Â±</span>
+                <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
+                  <span>Tahsilat Oranı</span>
                   <strong>%{tahsilatYuzdesiGenel}</strong>
                 </div>
 
-                <div style={styles.quickFooterRow}>
-                  <span>Kalan Tutar</span>
+                <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
+                  <span>{"Kalan Tutar"}</span>
                   <strong>{tl(tumKalanTutar)}</strong>
                 </div>
               </div>
 
-              <div style={styles.quickCard}>
-                <div style={styles.quickTitle}>HÃ„Â±zlÃ„Â± Durum</div>
-
-                <div style={styles.iconStatGrid}>
-                  <div style={styles.iconStatBox}>
-                    <div style={{ ...styles.iconStatIcon, ...styles.statIconBlue }}>
-                      <FolderKanban size={18} color={palette.blue} />
-                    </div>
-                    <div style={styles.iconStatNumber}>{homeProjectStats.length}</div>
-                    <div style={styles.iconStatLabel}>Proje</div>
+              <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
+                <div style={styles.quickTitle}>Hızlı Durum</div>
+                <div style={styles.projectInfoList}>
+                  <div style={styles.projectInfoRow}>
+                    <span>Proje</span>
+                    <strong>{homeProjectStats.length}</strong>
                   </div>
-
-                  <div style={styles.iconStatBox}>
-                    <div style={{ ...styles.iconStatIcon, ...styles.statIconTeal }}>
-                      <CheckCircle2 size={18} color={palette.teal} />
-                    </div>
-                    <div style={styles.iconStatNumber}>{tumOdeme}</div>
-                    <div style={styles.iconStatLabel}>Ãƒâ€“deme</div>
+                  <div style={styles.projectInfoRow}>
+                    <span>Ödeme</span>
+                    <strong>{tumOdeme}</strong>
                   </div>
-
-                  <div style={styles.iconStatBox}>
-                    <div style={{ ...styles.iconStatIcon, ...styles.statIconAmber }}>
-                      <Receipt size={18} color={palette.amber} />
-                    </div>
-                    <div style={styles.iconStatNumber}>{tumFatura}</div>
-                    <div style={styles.iconStatLabel}>Fatura</div>
+                  <div style={styles.projectInfoRow}>
+                    <span>Fatura</span>
+                    <strong>{tumFatura}</strong>
                   </div>
-
-                  <div style={styles.iconStatBox}>
-                    <div style={{ ...styles.iconStatIcon, ...styles.statIconRed }}>
-                      <Clock3 size={18} color={palette.red} />
-                    </div>
-                    <div style={styles.iconStatNumber}>
-                      {filteredHomeRows.filter((x) => !x.odendi).length}
-                    </div>
-                    <div style={styles.iconStatLabel}>Bekleyen</div>
+                  <div style={styles.projectInfoRow}>
+                    <span>Bekleyen</span>
+                    <strong>{filteredHomeRows.filter((x) => !x.odendi).length}</strong>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-<div style={styles.quickGrid} className="quick-grid">
+            <div style={styles.quickGrid} className="quick-grid">
               <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
-                <div style={styles.quickTitle}>{"Sekme ?zeti"}</div>
+                <div style={styles.quickTitle}>Sekme Özeti</div>
                 <div style={styles.projectSummaryAmount}>{tl(toplam)}</div>
-                <div style={styles.quickMuted}>{"Bu sekmenin toplam?"}</div>
+                <div style={styles.quickMuted}>Bu sekmenin toplamı</div>
 
                 <div style={styles.progressWrap}>
                   <div
@@ -2750,12 +2646,12 @@ export default function Page() {
                 </div>
 
                 <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
-                  <span>{"Tahsilat Oran?"}</span>
+                  <span>Tahsilat Oranı</span>
                   <strong>%{tahsilatYuzdesiAktif}</strong>
                 </div>
 
                 <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
-                  <span>{"?denen"}</span>
+                  <span>Ödenen</span>
                   <strong>{tl(odenen)}</strong>
                 </div>
 
@@ -2766,10 +2662,10 @@ export default function Page() {
               </div>
 
               <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
-                <div style={styles.quickTitle}>{"H?zl? Bilgi"}</div>
+                <div style={styles.quickTitle}>Hızlı Bilgi</div>
                 <div style={styles.projectInfoList}>
                   <div style={styles.projectInfoRow}>
-                    <span>{"?deme Al?nan"}</span>
+                    <span>Ödeme Alınan</span>
                     <strong>{odemesiAlinanAdet}</strong>
                   </div>
                   <div style={styles.projectInfoRow}>
@@ -2781,7 +2677,7 @@ export default function Page() {
                     <strong>{filteredActiveKayitlar.filter((x) => !x.odendi).length}</strong>
                   </div>
                   <div style={styles.projectInfoRow}>
-                    <span>{"Se?ili Kay?t"}</span>
+                    <span>Seçili Kayıt</span>
                     <strong>{selectedVisibleIds.length}</strong>
                   </div>
                 </div>
@@ -2792,7 +2688,7 @@ export default function Page() {
           {viewMode === "home" ? (
             <div style={styles.card}>
               <div style={styles.sectionHead}>
-                <h2 style={{ ...styles.h2, fontWeight: 900 }}>Genel Proje Ãƒâ€“zeti</h2>
+                <h2 style={{ ...styles.h2, fontWeight: 900 }}>Genel Proje Özeti</h2>
                 <div style={{ color: "var(--muted)", fontSize: 13 }}>
                   {homeProjectStats.length} proje
                 </div>
@@ -2925,7 +2821,7 @@ export default function Page() {
             <>
               <div style={styles.card}>
                 <div style={styles.sectionHead}>
-                  <h2 style={styles.h2}>KayÃƒâ€Ã‚Â±t Ekle / GÃƒÆ’Ã‚Â¼ncelle</h2>
+                  <h2 style={styles.h2}>Kayıt Ekle / Güncelle</h2>
                   <div style={{ color: "var(--muted)", fontSize: 12 }}>
                     Taslak otomatik kaydediliyor
                   </div>
@@ -2969,7 +2865,7 @@ export default function Page() {
                         }}
                         style={styles.input}
                       >
-                        <option value="kdvsiz">KDVÃƒÂ¢Ã¢â€šÂ¬Ã¢â€Â¢siz</option>
+                        <option value="kdvsiz">KDV’siz</option>
                         <option value="kdvli">+ %20 KDV</option>
                       </select>
 
@@ -2988,38 +2884,92 @@ export default function Page() {
                   </div>
 
                   <div style={styles.formSection}>
-                    <div style={styles.formSectionTitle}>Durum ve Ãƒâ€Ã‚Â°Ãƒâ€¦Ã…Â¸lem</div>
+                    <div style={styles.formSectionTitle}>Durum ve İşlem</div>
                     <div style={styles.formChecks}>
-                      <label style={styles.check}>
-                        <input
-                          type="checkbox"
-                          checked={faturaKesildi}
-                          onChange={(e) => {
-                            const value = e.target.checked;
-                            setFaturaKesildi(value);
-                            updateDraftField({ faturaKesildi: value });
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextValue = !faturaKesildi;
+                          setFaturaKesildi(nextValue);
+                          updateDraftField({ faturaKesildi: nextValue });
+                        }}
+                        style={{
+                          ...styles.statusToggle,
+                          ...(faturaKesildi ? styles.statusToggleActive : {}),
+                        }}
+                      >
+                        <span
+                          style={{
+                            ...styles.statusToggleTrack,
+                            ...(faturaKesildi ? styles.statusToggleTrackActive : {}),
                           }}
-                        />
-                        Fatura Kesildi
-                      </label>
+                        >
+                          <span
+                            style={{
+                              ...styles.statusToggleThumb,
+                              ...(faturaKesildi ? styles.statusToggleThumbActive : {}),
+                            }}
+                          />
+                        </span>
+                        <span style={styles.statusToggleInfo}>
+                          <span
+                            style={{
+                              ...styles.statusToggleIconWrap,
+                              ...(faturaKesildi
+                                ? styles.statusToggleIconWrapAmber
+                                : styles.statusToggleIconWrapMuted),
+                            }}
+                          >
+                            <Receipt size={14} />
+                          </span>
+                          <span style={styles.statusToggleLabel}>Fatura Kesildi</span>
+                        </span>
+                      </button>
 
-                      <label style={styles.check}>
-                        <input
-                          type="checkbox"
-                          checked={odemeAlindi}
-                          onChange={(e) => {
-                            const value = e.target.checked;
-                            const nextFaturaKesildi = value ? true : faturaKesildi;
-                            setOdemeAlindi(value);
-                            setFaturaKesildi(nextFaturaKesildi);
-                            updateDraftField({
-                              odemeAlindi: value,
-                              faturaKesildi: nextFaturaKesildi,
-                            });
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextValue = !odemeAlindi;
+                          const nextFaturaKesildi = nextValue ? true : faturaKesildi;
+                          setOdemeAlindi(nextValue);
+                          setFaturaKesildi(nextFaturaKesildi);
+                          updateDraftField({
+                            odemeAlindi: nextValue,
+                            faturaKesildi: nextFaturaKesildi,
+                          });
+                        }}
+                        style={{
+                          ...styles.statusToggle,
+                          ...(odemeAlindi ? styles.statusToggleActive : {}),
+                        }}
+                      >
+                        <span
+                          style={{
+                            ...styles.statusToggleTrack,
+                            ...(odemeAlindi ? styles.statusToggleTrackActive : {}),
                           }}
-                        />
-                        ÃƒÆ’Ã¢â‚¬â€œdeme AlÃƒâ€Ã‚Â±ndÃƒâ€Ã‚Â±
-                      </label>
+                        >
+                          <span
+                            style={{
+                              ...styles.statusToggleThumb,
+                              ...(odemeAlindi ? styles.statusToggleThumbActive : {}),
+                            }}
+                          />
+                        </span>
+                        <span style={styles.statusToggleInfo}>
+                          <span
+                            style={{
+                              ...styles.statusToggleIconWrap,
+                              ...(odemeAlindi
+                                ? styles.statusToggleIconWrapTeal
+                                : styles.statusToggleIconWrapMuted),
+                            }}
+                          >
+                            <CheckCircle2 size={14} />
+                          </span>
+                          <span style={styles.statusToggleLabel}>Ödeme Alındı</span>
+                        </span>
+                      </button>
                     </div>
 
                     <div style={styles.formActions}>
@@ -3030,7 +2980,7 @@ export default function Page() {
                       >
                         <span style={styles.btnInner}>
                           <Plus size={16} />
-                          {editId ? "GÃƒÆ’Ã‚Â¼ncelle" : "Kaydet"}
+                          {editId ? "Güncelle" : "Kaydet"}
                         </span>
                       </button>
 
@@ -3040,7 +2990,7 @@ export default function Page() {
                           onClick={temizle}
                           style={styles.secondaryBtn}
                         >
-                          Ãƒâ€Ã‚Â°ptal
+                          İptal
                         </button>
                       ) : null}
                     </div>
@@ -3048,70 +2998,11 @@ export default function Page() {
                 </div>
               </div>
 
-              <div style={styles.card} className="no-print">
-                <div style={styles.bulkHead}>
-                  <div style={styles.bulkTitle}>Toplu Ãƒâ€Ã‚Â°Ãƒâ€¦Ã…Â¸lem</div>
-                  <div style={{ color: "var(--muted)", fontSize: 13 }}>
-                    {selectedVisibleIds.length} kayÃƒâ€Ã‚Â±t seÃƒÆ’Ã‚Â§ili
-                  </div>
-                </div>
-
-                <div style={styles.bulkActions}>
-                  <button
-                    className="hover-button"
-                    onClick={toggleSelectAll}
-                    style={styles.secondaryBtn}
-                  >
-                    <span style={styles.btnInner}>
-                      {allFilteredSelected ? (
-                        <CheckSquare size={16} />
-                      ) : (
-                        <Square size={16} />
-                      )}
-                      {allFilteredSelected ? "SeÃƒÆ’Ã‚Â§imi KaldÃƒâ€Ã‚Â±r" : "TÃƒÆ’Ã‚Â¼mÃƒÆ’Ã‚Â¼nÃƒÆ’Ã‚Â¼ SeÃƒÆ’Ã‚Â§"}
-                    </span>
-                  </button>
-
-                  <button
-                    className="hover-button"
-                    onClick={() => void bulkUpdate("invoice")}
-                    style={styles.secondaryBtn}
-                  >
-                    <span style={styles.btnInner}>
-                      <Receipt size={16} />
-                      Fatura Kesildi Yap
-                    </span>
-                  </button>
-
-                  <button
-                    className="hover-button"
-                    onClick={() => void bulkUpdate("paid")}
-                    style={styles.primaryBtn}
-                  >
-                    <span style={styles.btnInner}>
-                      <CheckCircle2 size={16} />
-                      ÃƒÆ’Ã¢â‚¬â€œdendi Yap
-                    </span>
-                  </button>
-
-                  <button
-                    className="hover-button"
-                    onClick={() => void bulkUpdate("delete")}
-                    style={styles.deleteBtn}
-                  >
-                    <span style={styles.btnInner}>
-                      <Trash2 size={16} />
-                      SeÃƒÆ’Ã‚Â§ilileri Sil
-                    </span>
-                  </button>
-                </div>
-              </div>
-
               {msg ? <div style={styles.msg}>{msg}</div> : null}
 
               {lastDeleted?.length ? (
                 <div style={styles.undoBar} className="no-print">
-                  <span>{lastDeleted.length} kayÃƒâ€Ã‚Â±t silindi.</span>
+                  <span>{lastDeleted.length} kayıt silindi.</span>
                   <button
                     className="hover-button"
                     onClick={() => void undoDelete()}
@@ -3140,7 +3031,7 @@ export default function Page() {
                   </div>
 
                   <div style={styles.miniHighlight}>
-                    <div style={styles.miniLabelStrong}>ÃƒÆ’Ã¢â‚¬â€œdenen</div>
+                    <div style={styles.miniLabelStrong}>Ödenen</div>
                     <AnimatedMoney value={odenen} strong />
                   </div>
 
@@ -3151,17 +3042,17 @@ export default function Page() {
                 </div>
 
                 <div style={styles.sectionHead}>
-                  <h2 style={styles.h2}>KayÃƒâ€Ã‚Â±tlar</h2>
+                  <h2 style={styles.h2}>Kayıtlar</h2>
                   <div style={{ color: "var(--muted)", fontSize: 13 }}>
                     {sortKey === "manual"
-                      ? "SIRA alanÃƒâ€Ã‚Â±ndan sÃƒÆ’Ã‚Â¼rÃƒÆ’Ã‚Â¼kle bÃƒâ€Ã‚Â±rak yap"
-                      : "BaÃƒâ€¦Ã…Â¸lÃƒâ€Ã‚Â±Ãƒâ€Ã…Â¸a tÃƒâ€Ã‚Â±klayarak sÃƒâ€Ã‚Â±ralama deÃƒâ€Ã…Â¸iÃƒâ€¦Ã…Â¸ir"}
+                      ? "SIRA alanından sürükle bırak yap"
+                      : "Başlığa tıklayarak sıralama değişir"}
                   </div>
                 </div>
 
                 {draggedId !== null && sortKey === "manual" ? (
                   <div style={styles.dragNotice} className="no-print">
-                    KaydÃƒâ€Ã‚Â± bÃƒâ€Ã‚Â±rakacaÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±n satÃƒâ€Ã‚Â±r mavi ÃƒÆ’Ã‚Â§izgiyle iÃƒâ€¦Ã…Â¸aretlenir. ÃƒÆ’Ã…â€œst ÃƒÆ’Ã‚Â§izgi ÃƒÆ’Ã‚Â¼ste, alt ÃƒÆ’Ã‚Â§izgi alta bÃƒâ€Ã‚Â±rakÃƒâ€Ã‚Â±r.
+                    Kaydı bırakacağın satır mavi çizgiyle işaretlenir. Üst çizgi üste, alt çizgi alta bırakır.
                   </div>
                 ) : null}
 
@@ -3237,7 +3128,7 @@ export default function Page() {
                                 opacity:
                                   draggedColumn === column.key ? 0.55 : column.style.opacity,
                               }}
-                              title="SÃƒÆ’Ã‚Â¼rÃƒÆ’Ã‚Â¼kleyerek yer deÃƒâ€Ã…Â¸iÃƒâ€¦Ã…Â¸tir"
+                              title="Sürükleyerek yer değiştir"
                             >
                               {column.label}
                             </th>
@@ -3324,7 +3215,7 @@ export default function Page() {
                         fontSize: 13,
                       }}
                     >
-                      Filtreye uygun kayÃƒâ€Ã‚Â±t yok.
+                      Filtreye uygun kayıt yok.
                     </div>
                   ) : null}
                 </div>
@@ -3337,7 +3228,7 @@ export default function Page() {
 
           {loading ? (
             <div style={{ color: "var(--muted)", fontSize: 13 }}>
-              Veriler yÃƒÆ’Ã‚Â¼kleniyor...
+              Veriler yükleniyor...
             </div>
           ) : null}
         </main>
