@@ -2635,7 +2635,6 @@ export default function Page() {
         @media (max-width: 980px){
           .app-shell{grid-template-columns:1fr !important}
           .app-sidebar{position:static !important;height:auto !important}
-          .app-sidebar [data-sidebar-bottom="true"]{position:static !important;background:none !important;padding-top:8px !important;padding-bottom:0 !important}
           .app-content{padding:16px !important}
           .app-top-bar{flex-direction:column !important;align-items:stretch !important}
           .top-search{width:100% !important;min-width:0 !important}
@@ -3832,6 +3831,8 @@ const styles: Record<string, CSSProperties> = {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
+    alignSelf: "center",
+    margin: "2px auto 6px",
     borderRadius: 12,
     border: "1px dashed rgba(96,165,250,0.34)",
     background: "rgba(255,255,255,0.03)",
@@ -3848,13 +3849,8 @@ const styles: Record<string, CSSProperties> = {
     marginTop: "auto",
     display: "grid",
     gap: 8,
-    position: "sticky",
-    bottom: 0,
     paddingTop: 14,
-    paddingBottom: 4,
-    background:
-      "linear-gradient(180deg, rgba(11,22,38,0) 0%, rgba(11,22,38,0.92) 22%, rgba(11,22,38,1) 100%)",
-    zIndex: 2,
+    borderTop: "1px solid rgba(148,163,184,0.08)",
   },
   sidebarTabInner: {
     display: "flex",
