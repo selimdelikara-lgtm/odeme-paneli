@@ -90,6 +90,14 @@ type TabMeta = {
 
 type StoredState<T> = T;
 type DropPosition = "before" | "after";
+type ProjectColumnKey =
+  | "select"
+  | "sira"
+  | "proje"
+  | "durum"
+  | "fatura_tarihi"
+  | "tutar"
+  | "islem";
 
 type InvoiceAttachment = {
   id?: number;
@@ -150,6 +158,15 @@ const DEFAULT_COLORS = [
 ];
 const MAX_INVOICE_FILE_SIZE_MB = 1;
 const MAX_INVOICE_FILE_SIZE_BYTES = MAX_INVOICE_FILE_SIZE_MB * 1024 * 1024;
+const PROJECT_COLUMN_ORDER_DEFAULT: ProjectColumnKey[] = [
+  "select",
+  "sira",
+  "proje",
+  "durum",
+  "fatura_tarihi",
+  "tutar",
+  "islem",
+];
 
 const LIGHT = {
   appBg: "#050A14",
@@ -402,6 +419,9 @@ export default function Page() {
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
   const [dropPosition, setDropPosition] = useState<DropPosition>("before");
+  const [draggedColumn, setDraggedColumn] = useState<ProjectColumnKey | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<ProjectColumnKey | null>(null);
+  const [columnDropPosition, setColumnDropPosition] = useState<DropPosition>("before");
   const [sortKey, setSortKey] = useState<SortKey>("manual");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
@@ -425,6 +445,15 @@ export default function Page() {
     readStoredState<string[]>("odeme-archived-tabs-v1", [])
   );
   const [showArchivedTabs, setShowArchivedTabs] = useState(false);
+  const [projectColumnOrder, setProjectColumnOrder] = useState<ProjectColumnKey[]>(() => {
+    const stored = readStoredState<ProjectColumnKey[]>(
+      "odeme-project-columns-v1",
+      PROJECT_COLUMN_ORDER_DEFAULT
+    );
+    return PROJECT_COLUMN_ORDER_DEFAULT.every((key) => stored.includes(key))
+      ? stored
+      : PROJECT_COLUMN_ORDER_DEFAULT;
+  });
   const [invoiceMap, setInvoiceMap] = useState<Record<number, InvoiceAttachment[]>>({});
   const [invoiceTargetId, setInvoiceTargetId] = useState<number | null>(null);
   const [uploadingInvoiceId, setUploadingInvoiceId] = useState<number | null>(null);
@@ -545,6 +574,13 @@ export default function Page() {
   useEffect(() => {
     localStorage.setItem("odeme-archived-tabs-v1", JSON.stringify(archivedTabs));
   }, [archivedTabs]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "odeme-project-columns-v1",
+      JSON.stringify(projectColumnOrder)
+    );
+  }, [projectColumnOrder]);
 
   useEffect(() => {
     initialLoadRef.current = false;
@@ -1542,6 +1578,38 @@ export default function Page() {
     return sortDirection === "asc" ? "↑" : "↓";
   };
 
+  const moveProjectColumn = (
+    source: ProjectColumnKey,
+    target: ProjectColumnKey,
+    position: DropPosition
+  ) => {
+    if (source === target) return;
+
+    setProjectColumnOrder((prev) => {
+      const withoutSource = prev.filter((key) => key !== source);
+      const targetIndex = withoutSource.indexOf(target);
+      if (targetIndex === -1) return prev;
+
+      const insertAt = position === "before" ? targetIndex : targetIndex + 1;
+      const next = [...withoutSource];
+      next.splice(insertAt, 0, source);
+      return next;
+    });
+  };
+
+  const handleColumnDragOver = (
+    event: DragEvent<HTMLTableCellElement>,
+    column: ProjectColumnKey
+  ) => {
+    if (!draggedColumn || draggedColumn === column) return;
+
+    event.preventDefault();
+    const rect = event.currentTarget.getBoundingClientRect();
+    const offset = event.clientX - rect.left;
+    setDragOverColumn(column);
+    setColumnDropPosition(offset < rect.width / 2 ? "before" : "after");
+  };
+
   const durumGorunum = (row: Odeme) => {
     if (row.odendi) {
       return {
@@ -1574,6 +1642,380 @@ export default function Page() {
       icon: "📁",
       color: "var(--blue)",
     };
+
+  const projectColumns = projectColumnOrder.map((key) => {
+    if (key === "select") {
+      return {
+        key,
+        label: "SEÇ",
+        className: "no-print",
+        style: { ...styles.th, width: 52 },
+      };
+    }
+
+    if (key === "sira") {
+      return {
+        key,
+        label: `SIRA ${sortKey === "manual" ? "●" : ""}`,
+        className: "",
+        style: {
+          ...styles.th,
+          background: "var(--slateSoft)",
+          cursor: "pointer",
+          width: 70,
+        },
+        onClick: () => {
+          setSortKey("manual");
+          setSortDirection("asc");
+        },
+      };
+    }
+
+    if (key === "proje") {
+      return {
+        key,
+        label: `PROJE ${arrow("proje")}`,
+        className: "",
+        style: {
+          ...styles.th,
+          background: "var(--blueSoft)",
+          cursor: "pointer",
+        },
+        onClick: () => sortToggle("proje"),
+      };
+    }
+
+    if (key === "durum") {
+      return {
+        key,
+        label: `DURUM ${arrow("durum")}`,
+        className: "",
+        style: {
+          ...styles.th,
+          background: "var(--tealSoft)",
+          cursor: "pointer",
+        },
+        onClick: () => sortToggle("durum"),
+      };
+    }
+
+    if (key === "fatura_tarihi") {
+      return {
+        key,
+        label: `FATURA TARİHİ ${arrow("fatura_tarihi")}`,
+        className: "",
+        style: {
+          ...styles.th,
+          background: "var(--amberSoft)",
+          cursor: "pointer",
+        },
+        onClick: () => sortToggle("fatura_tarihi"),
+      };
+    }
+
+    if (key === "tutar") {
+      return {
+        key,
+        label: `TUTAR ${arrow("tutar")}`,
+        className: "",
+        style: {
+          ...styles.th,
+          background: "var(--redSoft)",
+          cursor: "pointer",
+        },
+        onClick: () => sortToggle("tutar"),
+      };
+    }
+
+    return {
+      key,
+      label: "İŞLEM",
+      className: "no-print",
+      style: { ...styles.th, width: 160 },
+    };
+  });
+
+  const renderProjectCell = (
+    column: ProjectColumnKey,
+    row: Odeme,
+    options: {
+      durum: ReturnType<typeof durumGorunum>;
+      editing: boolean;
+      meta?: RowMeta;
+      invoices: InvoiceAttachment[];
+      isDragSource: boolean;
+    }
+  ) => {
+    const { durum, editing, meta, invoices, isDragSource } = options;
+
+    if (column === "select") {
+      return (
+        <td key={column} style={{ ...styles.td, width: 52 }} className="no-print">
+          <button
+            type="button"
+            onClick={() => toggleSelected(row.id)}
+            style={styles.checkboxBtn}
+            title="Kaydı seç"
+          >
+            {selectedIds.includes(row.id) ? (
+              <CheckSquare size={18} color={palette.blue} />
+            ) : (
+              <Square size={18} color={palette.muted} />
+            )}
+          </button>
+        </td>
+      );
+    }
+
+    if (column === "sira") {
+      return (
+        <td
+          key={column}
+          draggable={sortKey === "manual"}
+          onDragStart={() => {
+            if (sortKey === "manual") setDraggedId(row.id);
+          }}
+          onDragEnd={() => {
+            setDraggedId(null);
+            setDragOverId(null);
+          }}
+          style={{
+            ...styles.td,
+            width: 70,
+            cursor: sortKey === "manual" ? "grab" : "default",
+            color: "var(--muted)",
+            fontWeight: 700,
+          }}
+          title={
+            sortKey === "manual"
+              ? "Sürükle"
+              : "Manuel sıralama için SIRA başlığına tıkla"
+          }
+        >
+          {isDragSource ? "•••" : "≡"}
+        </td>
+      );
+    }
+
+    if (column === "proje") {
+      return (
+        <td
+          key={column}
+          onDoubleClick={() => editAc(row)}
+          title="Düzenlemek için çift tıkla"
+          style={{
+            ...styles.td,
+            borderLeft: `5px solid ${aktifTabMeta.color}`,
+            cursor: "pointer",
+          }}
+        >
+          {editing ? (
+            <input
+              className="soft-input"
+              value={proje}
+              onChange={(e) => setProje(e.target.value)}
+              style={styles.input}
+            />
+          ) : (
+            <div>
+              <div style={{ fontWeight: 800 }}>{row.proje || "—"}</div>
+              {invoices.length > 0 ? (
+                <div style={styles.invoiceList}>
+                  {invoices.map((attachment) => (
+                    <div key={attachment.path} style={styles.invoiceChip}>
+                      <a
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={styles.invoiceLink}
+                      >
+                        {attachment.name}
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => void removeInvoice(row.id, attachment)}
+                        style={styles.invoiceRemoveBtn}
+                        title="Faturayı kaldır"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              <div style={styles.metaText}>
+                Oluşturma: {shortDateTime(meta?.createdAt || null)}
+              </div>
+              <div style={styles.metaText}>
+                Güncelleme: {shortDateTime(meta?.updatedAt || null)}
+              </div>
+            </div>
+          )}
+        </td>
+      );
+    }
+
+    if (column === "durum") {
+      return (
+        <td key={column} style={styles.td}>
+          {editing ? (
+            <select
+              className="soft-input"
+              value={
+                odemeAlindi ? "odeme" : faturaKesildi ? "fatura" : "bekliyor"
+              }
+              onChange={(e) => {
+                const v = e.target.value;
+                setOdemeAlindi(v === "odeme");
+                setFaturaKesildi(v === "fatura" || v === "odeme");
+              }}
+              style={styles.input}
+            >
+              <option value="bekliyor">Henüz kesilmedi</option>
+              <option value="fatura">Fatura kesildi</option>
+              <option value="odeme">Ödeme alındı</option>
+            </select>
+          ) : (
+            <button
+              className="status-button"
+              type="button"
+              onClick={async () => await durumIlerle(row)}
+              style={{
+                ...styles.status,
+                background: durum.bg,
+                color: durum.color,
+                border: `1px solid ${durum.color}55`,
+              }}
+            >
+              <span
+                style={{
+                  ...styles.dot,
+                  background: durum.color,
+                }}
+              />
+              {durum.text}
+            </button>
+          )}
+        </td>
+      );
+    }
+
+    if (column === "fatura_tarihi") {
+      return (
+        <td
+          key={column}
+          onDoubleClick={() => editAc(row)}
+          title="Düzenlemek için çift tıkla"
+          style={{ ...styles.td, cursor: "pointer" }}
+        >
+          {editing ? (
+            <input
+              className="soft-input"
+              type="date"
+              value={tarih}
+              onChange={(e) => setTarih(e.target.value)}
+              style={styles.input}
+            />
+          ) : (
+            shortDate(row.fatura_tarihi)
+          )}
+        </td>
+      );
+    }
+
+    if (column === "tutar") {
+      return (
+        <td
+          key={column}
+          onDoubleClick={() => editAc(row)}
+          title="Düzenlemek için çift tıkla"
+          style={{
+            ...styles.td,
+            cursor: "pointer",
+            fontWeight: 700,
+          }}
+        >
+          {editing ? (
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <input
+                className="soft-input"
+                value={tutar}
+                onChange={(e) => setTutar(e.target.value)}
+                style={styles.input}
+              />
+              <select
+                className="soft-input"
+                value={kdvli ? "kdvli" : "kdvsiz"}
+                onChange={(e) => setKdvli(e.target.value === "kdvli")}
+                style={styles.input}
+              >
+                <option value="kdvsiz">KDV’siz</option>
+                <option value="kdvli">+ %20 KDV</option>
+              </select>
+              <button className="hover-button" onClick={kaydet} style={styles.secondaryBtn}>
+                Kaydet
+              </button>
+              <button className="hover-button" onClick={temizle} style={styles.deleteBtn}>
+                İptal
+              </button>
+            </div>
+          ) : (
+            <div>
+              <div>{row.tutar ? tl(Number(row.tutar)) : "—"}</div>
+              {row.kdvli ? <div style={styles.metaText}>+ %20 KDV</div> : null}
+            </div>
+          )}
+        </td>
+      );
+    }
+
+    return (
+      <td key={column} style={styles.td} className="no-print">
+        <div style={styles.rowActions}>
+          <button
+            className="hover-button"
+            onClick={() => editAc(row)}
+            style={styles.iconActionBtn}
+            title="Düzenle"
+          >
+            <Pencil size={15} />
+          </button>
+          <button
+            className="hover-button"
+            onClick={() => void kaydiKopyala(row)}
+            style={styles.iconActionBtn}
+            title="Çoğalt"
+          >
+            <Copy size={15} />
+          </button>
+          <button
+            className="hover-button"
+            onClick={() => openInvoicePicker(row.id)}
+            style={styles.iconActionBtn}
+            title="Fatura yükle"
+            disabled={uploadingInvoiceId === row.id}
+          >
+            <Upload size={15} />
+          </button>
+          <button
+            className="hover-button"
+            onClick={() => void kayitSil(row.id)}
+            style={styles.iconDeleteBtn}
+            title="Sil"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
+      </td>
+    );
+  };
 
   async function authLogin() {
     if (!email.trim() || !authPassword.trim()) return;
@@ -2919,74 +3361,56 @@ export default function Page() {
                   <table style={styles.tableBig}>
                     <thead>
                       <tr>
-                        <th style={{ ...styles.th, width: 52 }} className="no-print">
-                          SEÇ
-                        </th>
-                        <th
-                          style={{
-                            ...styles.th,
-                            background: "var(--slateSoft)",
-                            cursor: "pointer",
-                            width: 70,
-                          }}
-                          onClick={() => {
-                            setSortKey("manual");
-                            setSortDirection("asc");
-                          }}
-                        >
-                          SIRA {sortKey === "manual" ? "●" : ""}
-                        </th>
+                        {projectColumns.map((column) => {
+                          const isColumnTarget =
+                            dragOverColumn === column.key &&
+                            draggedColumn !== null &&
+                            draggedColumn !== column.key;
 
-                        <th
-                          style={{
-                            ...styles.th,
-                            background: "var(--blueSoft)",
-                            cursor: "pointer",
-                          }}
-                          onClick={() => sortToggle("proje")}
-                        >
-                          PROJE {arrow("proje")}
-                        </th>
-
-                        <th
-                          style={{
-                            ...styles.th,
-                            background: "var(--tealSoft)",
-                            cursor: "pointer",
-                          }}
-                          onClick={() => sortToggle("durum")}
-                        >
-                          DURUM {arrow("durum")}
-                        </th>
-
-                        <th
-                          style={{
-                            ...styles.th,
-                            background: "var(--amberSoft)",
-                            cursor: "pointer",
-                          }}
-                          onClick={() => sortToggle("fatura_tarihi")}
-                        >
-                          FATURA TARİHİ {arrow("fatura_tarihi")}
-                        </th>
-
-                        <th
-                          style={{
-                            ...styles.th,
-                            background: "var(--redSoft)",
-                            cursor: "pointer",
-                          }}
-                          onClick={() => sortToggle("tutar")}
-                        >
-                          TUTAR {arrow("tutar")}
-                        </th>
-
-                        <th
-                          style={{ ...styles.th, width: 160 }}
-                          className="no-print"
-                        >
-                          İŞLEM
-                        </th>
+                          return (
+                            <th
+                              key={column.key}
+                              draggable
+                              className={column.className}
+                              onClick={column.onClick}
+                              onDragStart={() => setDraggedColumn(column.key)}
+                              onDragEnd={() => {
+                                setDraggedColumn(null);
+                                setDragOverColumn(null);
+                              }}
+                              onDragOver={(e) => handleColumnDragOver(e, column.key)}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                if (draggedColumn) {
+                                  moveProjectColumn(
+                                    draggedColumn,
+                                    column.key,
+                                    columnDropPosition
+                                  );
+                                }
+                                setDraggedColumn(null);
+                                setDragOverColumn(null);
+                              }}
+                              style={{
+                                ...column.style,
+                                position: "relative",
+                                borderLeft:
+                                  isColumnTarget && columnDropPosition === "before"
+                                    ? "4px solid var(--blue)"
+                                    : undefined,
+                                borderRight:
+                                  isColumnTarget && columnDropPosition === "after"
+                                    ? "4px solid var(--blue)"
+                                    : undefined,
+                                opacity:
+                                  draggedColumn === column.key ? 0.55 : column.style.opacity,
+                              }}
+                              title="Sürükleyerek yer değiştir"
+                            >
+                              {column.label}
+                            </th>
+                          );
+                        })}
                       </tr>
                     </thead>
 
@@ -3045,266 +3469,15 @@ export default function Page() {
                                   : undefined,
                             }}
                           >
-                            <td style={{ ...styles.td, width: 52 }} className="no-print">
-                              <button
-                                type="button"
-                                onClick={() => toggleSelected(row.id)}
-                                style={styles.checkboxBtn}
-                                title="Kaydı seç"
-                              >
-                                {selectedIds.includes(row.id) ? (
-                                  <CheckSquare size={18} color={palette.blue} />
-                                ) : (
-                                  <Square size={18} color={palette.muted} />
-                                )}
-                              </button>
-                            </td>
-
-                            <td
-                              draggable={sortKey === "manual"}
-                              onDragStart={() => {
-                                if (sortKey === "manual") setDraggedId(row.id);
-                              }}
-                              onDragEnd={() => {
-                                setDraggedId(null);
-                                setDragOverId(null);
-                              }}
-                              style={{
-                                ...styles.td,
-                                width: 70,
-                                cursor:
-                                  sortKey === "manual" ? "grab" : "default",
-                                color: "var(--muted)",
-                                fontWeight: 700,
-                              }}
-                              title={
-                                sortKey === "manual"
-                                  ? "Sürükle"
-                                  : "Manuel sıralama için SIRA başlığına tıkla"
-                              }
-                            >
-                              {isDragSource ? "•••" : "≡"}
-                            </td>
-
-                            <td
-                              onDoubleClick={() => editAc(row)}
-                              title="Düzenlemek için çift tıkla"
-                              style={{
-                                ...styles.td,
-                                borderLeft: `5px solid ${aktifTabMeta.color}`,
-                                cursor: "pointer",
-                              }}
-                            >
-                              {editing ? (
-                                <input
-                                  className="soft-input"
-                                  value={proje}
-                                  onChange={(e) => setProje(e.target.value)}
-                                  style={styles.input}
-                                />
-                              ) : (
-                                <div>
-                                  <div style={{ fontWeight: 800 }}>
-                                    {row.proje || "—"}
-                                  </div>
-                                  {invoices.length > 0 ? (
-                                    <div style={styles.invoiceList}>
-                                      {invoices.map((attachment) => (
-                                        <div key={attachment.path} style={styles.invoiceChip}>
-                                          <a
-                                            href={attachment.url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            style={styles.invoiceLink}
-                                          >
-                                            {attachment.name}
-                                          </a>
-                                          <button
-                                            type="button"
-                                            onClick={() => void removeInvoice(row.id, attachment)}
-                                            style={styles.invoiceRemoveBtn}
-                                            title="Faturayı kaldır"
-                                          >
-                                            <Trash2 size={12} />
-                                          </button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : null}
-                                  <div style={styles.metaText}>
-                                    Oluşturma: {shortDateTime(meta?.createdAt || null)}
-                                  </div>
-                                  <div style={styles.metaText}>
-                                    Güncelleme: {shortDateTime(meta?.updatedAt || null)}
-                                  </div>
-                                </div>
-                              )}
-                            </td>
-
-                            <td style={styles.td}>
-                              {editing ? (
-                                <select
-                                  className="soft-input"
-                                  value={
-                                    odemeAlindi
-                                      ? "odeme"
-                                      : faturaKesildi
-                                        ? "fatura"
-                                        : "bekliyor"
-                                  }
-                                  onChange={(e) => {
-                                    const v = e.target.value;
-                                    setOdemeAlindi(v === "odeme");
-                                    setFaturaKesildi(
-                                      v === "fatura" || v === "odeme"
-                                    );
-                                  }}
-                                  style={styles.input}
-                                >
-                                  <option value="bekliyor">Henüz kesilmedi</option>
-                                  <option value="fatura">Fatura kesildi</option>
-                                  <option value="odeme">Ödeme alındı</option>
-                                </select>
-                              ) : (
-                                <button
-                                  className="status-button"
-                                  type="button"
-                                  onClick={async () => await durumIlerle(row)}
-                                  style={{
-                                    ...styles.status,
-                                    background: durum.bg,
-                                    color: durum.color,
-                                    border: `1px solid ${durum.color}55`,
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      ...styles.dot,
-                                      background: durum.color,
-                                    }}
-                                  />
-                                  {durum.text}
-                                </button>
-                              )}
-                            </td>
-
-                            <td
-                              onDoubleClick={() => editAc(row)}
-                              title="Düzenlemek için çift tıkla"
-                              style={{ ...styles.td, cursor: "pointer" }}
-                            >
-                              {editing ? (
-                                <input
-                                  className="soft-input"
-                                  type="date"
-                                  value={tarih}
-                                  onChange={(e) => setTarih(e.target.value)}
-                                  style={styles.input}
-                                />
-                              ) : (
-                                shortDate(row.fatura_tarihi)
-                              )}
-                            </td>
-
-                            <td
-                              onDoubleClick={() => editAc(row)}
-                              title="Düzenlemek için çift tıkla"
-                              style={{
-                                ...styles.td,
-                                cursor: "pointer",
-                                fontWeight: 700,
-                              }}
-                            >
-                              {editing ? (
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    gap: 8,
-                                    alignItems: "center",
-                                    flexWrap: "wrap",
-                                  }}
-                                >
-                                  <input
-                                    className="soft-input"
-                                    value={tutar}
-                                    onChange={(e) => setTutar(e.target.value)}
-                                    style={styles.input}
-                                  />
-                                  <select
-                                    className="soft-input"
-                                    value={kdvli ? "kdvli" : "kdvsiz"}
-                                    onChange={(e) =>
-                                      setKdvli(e.target.value === "kdvli")
-                                    }
-                                    style={styles.input}
-                                  >
-                                    <option value="kdvsiz">KDV’siz</option>
-                                    <option value="kdvli">+ %20 KDV</option>
-                                  </select>
-                                  <button
-                                    className="hover-button"
-                                    onClick={kaydet}
-                                    style={styles.secondaryBtn}
-                                  >
-                                    Kaydet
-                                  </button>
-                                  <button
-                                    className="hover-button"
-                                    onClick={temizle}
-                                    style={styles.deleteBtn}
-                                  >
-                                    İptal
-                                  </button>
-                                </div>
-                              ) : (
-                                <div>
-                                  <div>
-                                    {row.tutar ? tl(Number(row.tutar)) : "—"}
-                                  </div>
-                                  {row.kdvli ? (
-                                    <div style={styles.metaText}>+ %20 KDV</div>
-                                  ) : null}
-                                </div>
-                              )}
-                            </td>
-
-                            <td style={styles.td} className="no-print">
-                              <div style={styles.rowActions}>
-                                <button
-                                  className="hover-button"
-                                  onClick={() => editAc(row)}
-                                  style={styles.iconActionBtn}
-                                  title="Düzenle"
-                                >
-                                  <Pencil size={15} />
-                                </button>
-                                <button
-                                  className="hover-button"
-                                  onClick={() => void kaydiKopyala(row)}
-                                  style={styles.iconActionBtn}
-                                  title="Çoğalt"
-                                >
-                                  <Copy size={15} />
-                                </button>
-                                <button
-                                  className="hover-button"
-                                  onClick={() => openInvoicePicker(row.id)}
-                                  style={styles.iconActionBtn}
-                                  title="Fatura yükle"
-                                  disabled={uploadingInvoiceId === row.id}
-                                >
-                                  <Upload size={15} />
-                                </button>
-                                <button
-                                  className="hover-button"
-                                  onClick={() => void kayitSil(row.id)}
-                                  style={styles.iconDeleteBtn}
-                                  title="Sil"
-                                >
-                                  <Trash2 size={15} />
-                                </button>
-                              </div>
-                            </td>
+                            {projectColumnOrder.map((column) =>
+                              renderProjectCell(column, row, {
+                                durum,
+                                editing,
+                                meta,
+                                invoices,
+                                isDragSource,
+                              })
+                            )}
                           </tr>
                         );
                       })}
