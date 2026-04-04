@@ -2,6 +2,7 @@
 
 import {
   Archive,
+  ChevronDown,
   CheckCircle2,
   CheckSquare,
   Clock3,
@@ -138,6 +139,7 @@ export default function Page() {
   const [dateTo] = useState("");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [lastDeleted, setLastDeleted] = useState<Odeme[] | null>(null);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
   const [rowMeta, setRowMeta] = useState<Record<number, RowMeta>>(() =>
     readStoredState<Record<number, RowMeta>>("odeme-row-meta-v1", {})
@@ -181,6 +183,7 @@ export default function Page() {
   const [settingsBusy, setSettingsBusy] = useState(false);
 
   const exportRef = useRef<HTMLElement | null>(null);
+  const exportMenuRef = useRef<HTMLDivElement | null>(null);
   const invoiceInputRef = useRef<HTMLInputElement | null>(null);
   const profileInputRef = useRef<HTMLInputElement | null>(null);
   const initialLoadRef = useRef(false);
@@ -328,17 +331,17 @@ export default function Page() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
-        const nextPassword = window.prompt("Yeni şifreni gir");
+        const nextPassword = window.prompt("Yeni Ã…Å¸ifreni gir");
 
         if (nextPassword && nextPassword.trim()) {
           void supabase.auth
             .updateUser({ password: nextPassword.trim() })
             .then(({ error }) => {
               if (error) {
-                setMsg("Şifre güncellenemedi: " + error.message);
+                setMsg("Ã…Âifre gÃƒÂ¼ncellenemedi: " + error.message);
                 return;
               }
-              setMsg("Şifren güncellendi. Yeni şifrenle giriş yapabilirsin.");
+              setMsg("Ã…Âifren gÃƒÂ¼ncellendi. Yeni Ã…Å¸ifrenle giriÃ…Å¸ yapabilirsin.");
             });
         }
       }
@@ -377,7 +380,7 @@ export default function Page() {
       .order("id", { ascending: true });
 
     if (error) {
-      setMsg("Veriler alınamadı: " + error.message);
+      setMsg("Veriler alÃ„Â±namadÃ„Â±: " + error.message);
       setLoading(false);
       return;
     }
@@ -481,6 +484,18 @@ export default function Page() {
     const close = () => setTabMenu((p) => ({ ...p, visible: false }));
     window.addEventListener("click", close);
     return () => window.removeEventListener("click", close);
+  }, []);
+
+  useEffect(() => {
+    const closeExportMenu = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (exportMenuRef.current?.contains(target)) return;
+      setExportMenuOpen(false);
+    };
+
+    window.addEventListener("click", closeExportMenu);
+    return () => window.removeEventListener("click", closeExportMenu);
   }, []);
 
   const sekmeler = useMemo(
@@ -587,7 +602,7 @@ export default function Page() {
       sekme: row.grup || "",
       proje: row.proje || "",
       durum: row.odendi
-        ? "Ödeme alındı"
+        ? "Ãƒâ€“deme alÃ„Â±ndÃ„Â±"
         : row.fatura_kesildi
           ? "Fatura kesildi"
           : "Bekliyor",
@@ -633,8 +648,8 @@ export default function Page() {
     const rows = getExportRows();
     const title =
       viewMode === "home"
-        ? "ÖDEDİ Mİ Genel Özet"
-        : `${aktifSekme || "Proje"} Özeti`;
+        ? "Ãƒâ€“DEDÃ„Â° MÃ„Â° Genel Ãƒâ€“zet"
+        : `${aktifSekme || "Proje"} Ãƒâ€“zeti`;
     const html = `<!DOCTYPE html>
 <html lang="tr">
   <head>
@@ -701,7 +716,7 @@ export default function Page() {
 
     if (file.size > MAX_INVOICE_FILE_SIZE_BYTES) {
       setMsg(
-        `Fatura yüklenemedi: Dosya boyutu en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`
+        `Fatura yÃƒÂ¼klenemedi: Dosya boyutu en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`
       );
       return;
     }
@@ -716,7 +731,7 @@ export default function Page() {
       .upload(path, file, { upsert: false });
 
     if (error) {
-      setMsg("Fatura yüklenemedi: " + error.message);
+      setMsg("Fatura yÃƒÂ¼klenemedi: " + error.message);
       setUploadingInvoiceId(null);
       return;
     }
@@ -747,7 +762,7 @@ export default function Page() {
 
     if (attachmentError || !insertedAttachment) {
       await supabase.storage.from("faturalar").remove([path]);
-      setMsg("Fatura kaydı oluşturulamadı: " + (attachmentError?.message || "Bilinmeyen hata"));
+      setMsg("Fatura kaydÃ„Â± oluÃ…Å¸turulamadÃ„Â±: " + (attachmentError?.message || "Bilinmeyen hata"));
       setUploadingInvoiceId(null);
       return;
     }
@@ -759,7 +774,7 @@ export default function Page() {
       [row.id]: [...(prev[row.id] || []), nextAttachment],
     }));
 
-    setMsg("Fatura yüklendi.");
+    setMsg("Fatura yÃƒÂ¼klendi.");
     setUploadingInvoiceId(null);
   };
 
@@ -769,7 +784,7 @@ export default function Page() {
       : await faturaEkleriTable().delete().eq("path", attachment.path);
 
     if (metadataDelete.error) {
-      setMsg("Fatura kaydı silinemedi: " + metadataDelete.error.message);
+      setMsg("Fatura kaydÃ„Â± silinemedi: " + metadataDelete.error.message);
       return;
     }
 
@@ -785,7 +800,7 @@ export default function Page() {
       [rowId]: (prev[rowId] || []).filter((item) => item.path !== attachment.path),
     }));
 
-    setMsg("Fatura kaldırıldı.");
+    setMsg("Fatura kaldÃ„Â±rÃ„Â±ldÃ„Â±.");
   };
 
   const deleteInvoicesForRows = async (rowIds: number[]) => {
@@ -796,7 +811,7 @@ export default function Page() {
       .in("odeme_id", rowIds);
 
     if (attachmentsError) {
-      return { error: "Fatura kayıtları alınamadı: " + attachmentsError.message };
+      return { error: "Fatura kayÃ„Â±tlarÃ„Â± alÃ„Â±namadÃ„Â±: " + attachmentsError.message };
     }
 
     const typedAttachments = ((attachments || []) as Array<{
@@ -815,7 +830,7 @@ export default function Page() {
         .remove(attachmentPaths);
 
       if (storageError) {
-        return { error: "Fatura dosyaları silinemedi: " + storageError.message };
+        return { error: "Fatura dosyalarÃ„Â± silinemedi: " + storageError.message };
       }
     }
 
@@ -830,7 +845,7 @@ export default function Page() {
           .in("id", attachmentIds);
 
         if (deleteError) {
-          return { error: "Fatura kayıtları silinemedi: " + deleteError.message };
+          return { error: "Fatura kayÃ„Â±tlarÃ„Â± silinemedi: " + deleteError.message };
         }
       }
     }
@@ -848,7 +863,7 @@ export default function Page() {
 
   const exportPDF = async () => {
     try {
-      setMsg("PDF hazırlanıyor...");
+      setMsg("PDF hazÃ„Â±rlanÃ„Â±yor...");
 
       await loadScript(
         "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
@@ -859,7 +874,7 @@ export default function Page() {
 
       const target = exportRef.current;
       if (!target) {
-        setMsg("PDF alanı bulunamadı.");
+        setMsg("PDF alanÃ„Â± bulunamadÃ„Â±.");
         return;
       }
 
@@ -868,7 +883,7 @@ export default function Page() {
       const jsPDF = pdfWindow.jspdf?.jsPDF;
 
       if (!html2canvas || !jsPDF) {
-        setMsg("PDF araçları yüklenemedi.");
+        setMsg("PDF araÃƒÂ§larÃ„Â± yÃƒÂ¼klenemedi.");
         return;
       }
 
@@ -905,7 +920,7 @@ export default function Page() {
       );
       setMsg("PDF indirildi.");
     } catch (error) {
-      setMsg(error instanceof Error ? error.message : "PDF oluşturulamadı.");
+      setMsg(error instanceof Error ? error.message : "PDF oluÃ…Å¸turulamadÃ„Â±.");
     }
   };
 
@@ -947,7 +962,7 @@ export default function Page() {
       : await odemelerTable().insert([payload]);
 
     if (res.error) {
-      setMsg("Kayıt kaydedilemedi: " + res.error.message);
+      setMsg("KayÃ„Â±t kaydedilemedi: " + res.error.message);
       return;
     }
 
@@ -962,7 +977,7 @@ export default function Page() {
     }
 
     temizle();
-    setMsg(editId ? "Kayıt güncellendi." : "Kayıt eklendi.");
+    setMsg(editId ? "KayÃ„Â±t gÃƒÂ¼ncellendi." : "KayÃ„Â±t eklendi.");
     await yukle();
   }
 
@@ -977,7 +992,7 @@ export default function Page() {
     const { error } = await odemelerTable().insert([
       {
         user_id: authUserId,
-        proje: `${row.proje || "Yeni Kayıt"} Kopya`,
+        proje: `${row.proje || "Yeni KayÃ„Â±t"} Kopya`,
         tutar: row.tutar,
         odendi: row.odendi,
         grup: row.grup,
@@ -989,11 +1004,11 @@ export default function Page() {
     ] satisfies OdemeInsert[]);
 
     if (error) {
-      setMsg("Kopyalama başarısız: " + error.message);
+      setMsg("Kopyalama baÃ…Å¸arÃ„Â±sÃ„Â±z: " + error.message);
       return;
     }
 
-    setMsg("Kayıt çoğaltıldı.");
+    setMsg("KayÃ„Â±t ÃƒÂ§oÃ„Å¸altÃ„Â±ldÃ„Â±.");
     await yukle();
   }
 
@@ -1012,7 +1027,7 @@ export default function Page() {
       .eq("id", row.id);
 
     if (error) {
-      setMsg("Durum güncellenemedi: " + error.message);
+      setMsg("Durum gÃƒÂ¼ncellenemedi: " + error.message);
       return;
     }
 
@@ -1036,7 +1051,7 @@ export default function Page() {
     if (!rows.length) return;
 
     if (type === "delete") {
-      const confirmed = window.confirm(`${rows.length} kayıt silinsin mi?`);
+      const confirmed = window.confirm(`${rows.length} kayÃ„Â±t silinsin mi?`);
       if (!confirmed) return;
       setLastDeleted(rows);
     }
@@ -1047,7 +1062,7 @@ export default function Page() {
 
     const accessToken = session?.access_token;
     if (!accessToken) {
-      setMsg("Toplu işlem için oturum doğrulanamadı.");
+      setMsg("Toplu iÃ…Å¸lem iÃƒÂ§in oturum doÃ„Å¸rulanamadÃ„Â±.");
       return;
     }
 
@@ -1066,7 +1081,7 @@ export default function Page() {
     const payload = (await response.json().catch(() => ({}))) as { error?: string };
 
     if (!response.ok) {
-      setMsg(payload.error || "Toplu işlem başarısız.");
+      setMsg(payload.error || "Toplu iÃ…Å¸lem baÃ…Å¸arÃ„Â±sÃ„Â±z.");
       return;
     }
 
@@ -1095,10 +1110,10 @@ export default function Page() {
     setSelectedIds([]);
     setMsg(
       type === "invoice"
-        ? "Seçilen kayıtlar fatura kesildi olarak güncellendi."
+        ? "SeÃƒÂ§ilen kayÃ„Â±tlar fatura kesildi olarak gÃƒÂ¼ncellendi."
         : type === "paid"
-          ? "Seçilen kayıtlar ödendi olarak güncellendi."
-          : "Seçilen kayıtlar silindi."
+          ? "SeÃƒÂ§ilen kayÃ„Â±tlar ÃƒÂ¶dendi olarak gÃƒÂ¼ncellendi."
+          : "SeÃƒÂ§ilen kayÃ„Â±tlar silindi."
     );
     await yukle();
   }
@@ -1121,12 +1136,12 @@ export default function Page() {
     const { error } = await odemelerTable().insert(payload);
 
     if (error) {
-      setMsg("Geri alma başarısız: " + error.message);
+      setMsg("Geri alma baÃ…Å¸arÃ„Â±sÃ„Â±z: " + error.message);
       return;
     }
 
     setLastDeleted(null);
-    setMsg("Silinen kayıtlar geri yüklendi.");
+    setMsg("Silinen kayÃ„Â±tlar geri yÃƒÂ¼klendi.");
     await yukle();
   }
 
@@ -1142,19 +1157,19 @@ export default function Page() {
     const { error } = await odemelerTable().delete().eq("id", id);
 
     if (error) {
-      setMsg("Kayıt silinemedi: " + error.message);
+      setMsg("KayÃ„Â±t silinemedi: " + error.message);
       return;
     }
 
     if (row) setLastDeleted([row]);
     if (editId === id) temizle();
-    setMsg("Kayıt silindi.");
+    setMsg("KayÃ„Â±t silindi.");
     await yukle();
   }
 
   async function sekmeSil(tabName: string) {
     const onay = window.confirm(
-      `${tabName} sekmesindeki tüm kayıtlar silinecek. Emin misin?`
+      `${tabName} sekmesindeki tÃƒÂ¼m kayÃ„Â±tlar silinecek. Emin misin?`
     );
     if (!onay) return;
 
@@ -1191,7 +1206,7 @@ export default function Page() {
   }
 
   async function sekmeYenidenAdlandir(tabName: string) {
-    const yeniAd = window.prompt("Sekmenin yeni adı ne olsun?", tabName);
+    const yeniAd = window.prompt("Sekmenin yeni adÃ„Â± ne olsun?", tabName);
     if (!yeniAd || !yeniAd.trim()) return;
 
     const rows = data.filter((x) => (x.grup || "") === tabName);
@@ -1206,7 +1221,7 @@ export default function Page() {
     const failed = res.find((r) => r.error);
 
     if (failed?.error) {
-      setMsg("Sekme adı güncellenemedi: " + failed.error.message);
+      setMsg("Sekme adÃ„Â± gÃƒÂ¼ncellenemedi: " + failed.error.message);
       return;
     }
 
@@ -1227,7 +1242,7 @@ export default function Page() {
       openProjectTab(yeniAd.trim());
     }
 
-    setMsg("Sekme adı güncellendi.");
+    setMsg("Sekme adÃ„Â± gÃƒÂ¼ncellendi.");
     await yukle();
   }
 
@@ -1268,7 +1283,7 @@ export default function Page() {
 
     const failed = res.find((r) => r.error);
     if (failed?.error) {
-      setMsg("Sıralama kaydedilemedi: " + failed.error.message);
+      setMsg("SÃ„Â±ralama kaydedilemedi: " + failed.error.message);
       await yukle();
     }
   }
@@ -1316,8 +1331,8 @@ export default function Page() {
   };
 
   const arrow = (key: SortKey) => {
-    if (sortKey !== key) return "↕";
-    return sortDirection === "asc" ? "↑" : "↓";
+    if (sortKey !== key) return "Ã¢â€ â€¢";
+    return sortDirection === "asc" ? "Ã¢â€ â€˜" : "Ã¢â€ â€œ";
   };
 
   const moveProjectColumn = (
@@ -1408,18 +1423,18 @@ export default function Page() {
     if (row.odendi) {
       return {
         text: "Ödeme alındı",
-        bg: theme === "dark" ? "rgba(45, 212, 191, 0.14)" : "#EAF8F4",
-        color: theme === "dark" ? "#71D8C9" : "#1A7F68",
-        rowBg: theme === "dark" ? "#0C1716" : "#F8FCFB",
+        bg: theme === "dark" ? "rgba(60, 193, 139, 0.18)" : "#EAF8F0",
+        color: theme === "dark" ? "#9BE4BF" : "#2A8B62",
+        rowBg: theme === "dark" ? "#0C1813" : "#FBFEFC",
       };
     }
 
     if (row.fatura_kesildi) {
       return {
         text: "Fatura kesildi",
-        bg: theme === "dark" ? "rgba(251, 191, 36, 0.14)" : "#FFF6E8",
-        color: theme === "dark" ? "#F0C46A" : "#B97812",
-        rowBg: theme === "dark" ? "#17130C" : "#FFFCF6",
+        bg: theme === "dark" ? "rgba(255, 186, 104, 0.18)" : "#FFF4E7",
+        color: theme === "dark" ? "#FFD08F" : "#D88724",
+        rowBg: theme === "dark" ? "#17120B" : "#FFFDF8",
       };
     }
 
@@ -1437,7 +1452,7 @@ export default function Page() {
     if (key === "select") {
       return {
         key,
-        label: "SEÇ",
+        label: "SEÃƒâ€¡",
         className: "no-print",
         style: { ...styles.th, width: 52 },
       };
@@ -1446,7 +1461,7 @@ export default function Page() {
     if (key === "sira") {
       return {
         key,
-        label: `SIRA ${sortKey === "manual" ? "●" : ""}`,
+        label: `SIRA ${sortKey === "manual" ? "Ã¢â€”Â" : ""}`,
         className: "",
         style: {
           ...styles.th,
@@ -1492,7 +1507,7 @@ export default function Page() {
     if (key === "fatura_tarihi") {
       return {
         key,
-        label: `FATURA TARİHİ ${arrow("fatura_tarihi")}`,
+        label: `FATURA TARÃ„Â°HÃ„Â° ${arrow("fatura_tarihi")}`,
         className: "",
         style: {
           ...styles.th,
@@ -1519,7 +1534,7 @@ export default function Page() {
 
     return {
       key,
-      label: "İŞLEM",
+      label: "Ã„Â°Ã…ÂLEM",
       className: "no-print",
       style: { ...styles.th, width: 160 },
     };
@@ -1545,7 +1560,7 @@ export default function Page() {
     if (key === "odeme") {
       return {
         key,
-        label: "ÖDEME",
+        label: "Ãƒâ€“DEME",
         style: { ...styles.th, background: "var(--amberSoft)" },
       };
     }
@@ -1585,7 +1600,7 @@ export default function Page() {
             type="button"
             onClick={() => toggleSelected(row.id)}
             style={styles.checkboxBtn}
-            title="Kaydı seç"
+            title="KaydÃ„Â± seÃƒÂ§"
           >
             {selectedIds.includes(row.id) ? (
               <CheckSquare size={18} color={palette.blue} />
@@ -1618,11 +1633,11 @@ export default function Page() {
           }}
           title={
             sortKey === "manual"
-              ? "Sürükle"
-              : "Manuel sıralama için SIRA başlığına tıkla"
+              ? "SÃƒÂ¼rÃƒÂ¼kle"
+              : "Manuel sÃ„Â±ralama iÃƒÂ§in SIRA baÃ…Å¸lÃ„Â±Ã„Å¸Ã„Â±na tÃ„Â±kla"
           }
         >
-          {isDragSource ? "•••" : "≡"}
+          {isDragSource ? "Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢" : "Ã¢â€°Â¡"}
         </td>
       );
     }
@@ -1632,7 +1647,7 @@ export default function Page() {
         <td
           key={column}
           onDoubleClick={() => editAc(row)}
-          title="Düzenlemek için çift tıkla"
+          title="DÃƒÂ¼zenlemek iÃƒÂ§in ÃƒÂ§ift tÃ„Â±kla"
           style={{
             ...styles.td,
             borderLeft: `5px solid ${aktifTabMeta.color}`,
@@ -1648,7 +1663,7 @@ export default function Page() {
             />
           ) : (
             <div>
-              <div style={{ fontWeight: 800 }}>{row.proje || "—"}</div>
+              <div style={{ fontWeight: 800 }}>{row.proje || "Ã¢â‚¬â€"}</div>
               {invoices.length > 0 ? (
                 <div style={styles.invoiceList}>
                   {invoices.map((attachment) => (
@@ -1665,7 +1680,7 @@ export default function Page() {
                         type="button"
                         onClick={() => void removeInvoice(row.id, attachment)}
                         style={styles.invoiceRemoveBtn}
-                        title="Faturayı kaldır"
+                        title="FaturayÃ„Â± kaldÃ„Â±r"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -1674,10 +1689,10 @@ export default function Page() {
                 </div>
               ) : null}
               <div style={styles.metaText}>
-                Oluşturma: {shortDateTime(meta?.createdAt || null)}
+                OluÃ…Å¸turma: {shortDateTime(meta?.createdAt || null)}
               </div>
               <div style={styles.metaText}>
-                Güncelleme: {shortDateTime(meta?.updatedAt || null)}
+                GÃƒÂ¼ncelleme: {shortDateTime(meta?.updatedAt || null)}
               </div>
             </div>
           )}
@@ -1701,9 +1716,9 @@ export default function Page() {
               }}
               style={styles.input}
             >
-              <option value="bekliyor">Henüz kesilmedi</option>
+              <option value="bekliyor">HenÃƒÂ¼z kesilmedi</option>
               <option value="fatura">Fatura kesildi</option>
-              <option value="odeme">Ödeme alındı</option>
+              <option value="odeme">Ãƒâ€“deme alÃ„Â±ndÃ„Â±</option>
             </select>
           ) : (
             <button
@@ -1735,7 +1750,7 @@ export default function Page() {
         <td
           key={column}
           onDoubleClick={() => editAc(row)}
-          title="Düzenlemek için çift tıkla"
+          title="DÃƒÂ¼zenlemek iÃƒÂ§in ÃƒÂ§ift tÃ„Â±kla"
           style={{ ...styles.td, cursor: "pointer" }}
         >
           {editing ? (
@@ -1758,7 +1773,7 @@ export default function Page() {
         <td
           key={column}
           onDoubleClick={() => editAc(row)}
-          title="Düzenlemek için çift tıkla"
+          title="DÃƒÂ¼zenlemek iÃƒÂ§in ÃƒÂ§ift tÃ„Â±kla"
           style={{
             ...styles.td,
             cursor: "pointer",
@@ -1786,19 +1801,19 @@ export default function Page() {
                 onChange={(e) => setKdvli(e.target.value === "kdvli")}
                 style={styles.input}
               >
-                <option value="kdvsiz">KDV’siz</option>
+                <option value="kdvsiz">KDVÃ¢â‚¬â„¢siz</option>
                 <option value="kdvli">+ %20 KDV</option>
               </select>
               <button className="hover-button" onClick={kaydet} style={styles.secondaryBtn}>
                 Kaydet
               </button>
               <button className="hover-button" onClick={temizle} style={styles.deleteBtn}>
-                İptal
+                Ã„Â°ptal
               </button>
             </div>
           ) : (
             <div>
-              <div>{row.tutar ? tl(Number(row.tutar)) : "—"}</div>
+              <div>{row.tutar ? tl(Number(row.tutar)) : "Ã¢â‚¬â€"}</div>
               {row.kdvli ? <div style={styles.metaText}>+ %20 KDV</div> : null}
             </div>
           )}
@@ -1813,7 +1828,7 @@ export default function Page() {
             className="hover-button"
             onClick={() => editAc(row)}
             style={styles.iconActionBtn}
-            title="Düzenle"
+            title="DÃƒÂ¼zenle"
           >
             <Pencil size={15} />
           </button>
@@ -1821,7 +1836,7 @@ export default function Page() {
             className="hover-button"
             onClick={() => void kaydiKopyala(row)}
             style={styles.iconActionBtn}
-            title="Çoğalt"
+            title="Ãƒâ€¡oÃ„Å¸alt"
           >
             <Copy size={15} />
           </button>
@@ -1829,7 +1844,7 @@ export default function Page() {
             className="hover-button"
             onClick={() => openInvoicePicker(row.id)}
             style={styles.iconActionBtn}
-            title="Fatura yükle"
+            title="Fatura yÃƒÂ¼kle"
             disabled={uploadingInvoiceId === row.id}
           >
             <Upload size={15} />
@@ -1857,11 +1872,11 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Supabase giriş başarısız: " + error.message);
+      setMsg("Supabase giriÃ…Å¸ baÃ…Å¸arÃ„Â±sÃ„Â±z: " + error.message);
       return;
     }
 
-    setMsg("Supabase ile giriş yapıldı.");
+    setMsg("Supabase ile giriÃ…Å¸ yapÃ„Â±ldÃ„Â±.");
   }
 
   async function authSignUp() {
@@ -1878,17 +1893,17 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Hesap oluşturulamadı: " + error.message);
+      setMsg("Hesap oluÃ…Å¸turulamadÃ„Â±: " + error.message);
       return;
     }
 
     setSignupMode(false);
-    setMsg("Hesap oluşturuldu. E-posta doğrulaması açıksa kutunu kontrol et.");
+    setMsg("Hesap oluÃ…Å¸turuldu. E-posta doÃ„Å¸rulamasÃ„Â± aÃƒÂ§Ã„Â±ksa kutunu kontrol et.");
   }
 
   async function authResetPassword() {
     if (!email.trim()) {
-      setMsg("Şifre sıfırlama için önce e-posta adresini gir.");
+      setMsg("Ã…Âifre sÃ„Â±fÃ„Â±rlama iÃƒÂ§in ÃƒÂ¶nce e-posta adresini gir.");
       return;
     }
 
@@ -1898,11 +1913,11 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Şifre sıfırlama e-postası gönderilemedi: " + error.message);
+      setMsg("Ã…Âifre sÃ„Â±fÃ„Â±rlama e-postasÃ„Â± gÃƒÂ¶nderilemedi: " + error.message);
       return;
     }
 
-    setMsg("Şifre sıfırlama bağlantısı e-posta adresine gönderildi.");
+    setMsg("Ã…Âifre sÃ„Â±fÃ„Â±rlama baÃ„Å¸lantÃ„Â±sÃ„Â± e-posta adresine gÃƒÂ¶nderildi.");
   }
 
   async function authLoginWithGoogle() {
@@ -1916,7 +1931,7 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Google girişi başlatılamadı: " + error.message);
+      setMsg("Google giriÃ…Å¸i baÃ…Å¸latÃ„Â±lamadÃ„Â±: " + error.message);
     }
   }
 
@@ -1933,7 +1948,7 @@ export default function Page() {
     if (!authUserId) return;
 
     if (file.size > MAX_INVOICE_FILE_SIZE_BYTES) {
-      setMsg(`Profil fotoğrafı en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`);
+      setMsg(`Profil fotoÃ„Å¸rafÃ„Â± en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`);
       return;
     }
 
@@ -1948,7 +1963,7 @@ export default function Page() {
       });
 
     if (error) {
-      setMsg("Profil fotoğrafı yüklenemedi: " + error.message);
+      setMsg("Profil fotoÃ„Å¸rafÃ„Â± yÃƒÂ¼klenemedi: " + error.message);
       setSettingsBusy(false);
       return;
     }
@@ -1966,13 +1981,13 @@ export default function Page() {
     });
 
     if (profileError) {
-      setMsg("Profil güncellenemedi: " + profileError.message);
+      setMsg("Profil gÃƒÂ¼ncellenemedi: " + profileError.message);
       setSettingsBusy(false);
       return;
     }
 
     setSettingsAvatarUrl(avatarUrl);
-    setMsg("Profil fotoğrafı güncellendi.");
+    setMsg("Profil fotoÃ„Å¸rafÃ„Â± gÃƒÂ¼ncellendi.");
     setSettingsBusy(false);
   }
 
@@ -1992,23 +2007,23 @@ export default function Page() {
       return;
     }
 
-    setMsg("Hesap ayarları kaydedildi.");
+    setMsg("Hesap ayarlarÃ„Â± kaydedildi.");
     setSettingsBusy(false);
   }
 
   async function changePassword() {
     if (!settingsPassword.trim()) {
-      setMsg("Yeni şifre alanı boş olamaz.");
+      setMsg("Yeni Ã…Å¸ifre alanÃ„Â± boÃ…Å¸ olamaz.");
       return;
     }
 
     if (settingsPassword.trim().length < 6) {
-      setMsg("Yeni şifre en az 6 karakter olmalı.");
+      setMsg("Yeni Ã…Å¸ifre en az 6 karakter olmalÃ„Â±.");
       return;
     }
 
     if (settingsPassword !== settingsPasswordRepeat) {
-      setMsg("Şifre tekrar alanı eşleşmiyor.");
+      setMsg("Ã…Âifre tekrar alanÃ„Â± eÃ…Å¸leÃ…Å¸miyor.");
       return;
     }
 
@@ -2018,14 +2033,14 @@ export default function Page() {
     });
 
     if (error) {
-      setMsg("Şifre değiştirilemedi: " + error.message);
+      setMsg("Ã…Âifre deÃ„Å¸iÃ…Å¸tirilemedi: " + error.message);
       setSettingsBusy(false);
       return;
     }
 
     setSettingsPassword("");
     setSettingsPasswordRepeat("");
-    setMsg("Şifre güncellendi.");
+    setMsg("Ã…Âifre gÃƒÂ¼ncellendi.");
     setSettingsBusy(false);
   }
 
@@ -2033,7 +2048,7 @@ export default function Page() {
     if (!authUserId) return;
 
     const confirmed = window.confirm(
-      "Bu işlem hesabı, panel verilerini ve yüklenen dosyaları kalıcı olarak siler. Devam edilsin mi?"
+      "Bu iÃ…Å¸lem hesabÃ„Â±, panel verilerini ve yÃƒÂ¼klenen dosyalarÃ„Â± kalÃ„Â±cÃ„Â± olarak siler. Devam edilsin mi?"
     );
     if (!confirmed) return;
 
@@ -2045,14 +2060,14 @@ export default function Page() {
 
     const accessToken = session?.access_token;
     if (!accessToken) {
-      setMsg("Hesap silme için oturum doğrulanamadı.");
+      setMsg("Hesap silme iÃƒÂ§in oturum doÃ„Å¸rulanamadÃ„Â±.");
       setSettingsBusy(false);
       return;
     }
 
     if (authProviders.includes("email")) {
       if (!authEmail || !settingsCurrentPassword.trim()) {
-        setMsg("Hesabı kapatmak için mevcut şifreni gir.");
+        setMsg("HesabÃ„Â± kapatmak iÃƒÂ§in mevcut Ã…Å¸ifreni gir.");
         setSettingsBusy(false);
         return;
       }
@@ -2063,7 +2078,7 @@ export default function Page() {
       });
 
       if (verifyError) {
-        setMsg("Mevcut şifre doğrulanamadı.");
+        setMsg("Mevcut Ã…Å¸ifre doÃ„Å¸rulanamadÃ„Â±.");
         setSettingsBusy(false);
         return;
       }
@@ -2087,11 +2102,11 @@ export default function Page() {
     await supabase.auth.signOut();
     setSettingsCurrentPassword("");
     setSettingsBusy(false);
-    setMsg("Hesap ve tüm veriler silindi.");
+    setMsg("Hesap ve tÃƒÂ¼m veriler silindi.");
   }
 
   function yeniProjeOlustur() {
-    const ad = window.prompt("Proje adı");
+    const ad = window.prompt("Proje adÃ„Â±");
     if (!ad || !ad.trim()) return;
 
     const clean = ad.trim();
@@ -2331,7 +2346,7 @@ export default function Page() {
                       ? styles.activeTab
                       : styles.tab
                   }
-                  title="Sağ tık: sekme seçenekleri"
+                  title="SaÃ„Å¸ tÃ„Â±k: sekme seÃƒÂ§enekleri"
                 >
                   <span style={styles.sidebarTabInner}>
                     <span
@@ -2355,7 +2370,7 @@ export default function Page() {
             >
               <span style={styles.sidebarTabInner}>
                 <Settings2 size={16} />
-                Hesap Ayarları
+                Hesap AyarlarÃ„Â±
               </span>
             </button>
             <button
@@ -2365,7 +2380,7 @@ export default function Page() {
             >
               <span style={styles.btnInner}>
                 <Archive size={16} />
-                {showArchivedTabs ? "Aktifleri Göster" : "Arşivleri Göster"}
+                {showArchivedTabs ? "Aktifleri GÃƒÂ¶ster" : "ArÃ…Å¸ivleri GÃƒÂ¶ster"}
               </span>
             </button>
           </div>
@@ -2378,15 +2393,15 @@ export default function Page() {
                 {viewMode === "home"
                   ? "Ana Sayfa"
                   : viewMode === "settings"
-                    ? "Hesap Ayarları"
+                    ? "Hesap AyarlarÃ„Â±"
                     : aktifSekme || "Proje"}
               </h1>
               <div style={styles.pageSubtitle}>
                 {viewMode === "home"
-                  ? "Tahsilat ve fatura takibinin genel özeti"
+                  ? "Tahsilat ve fatura takibinin genel ÃƒÂ¶zeti"
                   : viewMode === "settings"
-                    ? "Profil, güvenlik ve hesap işlemleri"
-                    : "Sekme detayları"}
+                    ? "Profil, gÃƒÂ¼venlik ve hesap iÃ…Å¸lemleri"
+                    : "Sekme detaylarÃ„Â±"}
               </div>
             </div>
 
@@ -2415,7 +2430,7 @@ export default function Page() {
               >
                 <span style={styles.btnInner}>
                   {theme === "light" ? <Moon size={16} /> : <SunMedium size={16} />}
-                  {theme === "light" ? "Karanlık Tema" : "Açık Tema"}
+                  {theme === "light" ? "KaranlÃ„Â±k Tema" : "AÃƒÂ§Ã„Â±k Tema"}
                 </span>
               </button>
 
@@ -2426,7 +2441,7 @@ export default function Page() {
               >
                 <span style={styles.btnInner}>
                   <LogOut size={16} />
-                  Çıkış Yap
+                  Ãƒâ€¡Ã„Â±kÃ„Â±Ã…Å¸ Yap
                 </span>
               </button>
             </div>
@@ -2460,39 +2475,86 @@ export default function Page() {
                   {tl(tumToplam)}
                 </div>
               </div>
-              <div style={styles.heroActionGroup} className="hero-actions">
+              <div
+                style={styles.heroExportWrap}
+                className="hero-actions no-print"
+                ref={exportMenuRef}
+              >
                 <button
-                  className="no-print"
-                  onClick={exportWord}
-                  style={styles.heroActionBtnWord}
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setExportMenuOpen((prev) => !prev);
+                  }}
+                  style={styles.heroExportToggle}
                 >
-                  <span style={styles.heroActionInner}>
-                    <FileText size={15} />
-                    WORD
+                  <span style={styles.heroExportToggleInner}>
+                    <Download size={14} />
+                    DÃ„Â±Ã…Å¸a Aktar
+                    <ChevronDown size={14} />
                   </span>
                 </button>
 
-                <button
-                  className="no-print"
-                  onClick={exportExcel}
-                  style={styles.heroActionBtnExcel}
-                >
-                  <span style={styles.heroActionInner}>
-                    <Download size={15} />
-                    EXCEL
-                  </span>
-                </button>
+                {exportMenuOpen ? (
+                  <div style={styles.heroExportMenu}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportWord();
+                        setExportMenuOpen(false);
+                      }}
+                      style={styles.heroExportMenuItem}
+                    >
+                      <span
+                        style={{
+                          ...styles.heroExportMenuIcon,
+                          ...styles.heroExportMenuIconWord,
+                        }}
+                      >
+                        <FileText size={14} />
+                      </span>
+                      <span>Word</span>
+                    </button>
 
-                <button
-                  className="no-print"
-                  onClick={exportPDF}
-                  style={styles.heroActionBtnPdf}
-                >
-                  <span style={styles.heroActionInner}>
-                    <FileText size={15} />
-                    PDF
-                  </span>
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportExcel();
+                        setExportMenuOpen(false);
+                      }}
+                      style={styles.heroExportMenuItem}
+                    >
+                      <span
+                        style={{
+                          ...styles.heroExportMenuIcon,
+                          ...styles.heroExportMenuIconExcel,
+                        }}
+                      >
+                        <Download size={14} />
+                      </span>
+                      <span>Excel</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void exportPDF();
+                        setExportMenuOpen(false);
+                      }}
+                      style={styles.heroExportMenuItem}
+                    >
+                      <span
+                        style={{
+                          ...styles.heroExportMenuIcon,
+                          ...styles.heroExportMenuIconPdf,
+                        }}
+                      >
+                        <FileText size={14} />
+                      </span>
+                      <span>PDF</span>
+                    </button>
+                  </div>
+                ) : null}
 
                 <input
                   ref={invoiceInputRef}
@@ -2520,7 +2582,7 @@ export default function Page() {
 
             <div style={styles.heroSubRow}>
               <div>
-                <div style={styles.heroSubTitle}>ÖDENEN</div>
+                <div style={styles.heroSubTitle}>Ã–DENEN</div>
                 <div style={styles.heroSubValue}>
                   {tl(tumOdenenTutar)}
                 </div>
@@ -2542,54 +2604,62 @@ export default function Page() {
               <>
                 <Stat
                   styles={styles}
-                  title="Toplam Kayıt"
+                  title="Toplam KayÄ±t"
                   value={String(filteredHomeRows.length)}
                   icon={<FolderKanban size={16} color={palette.blue} />}
+                  iconWrapStyle={styles.statIconBlue}
                 />
                 <Stat
                   styles={styles}
-                  title="Ödeme Alındı"
+                  title="Ã–deme AlÄ±ndÄ±"
                   value={String(tumOdeme)}
                   icon={<CheckCircle2 size={16} color={palette.teal} />}
+                  iconWrapStyle={styles.statIconTeal}
                 />
                 <Stat
                   styles={styles}
                   title="Fatura Kesildi"
                   value={String(tumFatura)}
                   icon={<Receipt size={16} color={palette.amber} />}
+                  iconWrapStyle={styles.statIconAmber}
                 />
                 <Stat
                   styles={styles}
                   title="Toplam Tutar"
                   value={tl(tumToplam)}
                   icon={<Wallet size={16} color={palette.blue} />}
+                  iconWrapStyle={styles.statIconBlue}
                 />
               </>
             ) : (
               <>
                 <Stat
                   styles={styles}
-                  title="Toplam Kayıt"
+                  title="Toplam KayÄ±t"
                   value={String(filteredActiveKayitlar.length)}
                   icon={<FolderKanban size={16} color={aktifTabMeta.color} />}
+                  iconWrapStyle={styles.statIconBlue}
                 />
                 <Stat
                   styles={styles}
-                  title="Ödeme Alındı"
+                  title="Ã–deme AlÄ±ndÄ±"
                   value={String(odemesiAlinanAdet)}
                   icon={<CheckCircle2 size={16} color={palette.teal} />}
+                  iconWrapStyle={styles.statIconTeal}
                 />
                 <Stat
                   styles={styles}
                   title="Fatura Kesildi"
                   value={String(faturasiKesilenAdet)}
                   icon={<Receipt size={16} color={palette.amber} />}
+                  iconWrapStyle={styles.statIconAmber}
                 />
                 <Stat
                   styles={styles}
                   title="Kalan Tahsilat"
                   value={tl(kalan)}
                   icon={<Clock3 size={16} color={palette.red} />}
+                  iconWrapStyle={styles.statIconRed}
                 />
               </>
             )}
@@ -2598,9 +2668,9 @@ export default function Page() {
           {viewMode === "home" ? (
             <div style={styles.quickGrid} className="quick-grid">
               <div style={styles.quickCard}>
-                <div style={styles.quickTitle}>Tahsilat Özeti</div>
+                <div style={styles.quickTitle}>Tahsilat Ã–zeti</div>
                 <div style={styles.quickBig}>{tl(tumOdenenTutar)}</div>
-                <div style={styles.quickMuted}>Filtreye göre tahsil edilen tutar</div>
+                <div style={styles.quickMuted}>Filtreye gÃ¶re tahsil edilen tutar</div>
 
                 <div style={styles.progressWrap}>
                   <div
@@ -2612,7 +2682,7 @@ export default function Page() {
                 </div>
 
                 <div style={styles.quickFooterRow}>
-                  <span>Tahsilat Oranı</span>
+                  <span>Tahsilat OranÄ±</span>
                   <strong>%{tahsilatYuzdesiGenel}</strong>
                 </div>
 
@@ -2623,11 +2693,11 @@ export default function Page() {
               </div>
 
               <div style={styles.quickCard}>
-                <div style={styles.quickTitle}>Hızlı Durum</div>
+                <div style={styles.quickTitle}>HÄ±zlÄ± Durum</div>
 
                 <div style={styles.iconStatGrid}>
                   <div style={styles.iconStatBox}>
-                    <div style={styles.iconStatIcon}>
+                    <div style={{ ...styles.iconStatIcon, ...styles.statIconBlue }}>
                       <FolderKanban size={18} color={palette.blue} />
                     </div>
                     <div style={styles.iconStatNumber}>{homeProjectStats.length}</div>
@@ -2635,15 +2705,15 @@ export default function Page() {
                   </div>
 
                   <div style={styles.iconStatBox}>
-                    <div style={styles.iconStatIcon}>
+                    <div style={{ ...styles.iconStatIcon, ...styles.statIconTeal }}>
                       <CheckCircle2 size={18} color={palette.teal} />
                     </div>
                     <div style={styles.iconStatNumber}>{tumOdeme}</div>
-                    <div style={styles.iconStatLabel}>Ödeme</div>
+                    <div style={styles.iconStatLabel}>Ã–deme</div>
                   </div>
 
                   <div style={styles.iconStatBox}>
-                    <div style={styles.iconStatIcon}>
+                    <div style={{ ...styles.iconStatIcon, ...styles.statIconAmber }}>
                       <Receipt size={18} color={palette.amber} />
                     </div>
                     <div style={styles.iconStatNumber}>{tumFatura}</div>
@@ -2651,7 +2721,7 @@ export default function Page() {
                   </div>
 
                   <div style={styles.iconStatBox}>
-                    <div style={styles.iconStatIcon}>
+                    <div style={{ ...styles.iconStatIcon, ...styles.statIconRed }}>
                       <Clock3 size={18} color={palette.red} />
                     </div>
                     <div style={styles.iconStatNumber}>
@@ -2665,9 +2735,9 @@ export default function Page() {
           ) : (
 <div style={styles.quickGrid} className="quick-grid">
               <div style={styles.quickCard}>
-                <div style={styles.quickTitle}>Sekme Özeti</div>
+                <div style={styles.quickTitle}>Sekme Ã–zeti</div>
                 <div style={styles.quickBig}>{tl(toplam)}</div>
-                <div style={styles.quickMuted}>Bu sekmenin toplamı</div>
+                <div style={styles.quickMuted}>Bu sekmenin toplamÄ±</div>
 
                 <div style={styles.progressWrap}>
                   <div
@@ -2680,12 +2750,12 @@ export default function Page() {
                 </div>
 
                 <div style={styles.quickFooterRow}>
-                  <span>Tahsilat Oranı</span>
+                  <span>Tahsilat OranÄ±</span>
                   <strong>%{tahsilatYuzdesiAktif}</strong>
                 </div>
 
                 <div style={styles.quickFooterRow}>
-                  <span>Ödenen</span>
+                  <span>Ã–denen</span>
                   <strong>{tl(odenen)}</strong>
                 </div>
 
@@ -2700,31 +2770,31 @@ export default function Page() {
                     <div style={styles.quickSummaryValue}>%{tahsilatYuzdesiAktif}</div>
                   </div>
                   <div style={styles.quickSummaryItem}>
-                    <div style={styles.quickSummaryLabel}>Ödenen</div>
+                    <div style={styles.quickSummaryLabel}>Ã–denen</div>
                     <div style={styles.quickSummaryValue}>{tl(odenen)}</div>
                   </div>
                 </div>
               </div>
 
               <div style={styles.quickCard}>
-                <div style={styles.quickTitle}>Hızlı Bilgi</div>
+                <div style={styles.quickTitle}>HÄ±zlÄ± Bilgi</div>
                 <div style={styles.iconStatGrid}>
                   <div style={styles.iconStatBox}>
-                    <div style={styles.iconStatIcon}>
+                    <div style={{ ...styles.iconStatIcon, ...styles.statIconTeal }}>
                       <CheckCircle2 size={18} color={palette.teal} />
                     </div>
                     <div style={styles.iconStatNumber}>{odemesiAlinanAdet}</div>
-                    <div style={styles.iconStatLabel}>Ödeme</div>
+                    <div style={styles.iconStatLabel}>Ã–deme</div>
                   </div>
                   <div style={styles.iconStatBox}>
-                    <div style={styles.iconStatIcon}>
+                    <div style={{ ...styles.iconStatIcon, ...styles.statIconAmber }}>
                       <Receipt size={18} color={palette.amber} />
                     </div>
                     <div style={styles.iconStatNumber}>{faturasiKesilenAdet}</div>
                     <div style={styles.iconStatLabel}>Fatura</div>
                   </div>
                   <div style={styles.iconStatBox}>
-                    <div style={styles.iconStatIcon}>
+                    <div style={{ ...styles.iconStatIcon, ...styles.statIconRed }}>
                       <Clock3 size={18} color={palette.red} />
                     </div>
                     <div style={styles.iconStatNumber}>
@@ -2733,11 +2803,11 @@ export default function Page() {
                     <div style={styles.iconStatLabel}>Bekleyen</div>
                   </div>
                   <div style={styles.iconStatBox}>
-                    <div style={styles.iconStatIcon}>
+                    <div style={{ ...styles.iconStatIcon, ...styles.statIconBlue }}>
                       <CheckSquare size={18} color={palette.blue} />
                     </div>
                     <div style={styles.iconStatNumber}>{selectedVisibleIds.length}</div>
-                    <div style={styles.iconStatLabel}>Seçili</div>
+                    <div style={styles.iconStatLabel}>SeÃ§ili</div>
                   </div>
                 </div>
               </div>
@@ -2747,7 +2817,7 @@ export default function Page() {
           {viewMode === "home" ? (
             <div style={styles.card}>
               <div style={styles.sectionHead}>
-                <h2 style={{ ...styles.h2, fontWeight: 900 }}>Genel Proje Özeti</h2>
+                <h2 style={{ ...styles.h2, fontWeight: 900 }}>Genel Proje Ã–zeti</h2>
                 <div style={{ color: "var(--muted)", fontSize: 13 }}>
                   {homeProjectStats.length} proje
                 </div>
@@ -2812,7 +2882,7 @@ export default function Page() {
                               opacity:
                                 draggedHomeColumn === column.key ? 0.55 : column.style.opacity,
                             }}
-                            title="Sürükleyerek yer değiştir"
+                            title="SÃƒÂ¼rÃƒÂ¼kleyerek yer deÃ„Å¸iÃ…Å¸tir"
                           >
                             {column.label}
                           </th>
@@ -2880,7 +2950,7 @@ export default function Page() {
             <>
               <div style={styles.card}>
                 <div style={styles.sectionHead}>
-                  <h2 style={styles.h2}>Kayıt Ekle / Güncelle</h2>
+                  <h2 style={styles.h2}>KayÃ„Â±t Ekle / GÃƒÂ¼ncelle</h2>
                   <div style={{ color: "var(--muted)", fontSize: 12 }}>
                     Taslak otomatik kaydediliyor
                   </div>
@@ -2924,7 +2994,7 @@ export default function Page() {
                         }}
                         style={styles.input}
                       >
-                        <option value="kdvsiz">KDV’siz</option>
+                        <option value="kdvsiz">KDVÃ¢â‚¬â„¢siz</option>
                         <option value="kdvli">+ %20 KDV</option>
                       </select>
 
@@ -2943,7 +3013,7 @@ export default function Page() {
                   </div>
 
                   <div style={styles.formSection}>
-                    <div style={styles.formSectionTitle}>Durum ve İşlem</div>
+                    <div style={styles.formSectionTitle}>Durum ve Ã„Â°Ã…Å¸lem</div>
                     <div style={styles.formChecks}>
                       <label style={styles.check}>
                         <input
@@ -2973,7 +3043,7 @@ export default function Page() {
                             });
                           }}
                         />
-                        Ödeme Alındı
+                        Ãƒâ€“deme AlÃ„Â±ndÃ„Â±
                       </label>
                     </div>
 
@@ -2985,7 +3055,7 @@ export default function Page() {
                       >
                         <span style={styles.btnInner}>
                           <Plus size={16} />
-                          {editId ? "Güncelle" : "Kaydet"}
+                          {editId ? "GÃƒÂ¼ncelle" : "Kaydet"}
                         </span>
                       </button>
 
@@ -2995,7 +3065,7 @@ export default function Page() {
                           onClick={temizle}
                           style={styles.secondaryBtn}
                         >
-                          İptal
+                          Ã„Â°ptal
                         </button>
                       ) : null}
                     </div>
@@ -3005,9 +3075,9 @@ export default function Page() {
 
               <div style={styles.card} className="no-print">
                 <div style={styles.bulkHead}>
-                  <div style={styles.bulkTitle}>Toplu İşlem</div>
+                  <div style={styles.bulkTitle}>Toplu Ã„Â°Ã…Å¸lem</div>
                   <div style={{ color: "var(--muted)", fontSize: 13 }}>
-                    {selectedVisibleIds.length} kayıt seçili
+                    {selectedVisibleIds.length} kayÃ„Â±t seÃƒÂ§ili
                   </div>
                 </div>
 
@@ -3023,7 +3093,7 @@ export default function Page() {
                       ) : (
                         <Square size={16} />
                       )}
-                      {allFilteredSelected ? "Seçimi Kaldır" : "Tümünü Seç"}
+                      {allFilteredSelected ? "SeÃƒÂ§imi KaldÃ„Â±r" : "TÃƒÂ¼mÃƒÂ¼nÃƒÂ¼ SeÃƒÂ§"}
                     </span>
                   </button>
 
@@ -3045,7 +3115,7 @@ export default function Page() {
                   >
                     <span style={styles.btnInner}>
                       <CheckCircle2 size={16} />
-                      Ödendi Yap
+                      Ãƒâ€“dendi Yap
                     </span>
                   </button>
 
@@ -3056,7 +3126,7 @@ export default function Page() {
                   >
                     <span style={styles.btnInner}>
                       <Trash2 size={16} />
-                      Seçilileri Sil
+                      SeÃƒÂ§ilileri Sil
                     </span>
                   </button>
                 </div>
@@ -3066,7 +3136,7 @@ export default function Page() {
 
               {lastDeleted?.length ? (
                 <div style={styles.undoBar} className="no-print">
-                  <span>{lastDeleted.length} kayıt silindi.</span>
+                  <span>{lastDeleted.length} kayÃ„Â±t silindi.</span>
                   <button
                     className="hover-button"
                     onClick={() => void undoDelete()}
@@ -3095,7 +3165,7 @@ export default function Page() {
                   </div>
 
                   <div style={styles.miniHighlight}>
-                    <div style={styles.miniLabelStrong}>Ödenen</div>
+                    <div style={styles.miniLabelStrong}>Ãƒâ€“denen</div>
                     <AnimatedMoney value={odenen} strong />
                   </div>
 
@@ -3106,17 +3176,17 @@ export default function Page() {
                 </div>
 
                 <div style={styles.sectionHead}>
-                  <h2 style={styles.h2}>Kayıtlar</h2>
+                  <h2 style={styles.h2}>KayÃ„Â±tlar</h2>
                   <div style={{ color: "var(--muted)", fontSize: 13 }}>
                     {sortKey === "manual"
-                      ? "SIRA alanından sürükle bırak yap"
-                      : "Başlığa tıklayarak sıralama değişir"}
+                      ? "SIRA alanÃ„Â±ndan sÃƒÂ¼rÃƒÂ¼kle bÃ„Â±rak yap"
+                      : "BaÃ…Å¸lÃ„Â±Ã„Å¸a tÃ„Â±klayarak sÃ„Â±ralama deÃ„Å¸iÃ…Å¸ir"}
                   </div>
                 </div>
 
                 {draggedId !== null && sortKey === "manual" ? (
                   <div style={styles.dragNotice} className="no-print">
-                    Kaydı bırakacağın satır mavi çizgiyle işaretlenir. Üst çizgi üste, alt çizgi alta bırakır.
+                    KaydÃ„Â± bÃ„Â±rakacaÃ„Å¸Ã„Â±n satÃ„Â±r mavi ÃƒÂ§izgiyle iÃ…Å¸aretlenir. ÃƒÅ“st ÃƒÂ§izgi ÃƒÂ¼ste, alt ÃƒÂ§izgi alta bÃ„Â±rakÃ„Â±r.
                   </div>
                 ) : null}
 
@@ -3192,7 +3262,7 @@ export default function Page() {
                                 opacity:
                                   draggedColumn === column.key ? 0.55 : column.style.opacity,
                               }}
-                              title="Sürükleyerek yer değiştir"
+                              title="SÃƒÂ¼rÃƒÂ¼kleyerek yer deÃ„Å¸iÃ…Å¸tir"
                             >
                               {column.label}
                             </th>
@@ -3279,7 +3349,7 @@ export default function Page() {
                         fontSize: 13,
                       }}
                     >
-                      Filtreye uygun kayıt yok.
+                      Filtreye uygun kayÃ„Â±t yok.
                     </div>
                   ) : null}
                 </div>
@@ -3292,7 +3362,7 @@ export default function Page() {
 
           {loading ? (
             <div style={{ color: "var(--muted)", fontSize: 13 }}>
-              Veriler yükleniyor...
+              Veriler yÃƒÂ¼kleniyor...
             </div>
           ) : null}
         </main>
@@ -3326,7 +3396,7 @@ export default function Page() {
               >
                 <span style={styles.btnInner}>
                   <Pencil size={14} />
-                  Ad Değiştir
+                  Ad DeÃ„Å¸iÃ…Å¸tir
                 </span>
               </button>
 
@@ -3339,7 +3409,7 @@ export default function Page() {
               >
                 <span style={styles.btnInner}>
                   <Palette size={14} />
-                  Renk Seç
+                  Renk SeÃƒÂ§
                 </span>
               </button>
 
@@ -3354,8 +3424,8 @@ export default function Page() {
                 <span style={styles.btnInner}>
                   <Archive size={14} />
                   {archivedTabs.includes(tabMenu.tabName)
-                    ? "Arşivden Çıkar"
-                    : "Sekmeyi Arşivle"}
+                    ? "ArÃ…Å¸ivden Ãƒâ€¡Ã„Â±kar"
+                    : "Sekmeyi ArÃ…Å¸ivle"}
                 </span>
               </button>
 
@@ -3376,7 +3446,7 @@ export default function Page() {
           ) : (
             <div style={styles.colorPickerWrap}>
               <div style={styles.colorPickerHead}>
-                <div style={styles.colorPickerTitle}>Renk Seç</div>
+                <div style={styles.colorPickerTitle}>Renk SeÃƒÂ§</div>
                 <button
                   type="button"
                   style={styles.colorPickerBackBtn}
@@ -3593,63 +3663,76 @@ const styles: Record<string, CSSProperties> = {
     gap: 12,
     flexWrap: "wrap",
   },
-  heroActionGroup: {
-    display: "flex",
-    gap: 6,
-    alignItems: "center",
+  heroExportWrap: {
+    position: "relative",
     marginLeft: "auto",
-    padding: 4,
-    borderRadius: 14,
-    background: "rgba(255,255,255,0.06)",
-    backdropFilter: "blur(8px)",
   },
-  heroActionInner: {
+  heroExportToggle: {
+    border: "1px solid rgba(255,255,255,0.16)",
+    background: "rgba(255,255,255,0.12)",
+    color: "var(--white)",
+    borderRadius: 12,
+    padding: "10px 14px",
+    fontWeight: 800,
+    fontSize: 12,
+    cursor: "pointer",
+    boxShadow: "0 12px 24px rgba(15,23,42,0.14)",
+    backdropFilter: "blur(12px)",
+  },
+  heroExportToggleInner: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    fontFamily: '"Arial Black", "Segoe UI Black", "Segoe UI", sans-serif',
-    letterSpacing: "-0.15px",
+    gap: 8,
     whiteSpace: "nowrap",
   },
-  heroActionBtnWord: {
-    minWidth: 64,
-    minHeight: 28,
-    padding: "6px 8px",
-    borderRadius: 10,
-    border: "1px solid rgba(113, 146, 225, 0.22)",
-    background: "#7392E1",
-    color: "#FFFFFF",
-    fontWeight: 900,
-    fontSize: 9,
-    cursor: "pointer",
-    boxShadow: "0 3px 8px rgba(63,97,174,0.12)",
+  heroExportMenu: {
+    position: "absolute",
+    top: "calc(100% + 10px)",
+    right: 0,
+    minWidth: 168,
+    padding: 8,
+    borderRadius: 14,
+    background: "var(--card)",
+    border: "1px solid rgba(148,163,184,0.22)",
+    boxShadow: "0 18px 42px rgba(15,23,42,0.18)",
+    display: "grid",
+    gap: 4,
+    zIndex: 50,
   },
-  heroActionBtnExcel: {
-    minWidth: 68,
-    minHeight: 28,
-    padding: "6px 8px",
+  heroExportMenuItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+    border: "none",
     borderRadius: 10,
-    border: "1px solid rgba(94, 190, 154, 0.22)",
-    background: "linear-gradient(135deg, #66CFA9, #57BC98)",
-    color: "#FFFFFF",
-    fontWeight: 900,
-    fontSize: 9,
+    padding: "10px 12px",
+    background: "transparent",
+    color: "var(--text)",
+    fontWeight: 700,
+    fontSize: 13,
     cursor: "pointer",
-    boxShadow: "0 3px 8px rgba(50,127,98,0.12)",
+    textAlign: "left",
   },
-  heroActionBtnPdf: {
-    minWidth: 60,
-    minHeight: 28,
-    padding: "6px 8px",
-    borderRadius: 10,
-    border: "1px solid rgba(228, 133, 133, 0.22)",
-    background: "linear-gradient(135deg, #E68D8D, #D97B7B)",
-    color: "#FFFFFF",
-    fontWeight: 900,
-    fontSize: 9,
-    cursor: "pointer",
-    boxShadow: "0 3px 8px rgba(153,76,76,0.12)",
+  heroExportMenuIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroExportMenuIconWord: {
+    background: "rgba(88, 130, 255, 0.14)",
+    color: "#4E74E6",
+  },
+  heroExportMenuIconExcel: {
+    background: "rgba(36, 182, 117, 0.14)",
+    color: "#1D9B66",
+  },
+  heroExportMenuIconPdf: {
+    background: "rgba(237, 94, 94, 0.14)",
+    color: "#D95050",
   },
   heroLabel: {
     fontSize: 12,
@@ -3699,24 +3782,43 @@ const styles: Record<string, CSSProperties> = {
     padding: 15,
     boxShadow: "var(--shadow)",
   },
-  statHead: {
+  statBody: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-    marginBottom: 6,
+    gap: 14,
   },
   statIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    background: "var(--slateSoft)",
+    width: 42,
+    height: 42,
+    borderRadius: 999,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
+  },
+  statIconBlue: {
+    background: "rgba(88, 130, 255, 0.12)",
+  },
+  statIconTeal: {
+    background: "rgba(38, 190, 126, 0.12)",
+  },
+  statIconAmber: {
+    background: "rgba(255, 175, 79, 0.14)",
+  },
+  statIconRed: {
+    background: "rgba(255, 112, 112, 0.12)",
+  },
+  statCopy: {
+    display: "grid",
+    gap: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: "var(--muted)",
+    fontWeight: 600,
   },
   statValue: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: 900,
     color: "var(--text)",
     letterSpacing: "-0.4px",
@@ -3820,16 +3922,20 @@ const styles: Record<string, CSSProperties> = {
   iconStatBox: {
     border: "1px solid var(--border)",
     borderRadius: 14,
-    background: "var(--slateSoft)",
-    padding: 14,
+    background: "linear-gradient(180deg, rgba(255,255,255,0.72), var(--slateSoft))",
+    padding: 16,
     display: "flex",
     flexDirection: "column",
-    gap: 6,
+    gap: 8,
     alignItems: "flex-start",
   },
   iconStatIcon: {
-    fontSize: 20,
-    lineHeight: 1,
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   iconStatNumber: {
     fontSize: 26,

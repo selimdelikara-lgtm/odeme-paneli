@@ -87,19 +87,23 @@ export function Stat({
   value,
   icon,
   styles,
+  iconWrapStyle,
 }: {
   title: string;
   value: string;
   icon: ReactNode;
   styles: Record<string, CSSProperties>;
+  iconWrapStyle?: CSSProperties;
 }) {
   return (
     <div style={styles.stat}>
-      <div style={styles.statHead}>
-        <div style={{ fontSize: 12, color: "var(--muted)" }}>{title}</div>
-        <div style={styles.statIcon}>{icon}</div>
+      <div style={styles.statBody}>
+        <div style={{ ...styles.statIcon, ...iconWrapStyle }}>{icon}</div>
+        <div style={styles.statCopy}>
+          <div style={styles.statLabel}>{title}</div>
+          <div style={styles.statValue}>{value}</div>
+        </div>
       </div>
-      <div style={styles.statValue}>{value}</div>
     </div>
   );
 }
