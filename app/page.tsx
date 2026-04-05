@@ -2466,7 +2466,7 @@ export default function Page() {
                 </div>
               ) : null}
 
-              <div style={isMobileViewport ? styles.mobileTopActions : styles.topBarActions}>
+              <div style={isMobileViewport ? { display: "none" } : styles.topBarActions}>
                 {viewMode !== "settings" ? (
                   isMobileViewport ? (
                     <button
@@ -2545,21 +2545,57 @@ export default function Page() {
               </>
             ) : (
               <div className={`view-panel view-panel-${viewMode}`}>
-          <div style={styles.heroCard} className="hero-card">
-            <div style={styles.heroTopRow} className="hero-top-row">
-              <div>
-                <div style={styles.heroLabel}>
-                  {viewMode === "home" ? "TOPLAM" : "GENEL TOPLAM"}
+            <div style={styles.heroCard} className="hero-card">
+              <div style={styles.heroTopRow} className="hero-top-row">
+                <div>
+                  <div style={styles.heroLabel}>
+                    {viewMode === "home" ? "TOPLAM" : "GENEL TOPLAM"}
+                  </div>
+                  <div style={styles.heroValue} className="hero-value">
+                    {tl(tumToplam)}
+                  </div>
                 </div>
-                <div style={styles.heroValue} className="hero-value">
-                  {tl(tumToplam)}
-                </div>
-              </div>
-              <div
-                style={styles.heroExportWrap}
-                className="hero-actions no-print"
-                ref={exportMenuRef}
-              >
+                {isMobileViewport ? (
+                  <div style={styles.heroMobileActions} className="no-print">
+                    <button
+                      type="button"
+                      className="hover-button"
+                      style={styles.heroMobileIconBtn}
+                      onClick={() => setShowMobileSearch((prev) => !prev)}
+                      aria-label="Ara"
+                      title="Ara"
+                    >
+                      <Search size={15} />
+                    </button>
+
+                    <button
+                      type="button"
+                      className="hover-button"
+                      style={styles.heroMobileIconBtn}
+                      onClick={() => setTheme((p) => (p === "light" ? "dark" : "light"))}
+                      aria-label={theme === "light" ? "Karanlık tema" : "Açık tema"}
+                      title={theme === "light" ? "Karanlık tema" : "Açık tema"}
+                    >
+                      {theme === "light" ? <Moon size={15} /> : <SunMedium size={15} />}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="hover-button"
+                      style={styles.heroMobileIconBtn}
+                      onClick={() => void cikisYap()}
+                      aria-label="Çıkış"
+                      title="Çıkış"
+                    >
+                      <LogOut size={15} />
+                    </button>
+                  </div>
+                ) : null}
+                <div
+                  style={styles.heroExportWrap}
+                  className="hero-actions no-print"
+                  ref={exportMenuRef}
+                >
                 <button
                   type="button"
                   onClick={(event) => {
@@ -3553,6 +3589,19 @@ export default function Page() {
               <button
                 type="button"
                 className="hover-button"
+                style={showArchivedTabs ? styles.mobileNavItemActive : styles.mobileNavItem}
+                onClick={() => {
+                  setShowArchivedTabs((prev) => !prev);
+                  setShowMobileProjects(false);
+                }}
+              >
+                <Archive size={16} />
+                <span>Arşiv</span>
+              </button>
+
+              <button
+                type="button"
+                className="hover-button"
                 style={viewMode === "home" ? styles.mobileNavItemActive : styles.mobileNavItem}
                 onClick={() => {
                   setViewMode("home");
@@ -4097,26 +4146,26 @@ const styles: Record<string, CSSProperties> = {
     flexWrap: "wrap",
     justifyContent: "flex-end",
   },
-  mobileTopActions: {
+  heroMobileActions: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "flex-end",
     gap: 8,
-    width: "100%",
+    marginLeft: "auto",
   },
-  mobileTopIconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    border: "1px solid var(--border)",
-    background: "var(--card)",
-    color: "var(--text)",
+  heroMobileIconBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    border: "1px solid rgba(255,255,255,0.16)",
+    background: "rgba(255,255,255,0.10)",
+    color: "#FFFFFF",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-    boxShadow: "var(--shadow)",
     padding: 0,
+    boxShadow: "0 8px 18px rgba(15,23,42,0.12)",
+    backdropFilter: "blur(10px)",
   },
   mobileSettingsTopActions: {
     display: "none",
