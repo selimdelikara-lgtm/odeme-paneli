@@ -3548,6 +3548,8 @@ export default function Page() {
               <span>Ana Sayfa</span>
             </button>
 
+            <div />
+
             <button
               type="button"
               className="hover-button"
@@ -3581,6 +3583,8 @@ export default function Page() {
               <Settings2 size={18} />
               <span>Ayarlar</span>
             </button>
+
+            <div />
           </div>
         </>
       ) : null}
@@ -3775,7 +3779,7 @@ const styles: Record<string, CSSProperties> = {
     left: 10,
     right: 10,
     bottom: 10,
-    gridTemplateColumns: "1fr auto 1fr 1fr",
+    gridTemplateColumns: "1fr 1fr auto 1fr 1fr",
     alignItems: "center",
     gap: 6,
     padding: 7,
