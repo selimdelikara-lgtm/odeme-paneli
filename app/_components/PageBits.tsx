@@ -185,12 +185,12 @@ export function AuthScreen({
     return (
       <div style={{ ...styles.loginWrap, ...themeVars }} className="login-wrap mobile-auth-wrap">
         <div style={styles.mobileAuthFormShell} className="mobile-auth-form-shell">
-          <div style={styles.loginCardTitle} className="login-card-title">
+          <div style={styles.mobileAuthTitle} className="login-card-title">
             Giriş Yap
           </div>
 
           <div style={styles.loginSection} className="login-section">
-            <div style={styles.loginLabel} className="login-label">
+            <div style={styles.mobileAuthLabel} className="login-label">
               E-posta
             </div>
             <input
@@ -199,9 +199,9 @@ export function AuthScreen({
               placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={styles.loginInput}
+              style={styles.mobileAuthInput}
             />
-            <div style={styles.loginLabel} className="login-label">
+            <div style={styles.mobileAuthLabel} className="login-label">
               Şifre
             </div>
             <input
@@ -210,10 +210,10 @@ export function AuthScreen({
               placeholder="Şifre"
               value={authPassword}
               onChange={(e) => setAuthPassword(e.target.value)}
-              style={styles.loginInput}
+              style={styles.mobileAuthInput}
             />
-            <div style={styles.loginMetaRow} className="login-meta-row">
-              <label style={styles.rememberMeLabel} className="remember-me-label">
+            <div style={styles.mobileAuthMetaRow} className="login-meta-row">
+              <label style={styles.mobileAuthRemember} className="remember-me-label">
                 <input
                   type="checkbox"
                   checked={rememberMe}
@@ -225,7 +225,7 @@ export function AuthScreen({
                 type="button"
                 className="hover-button forgot-link"
                 onClick={() => void authResetPassword()}
-                style={styles.forgotLink}
+                style={styles.mobileAuthForgot}
               >
                 Şifremi Unuttum
               </button>
