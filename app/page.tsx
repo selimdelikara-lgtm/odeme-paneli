@@ -3537,7 +3537,11 @@ export default function Page() {
             <button
               type="button"
               className="hover-button"
-              style={viewMode === "home" ? styles.mobileNavItemActive : styles.mobileNavItem}
+              style={{
+                ...(viewMode === "home" ? styles.mobileNavItemActive : styles.mobileNavItem),
+                gridColumn: 1,
+                justifySelf: "start",
+              }}
               onClick={() => {
                 setViewMode("home");
                 setSelectedIds([]);
@@ -3551,7 +3555,7 @@ export default function Page() {
             <button
               type="button"
               className="hover-button"
-              style={styles.mobileNavPlus}
+              style={{ ...styles.mobileNavPlus, gridColumn: 3 }}
               onClick={yeniProjeOlustur}
               aria-label="Yeni Proje"
               title="Yeni Proje"
@@ -3562,7 +3566,11 @@ export default function Page() {
             <button
               type="button"
               className="hover-button"
-              style={viewMode === "project" ? styles.mobileNavItemActive : styles.mobileNavItem}
+              style={{
+                ...(viewMode === "project" ? styles.mobileNavItemActive : styles.mobileNavItem),
+                gridColumn: 4,
+                justifySelf: "start",
+              }}
               onClick={() => setShowMobileProjects(true)}
             >
               <FolderKanban size={16} />
@@ -3572,7 +3580,11 @@ export default function Page() {
             <button
               type="button"
               className="hover-button"
-              style={viewMode === "settings" ? styles.mobileNavItemActive : styles.mobileNavItem}
+              style={{
+                ...(viewMode === "settings" ? styles.mobileNavItemActive : styles.mobileNavItem),
+                gridColumn: 5,
+                justifySelf: "end",
+              }}
               onClick={() => {
                 setViewMode("settings");
                 setShowMobileProjects(false);
@@ -3775,7 +3787,7 @@ const styles: Record<string, CSSProperties> = {
     left: 12,
     right: 12,
     bottom: 12,
-    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+    gridTemplateColumns: "1fr auto 72px auto 1fr",
     alignItems: "center",
     gap: 4,
     padding: "6px 8px",
@@ -3821,8 +3833,8 @@ const styles: Record<string, CSSProperties> = {
     whiteSpace: "nowrap",
   },
   mobileNavPlus: {
-    width: 42,
-    height: 42,
+    width: 50,
+    height: 50,
     border: "none",
     borderRadius: 999,
     background: "linear-gradient(180deg, #2563EB 0%, #194AC6 100%)",
