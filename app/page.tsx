@@ -2245,7 +2245,9 @@ export default function Page() {
         .status-button:active{transform:scale(.985)}
         @media (max-width: 980px){
           .app-shell{grid-template-columns:1fr !important}
-          .app-sidebar{position:static !important;height:auto !important}
+          .app-sidebar{position:static !important;height:auto !important;min-height:auto !important;padding-bottom:12px !important}
+          .sidebar-tabs{gap:6px !important}
+          .sidebar-bottom{margin-top:10px !important;padding-top:10px !important}
           .panel-row .row-actions-fade{opacity:1 !important;pointer-events:auto !important}
           .app-content{padding:16px !important}
           .form-layout{grid-template-columns:1fr !important}
@@ -2255,9 +2257,9 @@ export default function Page() {
           .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
           .quick-grid{grid-template-columns:1fr !important}
           .login-wrap{padding:16px !important}
-          .login-shell{display:block !important;grid-template-columns:1fr !important;min-height:auto !important;max-width:760px !important;width:100% !important}
-          .login-showcase{padding:32px 24px !important;min-height:280px !important}
-          .login-card{max-width:none !important;border-radius:0 !important;width:100% !important}
+          .login-shell{display:block !important;grid-template-columns:1fr !important;min-height:auto !important;max-width:760px !important;width:100% !important;background:transparent !important;box-shadow:none !important}
+          .login-showcase{display:none !important}
+          .login-card{max-width:none !important;border-radius:22px !important;width:100% !important}
         }
         @media (max-width: 720px){
           .app-content{padding:12px !important}
@@ -2267,24 +2269,41 @@ export default function Page() {
           .login-wrap{padding:12px !important}
           .login-shell{grid-template-columns:1fr !important;border-radius:20px !important;max-width:440px !important;min-height:auto !important}
           .login-showcase{display:none !important}
-          .login-card{padding:28px 22px !important;max-width:none !important;width:100% !important}
+          .login-card{padding:24px 18px !important;max-width:none !important;width:100% !important}
+          .login-card-title{font-size:28px !important;letter-spacing:-0.4px !important;margin-bottom:2px !important}
+          .login-section{gap:8px !important}
+          .login-label{font-size:11px !important}
+          .login-meta-row{margin-top:2px !important;gap:8px !important}
+          .remember-me-label,.forgot-link{font-size:12px !important}
           .login-signup-block{display:none !important}
           .stats-grid{grid-template-columns:1fr !important}
           .quick-grid{gap:10px !important}
         }
         @media (max-width: 560px){
           .app-sidebar{padding:14px !important}
+          .app-sidebar > :first-child{display:none !important}
+          .sidebar-bottom{border-top:none !important;padding-top:6px !important}
           .app-content{padding:10px !important}
           .top-search input{font-size:16px !important}
           .hero-card{padding:14px !important}
           .hero-value{font-size:28px !important}
           .hero-actions{width:100% !important}
           .login-wrap{padding:0 !important}
-          .login-shell{border-radius:0 !important;box-shadow:none !important;min-height:100vh !important;max-width:100% !important}
-          .login-card{padding:24px 16px !important}
+          .login-shell{border-radius:0 !important;box-shadow:none !important;min-height:100vh !important;max-width:100% !important;background:transparent !important}
+          .login-card{padding:16px 14px !important;justify-content:flex-start !important;min-height:100vh !important;border-radius:0 !important;box-shadow:none !important}
+          .mobile-auth-wrap{background:#F6F7FC !important}
+          .mobile-auth-intro{padding:28px 22px 20px !important}
+          .mobile-auth-cta{margin-top:auto !important}
+          .login-card-title{font-size:24px !important;line-height:1.05 !important}
+          .login-section{gap:7px !important}
+          .login-input,.soft-input{font-size:16px !important}
+          .login-meta-row{align-items:flex-start !important}
+          .remember-me-label{gap:6px !important}
         }
         @media (max-width: 420px){
-          .login-card{padding:20px 14px !important}
+          .login-card{padding:16px 12px !important}
+          .login-card-title{font-size:22px !important}
+          .login-meta-row{flex-wrap:wrap !important}
         }
         @media print{
           *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important}
@@ -2302,7 +2321,7 @@ export default function Page() {
             </div>
           </div>
 
-          <div style={styles.sidebarTabs}>
+          <div style={styles.sidebarTabs} className="sidebar-tabs">
             <button
               className="sidebar-item"
               onClick={() => {
@@ -2368,7 +2387,11 @@ export default function Page() {
             })}
           </div>
 
-          <div style={styles.sidebarBottom} data-sidebar-bottom="true">
+          <div
+            style={styles.sidebarBottom}
+            data-sidebar-bottom="true"
+            className="sidebar-bottom"
+          >
             <button
               className="hover-button"
               onClick={() => setViewMode("settings")}
@@ -4657,7 +4680,8 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
-    fontFamily: 'Inter, "SF Pro Display", Arial, sans-serif',
+    fontFamily:
+      '"Inter", "Segoe UI", "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
   },
   loginShell: {
     width: "100%",
@@ -4780,6 +4804,7 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 900,
     letterSpacing: "-0.8px",
     textAlign: "center",
+    lineHeight: 1.05,
   },
   loginCardSub: {
     color: "rgba(255,255,255,0.72)",
@@ -4799,13 +4824,14 @@ const styles: Record<string, CSSProperties> = {
   },
   loginInput: {
     width: "100%",
-    padding: "8px 0",
+    padding: "7px 0",
     borderRadius: 0,
     border: "none",
     borderBottom: "2px solid rgba(10, 20, 72, 0.72)",
     background: "transparent",
     color: "#FFFFFF",
     fontSize: 14,
+    lineHeight: 1.35,
     outline: "none",
   },
   loginMetaRow: {
@@ -4813,7 +4839,7 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
-    marginTop: 6,
+    marginTop: 4,
   },
   rememberMeLabel: {
     display: "inline-flex",
@@ -4834,7 +4860,7 @@ const styles: Record<string, CSSProperties> = {
     textDecoration: "underline",
   },
   loginPrimaryAction: {
-    padding: "12px 14px",
+    padding: "11px 14px",
     borderRadius: 8,
     border: "1px solid rgba(6, 12, 48, 0.9)",
     background: "#091C68",
@@ -4911,6 +4937,59 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 12,
     fontWeight: 900,
     lineHeight: 1,
+  },
+  mobileIntroShell: {
+    minHeight: "100vh",
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    padding: "40px 28px 24px",
+    background: "#F6F7FC",
+    color: "#171923",
+  },
+  mobileIntroMark: {
+    fontSize: 76,
+    lineHeight: 1,
+    fontWeight: 900,
+    letterSpacing: "-2px",
+  },
+  mobileIntroTitle: {
+    marginTop: 12,
+    fontSize: 34,
+    fontWeight: 900,
+    letterSpacing: "-0.8px",
+    color: "#171923",
+  },
+  mobileIntroArrow: {
+    marginTop: 30,
+    fontSize: 72,
+    lineHeight: 1,
+    color: "rgba(23,25,35,0.42)",
+    fontWeight: 300,
+  },
+  mobileIntroCopy: {
+    marginTop: 24,
+    fontSize: 18,
+    lineHeight: 1.3,
+    fontWeight: 700,
+    fontStyle: "italic",
+    color: "rgba(23,25,35,0.88)",
+  },
+  mobileIntroButton: {
+    marginTop: "auto",
+    width: "100%",
+    border: "none",
+    borderRadius: 22,
+    background: "#114A99",
+    color: "#FFFFFF",
+    fontWeight: 900,
+    fontSize: 20,
+    padding: "18px 20px",
+    cursor: "pointer",
+    boxShadow: "0 16px 30px rgba(17,74,153,0.18)",
   },
   badge: {
     display: "inline-block",

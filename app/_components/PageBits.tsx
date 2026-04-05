@@ -145,6 +145,8 @@ export function AuthScreen({
   msg,
   styles,
 }: AuthScreenProps) {
+  const [showMobileForm, setShowMobileForm] = useState(false);
+
   const authTitle = isMobileViewport ? "Giriş Yap" : signupMode ? "Hesap Oluştur" : "Giriş Yap";
   const primaryLabel = isMobileViewport
     ? "Giriş Yap"
@@ -152,46 +154,75 @@ export function AuthScreen({
       ? "Hesap Oluştur"
       : "Giriş Yap";
 
+  if (isMobileViewport && !showMobileForm) {
+    return (
+      <div style={{ ...styles.loginWrap, ...themeVars }} className="login-wrap mobile-auth-wrap">
+        <div style={styles.mobileIntroShell} className="mobile-auth-intro">
+          <div style={styles.mobileIntroMark}>₺</div>
+          <div style={styles.mobileIntroTitle}>ÖDEDİ Mİ</div>
+          <div style={styles.mobileIntroArrow}>↓</div>
+          <div style={styles.mobileIntroCopy}>sorusunun cevabı artık çok net</div>
+          <button
+            type="button"
+            className="hover-button mobile-auth-cta"
+            onClick={() => setShowMobileForm(true)}
+            style={styles.mobileIntroButton}
+          >
+            Giriş Yap
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ ...styles.loginWrap, ...themeVars }} className="login-wrap">
       <div style={styles.loginShell} className="login-shell">
-        <div style={styles.loginShowcase} className="login-showcase">
-          <div style={styles.loginOrbOne} />
-          <div style={styles.loginOrbTwo} />
-          <div style={styles.loginOrbThree} />
+        {!isMobileViewport ? (
+          <div style={styles.loginShowcase} className="login-showcase">
+            <div style={styles.loginOrbOne} />
+            <div style={styles.loginOrbTwo} />
+            <div style={styles.loginOrbThree} />
 
-          <div style={styles.loginBrand} className="login-brand">
-            ÖDEDİ Mİ
+            <div style={styles.loginBrand} className="login-brand">
+              ÖDEDİ Mİ
+            </div>
+            <h1 style={styles.loginHeadline} className="login-headline">
+              Paracıklar Geldi Mi Acep...
+            </h1>
           </div>
-          <h1 style={styles.loginHeadline} className="login-headline">
-            Paracıklar Geldi Mi Acep...
-          </h1>
-        </div>
+        ) : null}
 
         <div style={styles.loginCard} className="login-card">
-          <div style={styles.loginCardTitle}>{authTitle}</div>
+          <div style={styles.loginCardTitle} className="login-card-title">
+            {authTitle}
+          </div>
 
-          <div style={styles.loginSection}>
-            <div style={styles.loginLabel}>E-posta</div>
+          <div style={styles.loginSection} className="login-section">
+            <div style={styles.loginLabel} className="login-label">
+              E-posta
+            </div>
             <input
-              className="soft-input"
+              className="soft-input login-input"
               type="email"
               placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={styles.loginInput}
             />
-            <div style={styles.loginLabel}>Şifre</div>
+            <div style={styles.loginLabel} className="login-label">
+              Şifre
+            </div>
             <input
-              className="soft-input"
+              className="soft-input login-input"
               type="password"
               placeholder="Şifre"
               value={authPassword}
               onChange={(e) => setAuthPassword(e.target.value)}
               style={styles.loginInput}
             />
-            <div style={styles.loginMetaRow}>
-              <label style={styles.rememberMeLabel}>
+            <div style={styles.loginMetaRow} className="login-meta-row">
+              <label style={styles.rememberMeLabel} className="remember-me-label">
                 <input
                   type="checkbox"
                   checked={rememberMe}
@@ -201,7 +232,7 @@ export function AuthScreen({
               </label>
               <button
                 type="button"
-                className="hover-button"
+                className="hover-button forgot-link"
                 onClick={() => void authResetPassword()}
                 style={styles.forgotLink}
               >
@@ -212,6 +243,7 @@ export function AuthScreen({
               className="hover-button"
               onClick={() => void (isMobileViewport ? authLogin() : signupMode ? authSignUp() : authLogin())}
               style={styles.loginPrimaryAction}
+              type="button"
             >
               <span style={styles.btnInner}>
                 <Mail size={16} />
