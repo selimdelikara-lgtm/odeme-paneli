@@ -3576,6 +3576,17 @@ export default function Page() {
               <button
                 type="button"
                 className="hover-button"
+                style={styles.mobileNavUtility}
+                onClick={() => setShowMobileSearch((prev) => !prev)}
+                aria-label="Ara"
+                title="Ara"
+              >
+                <Search size={15} />
+              </button>
+
+              <button
+                type="button"
+                className="hover-button"
                 style={viewMode === "home" ? styles.mobileNavItemActive : styles.mobileNavItem}
                 onClick={() => {
                   setViewMode("home");
@@ -3833,6 +3844,7 @@ const styles: Record<string, CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-start",
+    gap: 6,
     minWidth: 0,
   },
   mobileBottomNavRight: {
@@ -3858,6 +3870,19 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 700,
     cursor: "pointer",
     whiteSpace: "nowrap",
+  },
+  mobileNavUtility: {
+    width: 38,
+    height: 38,
+    border: "1px solid var(--border)",
+    background: "rgba(255,255,255,0.9)",
+    borderRadius: 12,
+    color: "var(--muted)",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    flexShrink: 0,
   },
   mobileNavItemActive: {
     minHeight: 38,
