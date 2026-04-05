@@ -21,6 +21,7 @@ import {
   useState,
 } from "react";
 import { tl } from "../page.helpers";
+import type { ActivityItem, InvoiceAttachment, Odeme, RowMeta } from "../page.shared";
 
 export function AnimatedMoney({
   value,
@@ -277,6 +278,7 @@ type SettingsContentProps = {
   settingsCurrentPassword: string;
   setSettingsCurrentPassword: Dispatch<SetStateAction<string>>;
   closeAccountData: () => Promise<void>;
+  activityLog: ActivityItem[];
 };
 
 export function SettingsContent({
@@ -300,6 +302,7 @@ export function SettingsContent({
   settingsCurrentPassword,
   setSettingsCurrentPassword,
   closeAccountData,
+  activityLog,
 }: SettingsContentProps) {
   return (
     <div style={styles.settingsGrid}>
@@ -457,6 +460,172 @@ export function SettingsContent({
           </button>
         </div>
       </div>
+
+      <div style={styles.settingsCard}>
+        <div style={styles.sectionHead}>
+          <h2 style={styles.h2}>İşlem Geçmişi</h2>
+          <CircleAlert size={18} color={mutedColor} />
+        </div>
+        {activityLog.length ? (
+          <div style={styles.settingsHistoryList}>
+            {activityLog.map((item) => (
+              <div key={item.id} style={styles.settingsHistoryItem}>
+                <div style={styles.settingsHistoryTitleRow}>
+                  <strong>{item.title}</strong>
+                  <span style={styles.settingsHistoryTime}>{item.createdAt}</span>
+                </div>
+                <div style={styles.settingsHistoryDetail}>{item.detail}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={styles.settingsDangerText}>Henüz kayıtlı bir işlem yok.</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type EmptyStateCardProps = {
+  title: string;
+  description: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  styles: Record<string, CSSProperties>;
+};
+
+export function EmptyStateCard({
+  title,
+  description,
+  actionLabel,
+  onAction,
+  styles,
+}: EmptyStateCardProps) {
+  return (
+    <div style={styles.emptyStateCard}>
+      <div style={styles.emptyStateTitle}>{title}</div>
+      <div style={styles.emptyStateText}>{description}</div>
+      {actionLabel && onAction ? (
+        <button className="hover-button" type="button" onClick={onAction} style={styles.primaryBtn}>
+          {actionLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+type MobileProjectCardsProps = {
+  rows: Odeme[];
+  invoiceMap: Record<number, InvoiceAttachment[]>;
+  rowMeta: Record<number, RowMeta>;
+  aktifTabMeta: { color: string };
+  styles: Record<string, CSSProperties>;
+  shortDate: (v: string | null) => string;
+  shortDateTime: (v: string | null) => string;
+  tl: (v: number) => string;
+  durumGorunum: (row: Odeme) => {
+    text: string;
+    bg: string;
+    color: string;
+    rowBg: string;
+  };
+  editAc: (row: Odeme) => void;
+  kayitSil: (id: number) => Promise<void>;
+  openInvoicePicker: (rowId: number) => void;
+  uploadingInvoiceId: number | null;
+};
+
+export function MobileProjectCards({
+  rows,
+  invoiceMap,
+  rowMeta,
+  aktifTabMeta,
+  styles,
+  shortDate,
+  shortDateTime,
+  tl,
+  durumGorunum,
+  editAc,
+  kayitSil,
+  openInvoicePicker,
+  uploadingInvoiceId,
+}: MobileProjectCardsProps) {
+  return (
+    <div style={styles.mobileProjectList}>
+      {rows.map((row) => {
+        const invoices = invoiceMap[row.id] || [];
+        const meta = rowMeta[row.id];
+        const durum = durumGorunum(row);
+
+        return (
+          <div
+            key={row.id}
+            style={{
+              ...styles.mobileProjectCard,
+              borderLeft: `4px solid ${aktifTabMeta.color}`,
+            }}
+          >
+            <div style={styles.mobileProjectHead}>
+              <div>
+                <div style={styles.mobileProjectTitle}>{row.proje || "—"}</div>
+                <div style={styles.mobileProjectMeta}>
+                  {shortDate(row.fatura_tarihi)} · {row.tutar ? tl(Number(row.tutar)) : "—"}
+                </div>
+              </div>
+              <div
+                style={{
+                  ...styles.status,
+                  background: durum.bg,
+                  color: durum.color,
+                  border: `1px solid ${durum.color}55`,
+                }}
+              >
+                <span style={{ ...styles.dot, background: durum.color }} />
+                {durum.text}
+              </div>
+            </div>
+
+            <div style={styles.mobileProjectSubMeta}>
+              <span>Oluşturma: {shortDateTime(meta?.createdAt || null)}</span>
+              <span>Güncelleme: {shortDateTime(meta?.updatedAt || null)}</span>
+            </div>
+
+            {invoices.length ? (
+              <div style={styles.invoiceList}>
+                {invoices.map((attachment) => (
+                  <a
+                    key={attachment.path}
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={styles.invoiceLink}
+                  >
+                    {attachment.name}
+                  </a>
+                ))}
+              </div>
+            ) : null}
+
+            <div style={styles.mobileProjectActions}>
+              <button className="hover-button" type="button" onClick={() => editAc(row)} style={styles.secondaryBtn}>
+                Düzenle
+              </button>
+              <button
+                className="hover-button"
+                type="button"
+                onClick={() => openInvoicePicker(row.id)}
+                style={styles.secondaryBtn}
+                disabled={uploadingInvoiceId === row.id}
+              >
+                Fatura
+              </button>
+              <button className="hover-button" type="button" onClick={() => void kayitSil(row.id)} style={styles.deleteBtn}>
+                Sil
+              </button>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -47,6 +47,7 @@ import {
   type DropPosition,
   type HomeProjectColumnKey,
   type InvoiceAttachment,
+  type ActivityItem,
   type Odeme,
   type PdfWindow,
   type ProjectColumnKey,
@@ -82,7 +83,14 @@ import {
   browserSupabase as supabase,
   setAuthStoragePreference,
 } from "@/lib/supabase";
-import { AnimatedMoney, AuthScreen, SettingsContent, Stat } from "./_components/PageBits";
+import {
+  AnimatedMoney,
+  AuthScreen,
+  EmptyStateCard,
+  MobileProjectCards,
+  SettingsContent,
+  Stat,
+} from "./_components/PageBits";
 import type {
   FaturaEkiInsert,
   OdemeInsert,
@@ -181,6 +189,10 @@ export default function Page() {
   const [settingsPassword, setSettingsPassword] = useState("");
   const [settingsPasswordRepeat, setSettingsPasswordRepeat] = useState("");
   const [settingsBusy, setSettingsBusy] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [activityLog, setActivityLog] = useState<ActivityItem[]>(() =>
+    readStoredState<ActivityItem[]>("odeme-activity-v1", [])
+  );
 
   const exportRef = useRef<HTMLElement | null>(null);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
@@ -225,6 +237,23 @@ export default function Page() {
     setFaturaKesildi(draft?.faturaKesildi ?? false);
     setOdemeAlindi(draft?.odemeAlindi ?? false);
   };
+
+  const pushActivity = useCallback((title: string, detail: string) => {
+    const item: ActivityItem = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      title,
+      detail,
+      createdAt: new Date().toLocaleString("tr-TR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+
+    setActivityLog((prev) => [item, ...prev].slice(0, 30));
+  }, []);
 
   const openProjectTab = (tabName: string) => {
     setAktifSekme(tabName);
@@ -309,6 +338,22 @@ export default function Page() {
       JSON.stringify(homeProjectColumnOrder)
     );
   }, [homeProjectColumnOrder]);
+
+  useEffect(() => {
+    localStorage.setItem("odeme-activity-v1", JSON.stringify(activityLog));
+  }, [activityLog]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncViewport = () => {
+      setIsMobileViewport(window.innerWidth <= 820);
+    };
+
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    return () => window.removeEventListener("resize", syncViewport);
+  }, []);
 
   useEffect(() => {
     initialLoadRef.current = false;
@@ -771,6 +816,7 @@ export default function Page() {
     }));
 
     setMsg("Fatura yüklendi.");
+    pushActivity("Fatura yüklendi", `${row.proje || "Kayıt"} · ${file.name}`);
     setUploadingInvoiceId(null);
   };
 
@@ -797,6 +843,7 @@ export default function Page() {
     }));
 
     setMsg("Fatura kaldırıldı.");
+    pushActivity("Fatura kaldırıldı", attachment.name);
   };
 
   const deleteInvoicesForRows = async (rowIds: number[]) => {
@@ -853,6 +900,40 @@ export default function Page() {
       });
       return next;
     });
+
+    return { error: null as string | null };
+  };
+
+  void deleteInvoicesForRows;
+
+  const runManageRequest = async (
+    payload:
+      | { action: "delete_record"; id: number }
+      | { action: "delete_tab"; tabName: string }
+      | { action: "rename_tab"; tabName: string; nextTabName: string }
+  ) => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      return { error: "İşlem için oturum doğrulanamadı." };
+    }
+
+    const response = await fetch("/api/odemeler/manage", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    if (!response.ok) {
+      return { error: body.error || "İşlem gerçekleştirilemedi." };
+    }
 
     return { error: null as string | null };
   };
@@ -974,6 +1055,10 @@ export default function Page() {
 
     temizle();
     setMsg(editId ? "Kayıt güncellendi." : "Kayıt eklendi.");
+    pushActivity(
+      editId ? "Kayıt güncellendi" : "Kayıt eklendi",
+      `${aktifSekme} · ${payload.proje || "Yeni kayıt"}`
+    );
     await yukle();
   }
 
@@ -1005,6 +1090,7 @@ export default function Page() {
     }
 
     setMsg("Kayıt çoğaltıldı.");
+    pushActivity("Kayıt çoğaltıldı", `${row.grup || "Proje"} · ${row.proje || "Yeni Kayıt"}`);
     await yukle();
   }
 
@@ -1038,6 +1124,7 @@ export default function Page() {
     }));
 
     setData((prev) => prev.map((x) => (x.id === row.id ? { ...x, ...next } : x)));
+    pushActivity("Durum güncellendi", `${row.grup || "Proje"} · ${row.proje || "Kayıt"}`);
   }
 
   async function undoDelete() {
@@ -1064,28 +1151,23 @@ export default function Page() {
 
     setLastDeleted(null);
     setMsg("Silinen kayıtlar geri yüklendi.");
+    pushActivity("Kayıtlar geri yüklendi", `${lastDeleted.length} kayıt geri alındı`);
     await yukle();
   }
 
   async function kayitSil(id: number) {
     const row = data.find((x) => x.id === id) || null;
+    const result = await runManageRequest({ action: "delete_record", id });
 
-    const invoiceDelete = await deleteInvoicesForRows([id]);
-    if (invoiceDelete.error) {
-      setMsg(invoiceDelete.error);
-      return;
-    }
-
-    const { error } = await odemelerTable().delete().eq("id", id);
-
-    if (error) {
-      setMsg("Kayıt silinemedi: " + error.message);
+    if (result.error) {
+      setMsg(result.error);
       return;
     }
 
     if (row) setLastDeleted([row]);
     if (editId === id) temizle();
     setMsg("Kayıt silindi.");
+    pushActivity("Kayıt silindi", `${row?.grup || "Proje"} · ${row?.proje || id}`);
     await yukle();
   }
 
@@ -1095,20 +1177,9 @@ export default function Page() {
     );
     if (!onay) return;
 
-    const rows = data.filter((x) => (x.grup || "") === tabName);
-    const invoiceDelete = await deleteInvoicesForRows(rows.map((row) => row.id));
-    if (invoiceDelete.error) {
-      setMsg(invoiceDelete.error);
-      return;
-    }
-
-    const res = await Promise.all(
-      rows.map((x) => odemelerTable().delete().eq("id", x.id))
-    );
-
-    const failed = res.find((r) => r.error);
-    if (failed?.error) {
-      setMsg("Sekme silinemedi: " + failed.error.message);
+    const result = await runManageRequest({ action: "delete_tab", tabName });
+    if (result.error) {
+      setMsg(result.error);
       return;
     }
 
@@ -1124,6 +1195,7 @@ export default function Page() {
     }
 
     setMsg(`${tabName} sekmesi silindi.`);
+    pushActivity("Sekme silindi", tabName);
     await yukle();
   }
 
@@ -1131,40 +1203,35 @@ export default function Page() {
     const yeniAd = window.prompt("Sekmenin yeni adı ne olsun?", tabName);
     if (!yeniAd || !yeniAd.trim()) return;
 
-    const rows = data.filter((x) => (x.grup || "") === tabName);
-    const res = await Promise.all(
-      rows.map((x) =>
-        odemelerTable()
-          .update({ grup: yeniAd.trim() } satisfies OdemeUpdate)
-          .eq("id", x.id)
-      )
-    );
+    const nextName = yeniAd.trim();
+    const result = await runManageRequest({
+      action: "rename_tab",
+      tabName,
+      nextTabName: nextName,
+    });
 
-    const failed = res.find((r) => r.error);
-
-    if (failed?.error) {
-      setMsg("Sekme adı güncellenemedi: " + failed.error.message);
+    if (result.error) {
+      setMsg(result.error);
       return;
     }
 
     setTabMeta((prev) => {
       const next = { ...prev };
       if (next[tabName]) {
-        next[yeniAd.trim()] = next[tabName];
+        next[nextName] = next[tabName];
         delete next[tabName];
       }
       return next;
     });
 
-    setArchivedTabs((prev) =>
-      prev.map((x) => (x === tabName ? yeniAd.trim() : x))
-    );
+    setArchivedTabs((prev) => prev.map((x) => (x === tabName ? nextName : x)));
 
     if (aktifSekme === tabName) {
-      openProjectTab(yeniAd.trim());
+      openProjectTab(nextName);
     }
 
     setMsg("Sekme adı güncellendi.");
+    pushActivity("Sekme yeniden adlandırıldı", `${tabName} → ${nextName}`);
     await yukle();
   }
 
@@ -1812,6 +1879,7 @@ export default function Page() {
     }
 
     setSignupMode(false);
+    pushActivity("Hesap oluşturuldu", email.trim());
     setMsg("Hesap oluşturuldu. E-posta doğrulaması açıksa kutunu kontrol et.");
   }
 
@@ -1831,6 +1899,7 @@ export default function Page() {
       return;
     }
 
+    pushActivity("Şifre sıfırlama bağlantısı gönderildi", email.trim());
     setMsg("Şifre sıfırlama bağlantısı e-posta adresine gönderildi.");
   }
 
@@ -1921,6 +1990,7 @@ export default function Page() {
       return;
     }
 
+    pushActivity("Profil güncellendi", settingsName.trim() || authEmail || "Profil");
     setMsg("Hesap ayarları kaydedildi.");
     setSettingsBusy(false);
   }
@@ -1954,6 +2024,7 @@ export default function Page() {
 
     setSettingsPassword("");
     setSettingsPasswordRepeat("");
+    pushActivity("Şifre güncellendi", authEmail || "Hesap");
     setMsg("Şifre güncellendi.");
     setSettingsBusy(false);
   }
@@ -2118,6 +2189,7 @@ export default function Page() {
       settingsCurrentPassword={settingsCurrentPassword}
       setSettingsCurrentPassword={setSettingsCurrentPassword}
       closeAccountData={closeAccountData}
+      activityLog={activityLog}
     />
   );
   if (!authUserId) {
@@ -2694,6 +2766,15 @@ export default function Page() {
                 </div>
               </div>
 
+              {homeProjectStats.length === 0 ? (
+                <EmptyStateCard
+                  title="Henüz proje görünmüyor"
+                  description="İlk projeni oluşturduğunda genel özet burada listelenecek."
+                  actionLabel="Yeni Proje"
+                  onAction={yeniProjeOlustur}
+                  styles={styles}
+                />
+              ) : (
               <div style={styles.tableWrap}>
                 <table style={styles.table}>
                   <thead>
@@ -2816,6 +2897,7 @@ export default function Page() {
                   </tbody>
                 </table>
               </div>
+              )}
             </div>
           ) : (
             <>
@@ -3056,19 +3138,44 @@ export default function Page() {
                   </div>
                 ) : null}
 
-                <div
-                  style={{
-                    ...styles.tableWrap,
-                    ...(draggedId !== null && sortKey === "manual"
-                      ? styles.tableWrapDragging
-                      : null),
-                  }}
-                >
-                  {draggedId !== null && sortKey === "manual" ? (
-                    <div style={styles.dragOverlay} />
-                  ) : null}
+                {filteredActiveKayitlar.length === 0 ? (
+                  <EmptyStateCard
+                    title="Bu projede kayıt yok"
+                    description="İlk kaydı formdan ekleyebilir veya mevcut filtreleri temizleyebilirsin."
+                    actionLabel="Yeni Kayıt Hazırla"
+                    onAction={temizle}
+                    styles={styles}
+                  />
+                ) : isMobileViewport ? (
+                  <MobileProjectCards
+                    rows={filteredActiveKayitlar}
+                    invoiceMap={invoiceMap}
+                    rowMeta={rowMeta}
+                    aktifTabMeta={aktifTabMeta}
+                    styles={styles}
+                    shortDate={shortDate}
+                    shortDateTime={shortDateTime}
+                    tl={tl}
+                    durumGorunum={durumGorunum}
+                    editAc={editAc}
+                    kayitSil={kayitSil}
+                    openInvoicePicker={openInvoicePicker}
+                    uploadingInvoiceId={uploadingInvoiceId}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      ...styles.tableWrap,
+                      ...(draggedId !== null && sortKey === "manual"
+                        ? styles.tableWrapDragging
+                        : null),
+                    }}
+                  >
+                    {draggedId !== null && sortKey === "manual" ? (
+                      <div style={styles.dragOverlay} />
+                    ) : null}
 
-                  <table style={styles.tableBig}>
+                    <table style={styles.tableBig}>
                     <thead>
                       <tr>
                         {projectColumns.map((column) => {
@@ -3207,7 +3314,7 @@ export default function Page() {
                     </tbody>
                   </table>
 
-                  {filteredActiveKayitlar.length === 0 ? (
+                  {/* legacy empty-state block removed
                     <div
                       style={{
                         color: "var(--muted)",
@@ -3217,8 +3324,9 @@ export default function Page() {
                     >
                       Filtreye uygun kayıt yok.
                     </div>
-                  ) : null}
+                  */}
                 </div>
+                )}
               </div>
             </>
           )}
@@ -3932,6 +4040,97 @@ const styles: Record<string, CSSProperties> = {
     color: "var(--textSoft)",
     fontSize: 13,
     lineHeight: 1.5,
+  },
+  settingsHistoryList: {
+    display: "grid",
+    gap: 12,
+  },
+  settingsHistoryItem: {
+    padding: 12,
+    borderRadius: 14,
+    border: "1px solid var(--border)",
+    background: "var(--slateSoft)",
+    display: "grid",
+    gap: 6,
+  },
+  settingsHistoryTitleRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    color: "var(--text)",
+  },
+  settingsHistoryTime: {
+    fontSize: 12,
+    color: "var(--muted)",
+    whiteSpace: "nowrap",
+  },
+  settingsHistoryDetail: {
+    fontSize: 13,
+    color: "var(--textSoft)",
+    lineHeight: 1.5,
+  },
+  emptyStateCard: {
+    background: "var(--card)",
+    border: "1px dashed var(--border)",
+    borderRadius: 18,
+    padding: 24,
+    display: "grid",
+    gap: 12,
+    justifyItems: "start",
+    boxShadow: "var(--shadow)",
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: 800,
+    color: "var(--text)",
+  },
+  emptyStateText: {
+    fontSize: 14,
+    lineHeight: 1.6,
+    color: "var(--muted)",
+    maxWidth: 520,
+  },
+  mobileProjectList: {
+    display: "grid",
+    gap: 12,
+  },
+  mobileProjectCard: {
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+    borderRadius: 18,
+    padding: 14,
+    display: "grid",
+    gap: 12,
+    boxShadow: "var(--shadow)",
+  },
+  mobileProjectHead: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  mobileProjectTitle: {
+    fontSize: 16,
+    fontWeight: 800,
+    color: "var(--text)",
+    lineHeight: 1.3,
+  },
+  mobileProjectMeta: {
+    fontSize: 13,
+    color: "var(--muted)",
+    marginTop: 4,
+  },
+  mobileProjectSubMeta: {
+    display: "grid",
+    gap: 4,
+    fontSize: 12,
+    color: "var(--muted)",
+  },
+  mobileProjectActions: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap",
   },
   sectionHead: {
     display: "flex",

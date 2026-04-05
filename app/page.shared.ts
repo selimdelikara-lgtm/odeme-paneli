@@ -69,6 +69,13 @@ export type InvoiceAttachment = {
   uploadedAt: string;
 };
 
+export type ActivityItem = {
+  id: string;
+  title: string;
+  detail: string;
+  createdAt: string;
+};
+
 export type PdfWindow = Window &
   typeof globalThis & {
     html2canvas?: (
