@@ -160,7 +160,12 @@ export function AuthScreen({
         <div style={styles.mobileIntroShell} className="mobile-auth-intro">
           <div style={styles.mobileIntroMarkWrap}>
             <div style={styles.mobileIntroMarkQuestion}>?</div>
-            <div style={styles.mobileIntroMark}>🐱</div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/cat-question-source.jpg"
+              alt="Soru işaretli kedi"
+              style={styles.mobileIntroMarkImage}
+            />
           </div>
           <div style={styles.mobileIntroCopy}>Paracıklar Geldi Mi Acep...</div>
           <button

@@ -2292,8 +2292,8 @@ export default function Page() {
           .login-shell{border-radius:0 !important;box-shadow:none !important;min-height:100vh !important;max-width:100% !important;background:transparent !important}
           .login-card{padding:16px 14px !important;justify-content:flex-start !important;min-height:100vh !important;border-radius:0 !important;box-shadow:none !important}
           .mobile-auth-wrap{background:#F6F7FC !important}
-          .mobile-auth-intro{padding:42px 22px 32px !important}
-          .mobile-auth-cta{margin-top:56px !important}
+          .mobile-auth-intro{padding:36px 22px 28px !important}
+          .mobile-auth-cta{margin-top:40px !important}
           .login-card-title{font-size:24px !important;line-height:1.05 !important}
           .login-section{gap:7px !important}
           .login-input,.soft-input{font-size:16px !important}
@@ -4946,33 +4946,41 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "flex-start",
     textAlign: "center",
-    padding: "56px 28px 32px",
-    background: "linear-gradient(180deg, #F6F7FC 0%, #EEF2FF 100%)",
+    padding: "44px 28px 32px",
+    background:
+      "radial-gradient(circle at 50% 18%, rgba(37,99,235,0.08) 0%, rgba(37,99,235,0) 24%), linear-gradient(180deg, #F6F7FC 0%, #EEF2FF 100%)",
     color: "#171923",
   },
   mobileIntroMarkWrap: {
     position: "relative",
-    width: 112,
-    height: 112,
+    width: 132,
+    height: 132,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: 999,
+    background: "radial-gradient(circle, rgba(37,99,235,0.12) 0%, rgba(37,99,235,0.02) 70%, rgba(37,99,235,0) 100%)",
   },
   mobileIntroMarkQuestion: {
     position: "absolute",
-    top: 0,
-    right: 10,
-    fontSize: 32,
+    top: -2,
+    right: 6,
+    fontSize: 34,
     lineHeight: 1,
     fontWeight: 900,
     color: "#2557D6",
+    zIndex: 2,
   },
-  mobileIntroMark: {
-    fontSize: 82,
-    lineHeight: 1,
+  mobileIntroMarkImage: {
+    width: 108,
+    height: 108,
+    borderRadius: 999,
+    objectFit: "cover",
+    objectPosition: "center 22%",
+    boxShadow: "0 14px 28px rgba(37,99,235,0.12)",
   },
   mobileIntroCopy: {
-    marginTop: 20,
+    marginTop: 18,
     fontSize: 22,
     lineHeight: 1.24,
     fontWeight: 800,
@@ -4982,7 +4990,7 @@ const styles: Record<string, CSSProperties> = {
     maxWidth: 280,
   },
   mobileIntroButton: {
-    marginTop: 72,
+    marginTop: 52,
     width: "100%",
     border: "none",
     borderRadius: 22,
