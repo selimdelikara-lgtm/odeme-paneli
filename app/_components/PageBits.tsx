@@ -241,6 +241,26 @@ export function AuthScreen({
                 Giriş Yap
               </span>
             </button>
+
+            <div style={styles.mobileAuthDivider}>
+              <span style={styles.mobileAuthDividerLine} />
+              <span>veya</span>
+              <span style={styles.mobileAuthDividerLine} />
+            </div>
+
+            <button
+              type="button"
+              className="hover-button"
+              onClick={() => void authLoginWithGoogle()}
+              style={styles.mobileGoogleButton}
+            >
+              <span style={styles.btnInner}>
+                <span style={styles.googleMark}>
+                  <span style={{ color: "#4285F4" }}>G</span>
+                </span>
+                Google ile devam et
+              </span>
+            </button>
           </div>
 
           {msg ? <div style={{ ...styles.msg, marginTop: 14 }}>{msg}</div> : null}
