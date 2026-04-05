@@ -2204,18 +2204,44 @@ export default function Page() {
   return (
     <div style={{ ...styles.page, ...themeVars }}>
       <style>{`
+        @keyframes panelFadeSlide{
+          from{opacity:0;transform:translateY(10px)}
+          to{opacity:1;transform:translateY(0)}
+        }
+        @keyframes floatIn{
+          from{opacity:0;transform:translateY(14px) scale(.985)}
+          to{opacity:1;transform:translateY(0) scale(1)}
+        }
+        @keyframes menuPop{
+          from{opacity:0;transform:translateY(8px) scale(.96)}
+          to{opacity:1;transform:translateY(0) scale(1)}
+        }
+        .view-panel{animation:panelFadeSlide .24s cubic-bezier(.22,1,.36,1)}
+        .motion-card,
+        .quick-grid > div,
+        .hero-card,
+        .content-card{
+          animation:floatIn .34s cubic-bezier(.22,1,.36,1) both;
+        }
+        .stats-grid > .motion-card:nth-child(2),
+        .quick-grid > div:nth-child(2){animation-delay:.04s}
+        .stats-grid > .motion-card:nth-child(3),
+        .quick-grid > div:nth-child(3){animation-delay:.08s}
+        .stats-grid > .motion-card:nth-child(4),
+        .quick-grid > div:nth-child(4){animation-delay:.12s}
+        .export-menu{animation:menuPop .18s cubic-bezier(.22,1,.36,1)}
         .hover-button{transition:all .18s ease}
         .hover-button:hover{filter:brightness(.97);transform:translateY(-1px)}
         .soft-input{transition:border-color .18s ease,box-shadow .18s ease}
         .soft-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}
-        .sidebar-item{transition:all .18s ease}
-        .sidebar-item:hover{background:rgba(255,255,255,.06)}
+        .sidebar-item{transition:transform .18s ease, background-color .18s ease, box-shadow .18s ease}
+        .sidebar-item:hover{background:rgba(255,255,255,.06);transform:translateX(2px)}
         .panel-row{transition:transform .18s ease, box-shadow .18s ease, background-color .22s ease}
         .panel-row:hover{transform:translateY(-2px) scale(1.003);box-shadow:0 8px 18px rgba(15,23,42,.08)}
         .panel-row .row-actions-fade{opacity:0;pointer-events:none;transition:opacity .18s ease}
         .panel-row:hover .row-actions-fade{opacity:1;pointer-events:auto}
-        .status-button{transition:all .18s ease}
-        .status-button:hover{transform:scale(1.015)}
+        .status-button{transition:transform .18s ease, box-shadow .18s ease, background-color .22s ease, border-color .22s ease, color .22s ease}
+        .status-button:hover{transform:scale(1.015);box-shadow:0 10px 24px rgba(15,23,42,.10)}
         .status-button:active{transform:scale(.985)}
         @media (max-width: 980px){
           .app-shell{grid-template-columns:1fr !important}
@@ -2444,7 +2470,7 @@ export default function Page() {
           {viewMode === "settings" ? (
             renderSettingsContent()
           ) : (
-            <>
+            <div className={`view-panel view-panel-${viewMode}`}>
           <div style={styles.heroCard} className="hero-card">
             <div style={styles.heroTopRow}>
               <div>
@@ -2476,7 +2502,7 @@ export default function Page() {
                 </button>
 
                 {exportMenuOpen ? (
-                  <div style={styles.heroExportMenu}>
+                  <div style={styles.heroExportMenu} className="export-menu">
                     <button
                       type="button"
                       onClick={() => {
@@ -2752,7 +2778,7 @@ export default function Page() {
           )}
 
           {viewMode === "home" ? (
-            <div style={styles.card}>
+            <div style={styles.card} className="content-card">
               <div style={styles.sectionHead}>
                 <h2 style={{ ...styles.h2, fontWeight: 900 }}>Genel Proje Özeti</h2>
                 <div style={{ color: "var(--muted)", fontSize: 13 }}>
@@ -2895,7 +2921,7 @@ export default function Page() {
             </div>
           ) : (
             <>
-              <div style={styles.card}>
+              <div style={styles.card} className="content-card">
                 <div style={styles.sectionHead}>
                   <h2 style={styles.h2}>Kayıt Ekle / Güncelle</h2>
                   <div style={{ color: "var(--muted)", fontSize: 12 }}>
@@ -3092,7 +3118,7 @@ export default function Page() {
                 </div>
               ) : null}
 
-              <div style={styles.card}>
+              <div style={styles.card} className="content-card">
                 <div
                   style={{
                     display: "flex",
@@ -3326,7 +3352,7 @@ export default function Page() {
             </>
           )}
 
-            </>
+            </div>
           )}
 
           {loading ? (

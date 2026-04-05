@@ -96,7 +96,7 @@ export function Stat({
   iconWrapStyle?: CSSProperties;
 }) {
   return (
-    <div style={styles.stat}>
+    <div style={styles.stat} className="motion-card">
       <div style={styles.statBody}>
         <div style={{ ...styles.statIcon, ...iconWrapStyle }}>{icon}</div>
         <div style={styles.statCopy}>
