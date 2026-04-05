@@ -2311,14 +2311,15 @@ export default function Page() {
           .login-shell{border-radius:0 !important;box-shadow:none !important;min-height:100vh !important;max-width:100% !important;background:transparent !important}
           .login-card{padding:16px 14px !important;justify-content:flex-start !important;min-height:100vh !important;border-radius:0 !important;box-shadow:none !important}
           .mobile-auth-wrap{background:#F6F7FC !important}
-          .mobile-auth-intro{padding:36px 22px 28px !important}
-          .mobile-auth-cta{margin-top:40px !important}
-          .login-card-title{font-size:24px !important;line-height:1.05 !important}
-          .login-section{gap:7px !important}
-          .login-input,.soft-input{font-size:16px !important}
-          .login-meta-row{align-items:flex-start !important}
-          .remember-me-label{gap:6px !important}
-        }
+            .mobile-auth-intro{padding:36px 22px 28px !important}
+            .mobile-auth-cta{margin-top:40px !important}
+            .login-card-title{font-size:24px !important;line-height:1.05 !important}
+            .login-section{gap:7px !important}
+            .login-input,.soft-input{font-size:16px !important}
+            .login-meta-row{align-items:flex-start !important}
+            .remember-me-label{gap:6px !important}
+            .mobile-settings-top-actions{display:flex !important}
+          }
         @media (max-width: 420px){
           .login-card{padding:16px 12px !important}
           .login-card-title{font-size:22px !important}
@@ -2441,32 +2442,34 @@ export default function Page() {
               style={{
                 ...styles.topBar,
                 ...(isMobileViewport
-                  ? { flexDirection: "column", alignItems: "center", textAlign: "center" }
+                  ? { justifyContent: "flex-end", minHeight: 0, marginBottom: 0 }
                   : {}),
               }}
               className="app-top-bar"
             >
-              <div style={isMobileViewport ? { width: "100%", textAlign: "center" } : undefined}>
-                <h1 style={styles.pageTitle} className="page-title">
-                  {viewMode === "home"
-                    ? "Ana Sayfa"
-                  : viewMode === "settings"
-                    ? "Hesap Ayarları"
-                    : aktifSekme || "Proje"}
-              </h1>
-              <div style={styles.pageSubtitle} className="page-subtitle">
-                {viewMode === "home"
-                  ? "Tahsilat ve fatura takibinin genel özeti"
-                  : viewMode === "settings"
-                    ? "Profil, güvenlik ve hesap işlemleri"
-                    : "Sekme detayları"}
-              </div>
-            </div>
+              {!isMobileViewport ? (
+                <div>
+                  <h1 style={styles.pageTitle} className="page-title">
+                    {viewMode === "home"
+                      ? "Ana Sayfa"
+                      : viewMode === "settings"
+                        ? "Hesap Ayarları"
+                        : aktifSekme || "Proje"}
+                  </h1>
+                  <div style={styles.pageSubtitle} className="page-subtitle">
+                    {viewMode === "home"
+                      ? "Tahsilat ve fatura takibinin genel özeti"
+                      : viewMode === "settings"
+                        ? "Profil, güvenlik ve hesap işlemleri"
+                        : "Sekme detayları"}
+                  </div>
+                </div>
+              ) : null}
 
-            <div style={styles.topBarActions}>
-              {viewMode !== "settings" ? (
-                isMobileViewport ? (
-                  <button
+              <div style={isMobileViewport ? { display: "none" } : styles.topBarActions}>
+                {viewMode !== "settings" ? (
+                  isMobileViewport ? (
+                    <button
                     type="button"
                     className="hover-button top-search"
                     style={styles.mobileSearchToggle}
@@ -2534,10 +2537,37 @@ export default function Page() {
             }}
           />
 
-          {viewMode === "settings" ? (
-            renderSettingsContent()
-          ) : (
-            <div className={`view-panel view-panel-${viewMode}`}>
+            {viewMode === "settings" ? (
+              <>
+                {isMobileViewport ? (
+                  <div style={styles.mobileSettingsTopActions}>
+                    <button
+                      className="hover-button"
+                      onClick={() => setTheme((p) => (p === "light" ? "dark" : "light"))}
+                      style={styles.mobileSettingsTopBtn}
+                    >
+                      <span style={styles.btnInner}>
+                        {theme === "light" ? <Moon size={16} /> : <SunMedium size={16} />}
+                        <span>{theme === "light" ? "Karanlık" : "Açık"}</span>
+                      </span>
+                    </button>
+
+                    <button
+                      className="hover-button"
+                      onClick={() => void cikisYap()}
+                      style={styles.mobileSettingsTopBtn}
+                    >
+                      <span style={styles.btnInner}>
+                        <LogOut size={16} />
+                        <span>Çıkış</span>
+                      </span>
+                    </button>
+                  </div>
+                ) : null}
+                {renderSettingsContent()}
+              </>
+            ) : (
+              <div className={`view-panel view-panel-${viewMode}`}>
           <div style={styles.heroCard} className="hero-card">
             <div style={styles.heroTopRow} className="hero-top-row">
               <div>
@@ -4075,6 +4105,25 @@ const styles: Record<string, CSSProperties> = {
     gap: 10,
     flexWrap: "wrap",
     justifyContent: "flex-end",
+  },
+  mobileSettingsTopActions: {
+    display: "none",
+    gap: 8,
+    marginBottom: 10,
+  },
+  mobileSettingsTopBtn: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 14,
+    border: "1px solid var(--border)",
+    background: "var(--card)",
+    color: "var(--text)",
+    fontWeight: 700,
+    fontSize: 13,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   topSearchWrap: {
     minWidth: 180,
