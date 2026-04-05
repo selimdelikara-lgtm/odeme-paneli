@@ -162,6 +162,7 @@ export default function Page() {
     readStoredState<string[]>("odeme-archived-tabs-v1", [])
   );
   const [showArchivedTabs, setShowArchivedTabs] = useState(false);
+  const [showMobileProjects, setShowMobileProjects] = useState(false);
   const [projectColumnOrder, setProjectColumnOrder] = useState<ProjectColumnKey[]>(() => {
     const stored = readStoredState<ProjectColumnKey[]>(
       "odeme-project-columns-v1",
@@ -2284,10 +2285,13 @@ export default function Page() {
           .app-sidebar > :first-child{display:none !important}
           .sidebar-bottom{border-top:none !important;padding-top:6px !important}
           .app-content{padding:10px !important}
+          .app-content{padding-bottom:92px !important}
           .top-search input{font-size:16px !important}
           .hero-card{padding:14px !important}
           .hero-value{font-size:28px !important}
           .hero-actions{width:100% !important}
+          .mobile-bottom-nav{display:grid !important}
+          .mobile-projects-sheet{display:block !important}
           .login-wrap{padding:0 !important}
           .login-shell{border-radius:0 !important;box-shadow:none !important;min-height:100vh !important;max-width:100% !important;background:transparent !important}
           .login-card{padding:16px 14px !important;justify-content:flex-start !important;min-height:100vh !important;border-radius:0 !important;box-shadow:none !important}
@@ -2313,6 +2317,7 @@ export default function Page() {
       `}</style>
 
       <div style={styles.shell} className="app-shell">
+        {!isMobileViewport ? (
         <aside style={styles.sidebar} className="app-sidebar">
           <div>
             <div style={styles.sidebarTitle}>Panel</div>
@@ -2414,6 +2419,7 @@ export default function Page() {
             </button>
           </div>
         </aside>
+        ) : null}
 
         <main style={styles.content} className="app-content" ref={exportRef}>
           <div style={styles.topBar} className="app-top-bar">
@@ -3386,6 +3392,118 @@ export default function Page() {
         </main>
       </div>
 
+      {isMobileViewport ? (
+        <>
+          <div
+            className="mobile-projects-sheet"
+            style={{
+              ...styles.mobileProjectsBackdrop,
+              opacity: showMobileProjects ? 1 : 0,
+              pointerEvents: showMobileProjects ? "auto" : "none",
+            }}
+            onClick={() => setShowMobileProjects(false)}
+          >
+            <div
+              style={{
+                ...styles.mobileProjectsSheet,
+                transform: showMobileProjects ? "translateY(0)" : "translateY(24px)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={styles.mobileProjectsSheetHeader}>
+                <strong>Projeler</strong>
+                <button
+                  type="button"
+                  className="hover-button"
+                  style={styles.mobileProjectsSheetAction}
+                  onClick={() => setShowArchivedTabs((p) => !p)}
+                >
+                  {showArchivedTabs ? "Aktifler" : "Arşiv"}
+                </button>
+              </div>
+
+              <div style={styles.mobileProjectsList}>
+                {gorunenSekmeler.map((tab) => {
+                  const meta = tabMeta[tab] || { color: "var(--blue)" };
+                  const active = viewMode === "project" && aktifSekme === tab;
+
+                  return (
+                    <button
+                      key={tab}
+                      type="button"
+                      className="hover-button"
+                      style={active ? styles.mobileProjectItemActive : styles.mobileProjectItem}
+                      onClick={() => {
+                        openProjectTab(tab);
+                        setShowMobileProjects(false);
+                      }}
+                    >
+                      <span
+                        style={{
+                          ...styles.tabColorDot,
+                          background: meta.color,
+                        }}
+                      />
+                      <span>{tab}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div style={styles.mobileBottomNav} className="mobile-bottom-nav no-print">
+            <button
+              type="button"
+              className="hover-button"
+              style={viewMode === "home" ? styles.mobileNavItemActive : styles.mobileNavItem}
+              onClick={() => {
+                setViewMode("home");
+                setSelectedIds([]);
+                setShowMobileProjects(false);
+              }}
+            >
+              <LayoutDashboard size={18} />
+              <span>Ana Sayfa</span>
+            </button>
+
+            <button
+              type="button"
+              className="hover-button"
+              style={styles.mobileNavPlus}
+              onClick={yeniProjeOlustur}
+              aria-label="Yeni Proje"
+              title="Yeni Proje"
+            >
+              <Plus size={20} />
+            </button>
+
+            <button
+              type="button"
+              className="hover-button"
+              style={viewMode === "project" ? styles.mobileNavItemActive : styles.mobileNavItem}
+              onClick={() => setShowMobileProjects(true)}
+            >
+              <FolderKanban size={18} />
+              <span>Projeler</span>
+            </button>
+
+            <button
+              type="button"
+              className="hover-button"
+              style={viewMode === "settings" ? styles.mobileNavItemActive : styles.mobileNavItem}
+              onClick={() => {
+                setViewMode("settings");
+                setShowMobileProjects(false);
+              }}
+            >
+              <Settings2 size={18} />
+              <span>Ayarlar</span>
+            </button>
+          </div>
+        </>
+      ) : null}
+
       {tabMenu.visible ? (
         <div
           style={{
@@ -3569,6 +3687,141 @@ const styles: Record<string, CSSProperties> = {
     gap: 8,
     paddingTop: 14,
     borderTop: "1px solid rgba(148,163,184,0.08)",
+  },
+  mobileBottomNav: {
+    display: "none",
+    position: "fixed",
+    left: 10,
+    right: 10,
+    bottom: 10,
+    gridTemplateColumns: "1fr auto 1fr 1fr",
+    alignItems: "center",
+    gap: 8,
+    padding: 8,
+    borderRadius: 22,
+    background: "rgba(255,255,255,0.94)",
+    border: "1px solid rgba(148,163,184,0.22)",
+    boxShadow: "0 16px 38px rgba(15,23,42,0.14)",
+    backdropFilter: "blur(16px)",
+    zIndex: 40,
+  },
+  mobileNavItem: {
+    minHeight: 52,
+    border: "none",
+    background: "transparent",
+    borderRadius: 16,
+    color: "var(--muted)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    fontSize: 11,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  mobileNavItemActive: {
+    minHeight: 52,
+    border: "none",
+    background: "rgba(37,99,235,0.10)",
+    borderRadius: 16,
+    color: "var(--blue)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    fontSize: 11,
+    fontWeight: 800,
+    cursor: "pointer",
+  },
+  mobileNavPlus: {
+    width: 54,
+    height: 54,
+    border: "none",
+    borderRadius: 999,
+    background: "linear-gradient(180deg, #2563EB 0%, #194AC6 100%)",
+    color: "#FFFFFF",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    boxShadow: "0 12px 26px rgba(37,99,235,0.24)",
+    marginTop: -22,
+  },
+  mobileProjectsBackdrop: {
+    display: "none",
+    position: "fixed",
+    inset: 0,
+    background: "rgba(15,23,42,0.26)",
+    transition: "opacity .18s ease",
+    zIndex: 39,
+  },
+  mobileProjectsSheet: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    bottom: 84,
+    borderRadius: 22,
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+    boxShadow: "0 18px 42px rgba(15,23,42,0.16)",
+    padding: 14,
+    transition: "transform .18s ease",
+  },
+  mobileProjectsSheetHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginBottom: 10,
+    color: "var(--text)",
+  },
+  mobileProjectsSheetAction: {
+    border: "1px solid var(--border)",
+    background: "var(--slateSoft)",
+    color: "var(--text)",
+    borderRadius: 12,
+    padding: "8px 10px",
+    fontSize: 12,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  mobileProjectsList: {
+    display: "grid",
+    gap: 8,
+    maxHeight: "50vh",
+    overflowY: "auto",
+  },
+  mobileProjectItem: {
+    width: "100%",
+    border: "1px solid var(--border)",
+    background: "var(--slateSoft)",
+    color: "var(--text)",
+    borderRadius: 14,
+    padding: "12px 14px",
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    fontSize: 14,
+    fontWeight: 700,
+    cursor: "pointer",
+    textAlign: "left",
+  },
+  mobileProjectItemActive: {
+    width: "100%",
+    border: "1px solid rgba(37,99,235,0.18)",
+    background: "rgba(37,99,235,0.08)",
+    color: "var(--blue)",
+    borderRadius: 14,
+    padding: "12px 14px",
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    fontSize: 14,
+    fontWeight: 800,
+    cursor: "pointer",
+    textAlign: "left",
   },
   sidebarTabInner: {
     display: "flex",
