@@ -3542,65 +3542,57 @@ export default function Page() {
           ) : null}
 
           <div style={styles.mobileBottomNav} className="mobile-bottom-nav no-print">
-            <button
-              type="button"
-              className="hover-button"
-              style={{
-                ...(viewMode === "home" ? styles.mobileNavItemActive : styles.mobileNavItem),
-                gridColumn: 1,
-                justifySelf: "start",
-              }}
-              onClick={() => {
-                setViewMode("home");
-                setSelectedIds([]);
-                setShowMobileProjects(false);
-              }}
-            >
-              <LayoutDashboard size={16} />
-              <span>Ana Sayfa</span>
-            </button>
+            <div style={styles.mobileBottomNavLeft}>
+              <button
+                type="button"
+                className="hover-button"
+                style={viewMode === "home" ? styles.mobileNavItemActive : styles.mobileNavItem}
+                onClick={() => {
+                  setViewMode("home");
+                  setSelectedIds([]);
+                  setShowMobileProjects(false);
+                }}
+              >
+                <LayoutDashboard size={16} />
+                <span>Ana Sayfa</span>
+              </button>
+            </div>
 
             <button
               type="button"
               className="hover-button"
-              style={{ ...styles.mobileNavPlus, gridColumn: 3 }}
+              style={styles.mobileNavPlus}
               onClick={yeniProjeOlustur}
               aria-label="Yeni Proje"
               title="Yeni Proje"
             >
-              <Plus size={18} />
+              <Plus size={20} />
             </button>
 
-            <button
-              type="button"
-              className="hover-button"
-              style={{
-                ...(viewMode === "project" ? styles.mobileNavItemActive : styles.mobileNavItem),
-                gridColumn: 4,
-                justifySelf: "start",
-              }}
-              onClick={() => setShowMobileProjects(true)}
-            >
-              <FolderKanban size={16} />
-              <span>Projeler</span>
-            </button>
+            <div style={styles.mobileBottomNavRight}>
+              <button
+                type="button"
+                className="hover-button"
+                style={viewMode === "project" ? styles.mobileNavItemActive : styles.mobileNavItem}
+                onClick={() => setShowMobileProjects(true)}
+              >
+                <FolderKanban size={16} />
+                <span>Projeler</span>
+              </button>
 
-            <button
-              type="button"
-              className="hover-button"
-              style={{
-                ...(viewMode === "settings" ? styles.mobileNavItemActive : styles.mobileNavItem),
-                gridColumn: 5,
-                justifySelf: "end",
-              }}
-              onClick={() => {
-                setViewMode("settings");
-                setShowMobileProjects(false);
-              }}
-            >
-              <Settings2 size={16} />
-              <span>Ayarlar</span>
-            </button>
+              <button
+                type="button"
+                className="hover-button"
+                style={viewMode === "settings" ? styles.mobileNavItemActive : styles.mobileNavItem}
+                onClick={() => {
+                  setViewMode("settings");
+                  setShowMobileProjects(false);
+                }}
+              >
+                <Settings2 size={16} />
+                <span>Ayarlar</span>
+              </button>
+            </div>
           </div>
         </>
       ) : null}
@@ -3790,14 +3782,14 @@ const styles: Record<string, CSSProperties> = {
     borderTop: "1px solid rgba(148,163,184,0.08)",
   },
   mobileBottomNav: {
-    display: "none",
     position: "fixed",
     left: 12,
     right: 12,
     bottom: 12,
-    gridTemplateColumns: "1fr auto 72px auto 1fr",
+    minHeight: 64,
+    display: "flex",
     alignItems: "center",
-    gap: 4,
+    justifyContent: "space-between",
     padding: "6px 8px",
     borderRadius: 18,
     background: "rgba(255,255,255,0.94)",
@@ -3805,6 +3797,20 @@ const styles: Record<string, CSSProperties> = {
     boxShadow: "0 12px 26px rgba(15,23,42,0.10)",
     backdropFilter: "blur(16px)",
     zIndex: 40,
+    overflow: "visible",
+  },
+  mobileBottomNavLeft: {
+    flex: 1,
+    display: "flex",
+    justifyContent: "flex-start",
+    minWidth: 0,
+  },
+  mobileBottomNavRight: {
+    flex: 1,
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 4,
+    minWidth: 0,
   },
   mobileNavItem: {
     minHeight: 38,
@@ -3851,9 +3857,13 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-    justifySelf: "center",
+    position: "absolute",
+    left: "50%",
+    top: "50%",
+    transform: "translate(-50%, -50%)",
     boxShadow: "0 8px 18px rgba(37,99,235,0.18)",
     marginTop: 0,
+    zIndex: 2,
   },
   mobileProjectsBackdrop: {
     display: "none",
