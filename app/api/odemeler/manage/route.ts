@@ -160,6 +160,15 @@ export async function POST(request: Request) {
       return jsonError("Kayıt silinemedi.", 500);
     }
 
+    await adminClient.from("audit_logs").insert({
+      user_id: user.id,
+      title: "Kayıt silindi",
+      detail: `Kayıt #${id} silindi.`,
+      source: "manage_api",
+      ip: clientIp,
+      user_agent: request.headers.get("user-agent")?.slice(0, 255) || null,
+    });
+
     return NextResponse.json(
       { ok: true },
       {
@@ -203,6 +212,15 @@ export async function POST(request: Request) {
       return jsonError("Sekme silinemedi.", 500);
     }
 
+    await adminClient.from("audit_logs").insert({
+      user_id: user.id,
+      title: "Sekme silindi",
+      detail: `${tabName} sekmesi silindi.`,
+      source: "manage_api",
+      ip: clientIp,
+      user_agent: request.headers.get("user-agent")?.slice(0, 255) || null,
+    });
+
     return NextResponse.json(
       { ok: true },
       {
@@ -229,6 +247,15 @@ export async function POST(request: Request) {
   if (error) {
     return jsonError("Sekme adı güncellenemedi.", 500);
   }
+
+  await adminClient.from("audit_logs").insert({
+    user_id: user.id,
+    title: "Sekme yeniden adlandırıldı",
+    detail: `${tabName} → ${nextTabName}`,
+    source: "manage_api",
+    ip: clientIp,
+    user_agent: request.headers.get("user-agent")?.slice(0, 255) || null,
+  });
 
   return NextResponse.json(
     { ok: true },

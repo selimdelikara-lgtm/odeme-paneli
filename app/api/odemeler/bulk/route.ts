@@ -136,6 +136,15 @@ export async function POST(request: Request) {
       return jsonError("Kayıtlar silinemedi.", 500);
     }
 
+    await adminClient.from("audit_logs").insert({
+      user_id: user.id,
+      title: "Toplu kayıt silme",
+      detail: `${ids.length} kayıt silindi.`,
+      source: "bulk_api",
+      ip: clientIp,
+      user_agent: request.headers.get("user-agent")?.slice(0, 255) || null,
+    });
+
     return NextResponse.json(
       { ok: true },
       {
@@ -160,6 +169,15 @@ export async function POST(request: Request) {
   if (updateError) {
     return jsonError("Toplu işlem uygulanamadı.", 500);
   }
+
+  await adminClient.from("audit_logs").insert({
+    user_id: user.id,
+    title: action === "paid" ? "Toplu ödendi güncellemesi" : "Toplu fatura kesildi güncellemesi",
+    detail: `${ids.length} kayıt güncellendi.`,
+    source: "bulk_api",
+    ip: clientIp,
+    user_agent: request.headers.get("user-agent")?.slice(0, 255) || null,
+  });
 
   return NextResponse.json(
     { ok: true },

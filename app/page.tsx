@@ -192,9 +192,7 @@ export default function Page() {
   const [settingsPasswordRepeat, setSettingsPasswordRepeat] = useState("");
   const [settingsBusy, setSettingsBusy] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
-  const [activityLog, setActivityLog] = useState<ActivityItem[]>(() =>
-    readStoredState<ActivityItem[]>("odeme-activity-v1", [])
-  );
+  const [activityLog, setActivityLog] = useState<ActivityItem[]>([]);
 
   const exportRef = useRef<HTMLElement | null>(null);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
@@ -255,6 +253,28 @@ export default function Page() {
     };
 
     setActivityLog((prev) => [item, ...prev].slice(0, 30));
+
+    void (async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const accessToken = session?.access_token;
+      if (!accessToken) return;
+
+      await fetch("/api/audit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          title,
+          detail,
+          source: "client",
+        }),
+      });
+    })();
   }, []);
 
   const openProjectTab = (tabName: string) => {
@@ -342,10 +362,6 @@ export default function Page() {
   }, [homeProjectColumnOrder]);
 
   useEffect(() => {
-    localStorage.setItem("odeme-activity-v1", JSON.stringify(activityLog));
-  }, [activityLog]);
-
-  useEffect(() => {
     if (typeof window === "undefined") return;
 
     const syncViewport = () => {
@@ -359,6 +375,43 @@ export default function Page() {
 
   useEffect(() => {
     initialLoadRef.current = false;
+  }, [authUserId]);
+
+  useEffect(() => {
+    const loadAuditLog = async () => {
+      if (!authUserId) {
+        setActivityLog([]);
+        return;
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setActivityLog([]);
+        return;
+      }
+
+      const response = await fetch("/api/audit", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        items?: ActivityItem[];
+      };
+
+      if (!response.ok || !Array.isArray(payload.items)) {
+        return;
+      }
+
+      setActivityLog(payload.items);
+    };
+
+    void loadAuditLog();
   }, [authUserId]);
 
   useEffect(() => {

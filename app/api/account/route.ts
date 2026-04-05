@@ -161,6 +161,15 @@ export async function DELETE(request: Request) {
     }
   }
 
+  await adminClient.from("audit_logs").insert({
+    user_id: user.id,
+    title: "Hesap kapatıldı",
+    detail: "Kullanıcı hesabını ve tüm verilerini sildi.",
+    source: "account_api",
+    ip: clientIp,
+    user_agent: request.headers.get("user-agent")?.slice(0, 255) || null,
+  });
+
   const { error: adminDeleteError } = await adminClient.auth.admin.deleteUser(user.id);
 
   if (adminDeleteError) {
