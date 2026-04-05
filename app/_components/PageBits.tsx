@@ -536,6 +536,7 @@ type MobileProjectCardsProps = {
     color: string;
     rowBg: string;
   };
+  durumIlerle: (row: Odeme) => Promise<void>;
   editAc: (row: Odeme) => void;
   kayitSil: (id: number) => Promise<void>;
   openInvoicePicker: (rowId: number) => void;
@@ -552,6 +553,7 @@ export function MobileProjectCards({
   shortDateTime,
   tl,
   durumGorunum,
+  durumIlerle,
   editAc,
   kayitSil,
   openInvoicePicker,
@@ -579,7 +581,10 @@ export function MobileProjectCards({
                   {shortDate(row.fatura_tarihi)} Â· {row.tutar ? tl(Number(row.tutar)) : "â€”"}
                 </div>
               </div>
-              <div
+              <button
+                className="status-button"
+                type="button"
+                onClick={() => void durumIlerle(row)}
                 style={{
                   ...styles.status,
                   background: durum.bg,
@@ -589,7 +594,7 @@ export function MobileProjectCards({
               >
                 <span style={{ ...styles.dot, background: durum.color }} />
                 {durum.text}
-              </div>
+              </button>
             </div>
 
             <div style={styles.mobileProjectSubMeta}>

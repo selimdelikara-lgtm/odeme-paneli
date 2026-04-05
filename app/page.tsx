@@ -3151,6 +3151,7 @@ export default function Page() {
                     shortDateTime={shortDateTime}
                     tl={tl}
                     durumGorunum={durumGorunum}
+                    durumIlerle={durumIlerle}
                     editAc={editAc}
                     kayitSil={kayitSil}
                     openInvoicePicker={openInvoicePicker}
