@@ -2292,8 +2292,8 @@ export default function Page() {
           .login-shell{border-radius:0 !important;box-shadow:none !important;min-height:100vh !important;max-width:100% !important;background:transparent !important}
           .login-card{padding:16px 14px !important;justify-content:flex-start !important;min-height:100vh !important;border-radius:0 !important;box-shadow:none !important}
           .mobile-auth-wrap{background:#F6F7FC !important}
-          .mobile-auth-intro{padding:28px 22px 20px !important}
-          .mobile-auth-cta{margin-top:auto !important}
+          .mobile-auth-intro{padding:42px 22px 32px !important}
+          .mobile-auth-cta{margin-top:56px !important}
           .login-card-title{font-size:24px !important;line-height:1.05 !important}
           .login-section{gap:7px !important}
           .login-input,.soft-input{font-size:16px !important}
@@ -4944,52 +4944,55 @@ const styles: Record<string, CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     textAlign: "center",
-    padding: "40px 28px 24px",
-    background: "#F6F7FC",
+    padding: "56px 28px 32px",
+    background: "linear-gradient(180deg, #F6F7FC 0%, #EEF2FF 100%)",
     color: "#171923",
+  },
+  mobileIntroMarkWrap: {
+    position: "relative",
+    width: 112,
+    height: 112,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  mobileIntroMarkQuestion: {
+    position: "absolute",
+    top: 0,
+    right: 10,
+    fontSize: 32,
+    lineHeight: 1,
+    fontWeight: 900,
+    color: "#2557D6",
   },
   mobileIntroMark: {
-    fontSize: 76,
+    fontSize: 82,
     lineHeight: 1,
-    fontWeight: 900,
-    letterSpacing: "-2px",
-  },
-  mobileIntroTitle: {
-    marginTop: 12,
-    fontSize: 34,
-    fontWeight: 900,
-    letterSpacing: "-0.8px",
-    color: "#171923",
-  },
-  mobileIntroArrow: {
-    marginTop: 30,
-    fontSize: 72,
-    lineHeight: 1,
-    color: "rgba(23,25,35,0.42)",
-    fontWeight: 300,
   },
   mobileIntroCopy: {
-    marginTop: 24,
-    fontSize: 18,
-    lineHeight: 1.3,
-    fontWeight: 700,
+    marginTop: 20,
+    fontSize: 22,
+    lineHeight: 1.24,
+    fontWeight: 800,
     fontStyle: "italic",
-    color: "rgba(23,25,35,0.88)",
+    letterSpacing: "-0.4px",
+    color: "#1A1E2B",
+    maxWidth: 280,
   },
   mobileIntroButton: {
-    marginTop: "auto",
+    marginTop: 72,
     width: "100%",
     border: "none",
     borderRadius: 22,
-    background: "#114A99",
+    background: "linear-gradient(180deg, #2563EB 0%, #194AC6 100%)",
     color: "#FFFFFF",
     fontWeight: 900,
     fontSize: 20,
     padding: "18px 20px",
     cursor: "pointer",
-    boxShadow: "0 16px 30px rgba(17,74,153,0.18)",
+    boxShadow: "0 16px 30px rgba(37,99,235,0.22)",
   },
   badge: {
     display: "inline-block",

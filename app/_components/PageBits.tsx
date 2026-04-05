@@ -158,10 +158,11 @@ export function AuthScreen({
     return (
       <div style={{ ...styles.loginWrap, ...themeVars }} className="login-wrap mobile-auth-wrap">
         <div style={styles.mobileIntroShell} className="mobile-auth-intro">
-          <div style={styles.mobileIntroMark}>₺</div>
-          <div style={styles.mobileIntroTitle}>ÖDEDİ Mİ</div>
-          <div style={styles.mobileIntroArrow}>↓</div>
-          <div style={styles.mobileIntroCopy}>sorusunun cevabı artık çok net</div>
+          <div style={styles.mobileIntroMarkWrap}>
+            <div style={styles.mobileIntroMarkQuestion}>?</div>
+            <div style={styles.mobileIntroMark}>🐱</div>
+          </div>
+          <div style={styles.mobileIntroCopy}>Paracıklar Geldi Mi Acep...</div>
           <button
             type="button"
             className="hover-button mobile-auth-cta"
