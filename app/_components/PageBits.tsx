@@ -181,6 +181,74 @@ export function AuthScreen({
     );
   }
 
+  if (isMobileViewport) {
+    return (
+      <div style={{ ...styles.loginWrap, ...themeVars }} className="login-wrap mobile-auth-wrap">
+        <div style={styles.mobileAuthFormShell} className="mobile-auth-form-shell">
+          <div style={styles.loginCardTitle} className="login-card-title">
+            Giriş Yap
+          </div>
+
+          <div style={styles.loginSection} className="login-section">
+            <div style={styles.loginLabel} className="login-label">
+              E-posta
+            </div>
+            <input
+              className="soft-input login-input"
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={styles.loginInput}
+            />
+            <div style={styles.loginLabel} className="login-label">
+              Şifre
+            </div>
+            <input
+              className="soft-input login-input"
+              type="password"
+              placeholder="Şifre"
+              value={authPassword}
+              onChange={(e) => setAuthPassword(e.target.value)}
+              style={styles.loginInput}
+            />
+            <div style={styles.loginMetaRow} className="login-meta-row">
+              <label style={styles.rememberMeLabel} className="remember-me-label">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <span>Beni Hatırla</span>
+              </label>
+              <button
+                type="button"
+                className="hover-button forgot-link"
+                onClick={() => void authResetPassword()}
+                style={styles.forgotLink}
+              >
+                Şifremi Unuttum
+              </button>
+            </div>
+            <button
+              className="hover-button mobile-auth-cta"
+              onClick={() => void authLogin()}
+              style={styles.mobileAuthPrimaryButton}
+              type="button"
+            >
+              <span style={styles.btnInner}>
+                <Mail size={16} />
+                Giriş Yap
+              </span>
+            </button>
+          </div>
+
+          {msg ? <div style={{ ...styles.msg, marginTop: 14 }}>{msg}</div> : null}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ ...styles.loginWrap, ...themeVars }} className="login-wrap">
       <div style={styles.loginShell} className="login-shell">
