@@ -1,38 +1,30 @@
-import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit } from "../_lib/rate-limit";
 import type { Database } from "@/lib/database.types";
+import {
+  createAdminServerClient,
+  createAuthedServerClient,
+  getBearerToken,
+  getClientIp,
+  getServerSupabaseEnv,
+  jsonError,
+  jsonOk,
+} from "../_lib/server";
+import { writeAuditLog } from "../_lib/audit";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RECENT_REAUTH_WINDOW_MS = 10 * 60 * 1000;
-
-const jsonError = (message: string, status: number) =>
-  NextResponse.json(
-    { error: message },
-    {
-      status,
-      headers: {
-        "Cache-Control": "no-store",
-      },
-    }
-  );
-
-const getClientIp = (request: Request) =>
-  request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
 type DeleteBody = {
   currentPassword?: string;
 };
 
 export async function DELETE(request: Request) {
-  if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
+  const env = getServerSupabaseEnv();
+  if (!env) {
     return jsonError("Sunucu ortam değişkenleri eksik.", 500);
   }
 
-  const authHeader = request.headers.get("authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const token = getBearerToken(request);
   const clientIp = getClientIp(request);
   const body = (await request.json().catch(() => ({}))) as DeleteBody;
   const currentPassword = body.currentPassword?.trim() || "";
@@ -41,13 +33,7 @@ export async function DELETE(request: Request) {
     return jsonError("Yetkilendirme bilgisi eksik.", 401);
   }
 
-  const authClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
+  const authClient = createAuthedServerClient(env, token);
 
   const {
     data: { user },
@@ -78,7 +64,7 @@ export async function DELETE(request: Request) {
       return jsonError("Hesabı kapatmak için mevcut şifren gerekli.", 400);
     }
 
-    const verifyClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    const verifyClient = createClient<Database>(env.supabaseUrl, env.supabaseAnonKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -95,12 +81,7 @@ export async function DELETE(request: Request) {
     }
   }
 
-  const adminClient = createClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  const adminClient = createAdminServerClient(env);
 
   const { data: attachments, error: attachmentsError } = await adminClient
     .from("fatura_ekleri")
@@ -161,13 +142,13 @@ export async function DELETE(request: Request) {
     }
   }
 
-  await adminClient.from("audit_logs").insert({
-    user_id: user.id,
+  await writeAuditLog({
+    adminClient,
+    userId: user.id,
     title: "Hesap kapatıldı",
     detail: "Kullanıcı hesabını ve tüm verilerini sildi.",
     source: "account_api",
-    ip: clientIp,
-    user_agent: request.headers.get("user-agent")?.slice(0, 255) || null,
+    request,
   });
 
   const { error: adminDeleteError } = await adminClient.auth.admin.deleteUser(user.id);
@@ -176,12 +157,5 @@ export async function DELETE(request: Request) {
     return jsonError("Auth hesabı silinemedi.", 500);
   }
 
-  return NextResponse.json(
-    { ok: true },
-    {
-      headers: {
-        "Cache-Control": "no-store",
-      },
-    }
-  );
+  return jsonOk({ ok: true });
 }

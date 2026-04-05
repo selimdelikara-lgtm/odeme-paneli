@@ -2,14 +2,9 @@
 
 import {
   Archive,
-  ChevronDown,
   CheckCircle2,
   CheckSquare,
-  Clock3,
   Copy,
-  Download,
-  FileText,
-  FolderKanban,
   LogOut,
   Moon,
   Palette,
@@ -22,7 +17,6 @@ import {
   SunMedium,
   Trash2,
   Upload,
-  Wallet,
 } from "lucide-react";
 import {
   useCallback,
@@ -87,9 +81,13 @@ import {
   EmptyStateCard,
   MobileProjectCards,
   SettingsContent,
-  Stat,
 } from "./_components/PageBits";
 import { DesktopSidebar } from "./_components/DesktopSidebar";
+import {
+  DashboardHero,
+  SummaryQuickPanels,
+  SummaryStatsGrid,
+} from "./_components/DashboardOverview";
 import { MobileNavigation } from "./_components/MobileNavigation";
 import type {
   FaturaEkiInsert,
@@ -2535,348 +2533,94 @@ export default function Page() {
               </>
             ) : (
               <div className={`view-panel view-panel-${viewMode}`}>
-            <div style={styles.heroCard} className="hero-card">
-              <div style={styles.heroTopRow} className="hero-top-row">
-                <div>
-                  <div style={styles.heroLabel}>
-                    {viewMode === "home" ? "TOPLAM" : "GENEL TOPLAM"}
-                  </div>
-                  <div style={styles.heroValue} className="hero-value">
-                    {tl(tumToplam)}
-                  </div>
-                </div>
-                {isMobileViewport ? (
-                  <div style={styles.heroMobileActions} className="no-print">
-                    <button
-                      type="button"
-                      className="hover-button"
-                      style={styles.heroMobileIconBtn}
-                      onClick={() => setShowMobileSearch((prev) => !prev)}
-                      aria-label="Ara"
-                      title="Ara"
-                    >
-                      <Search size={15} />
-                    </button>
+            <DashboardHero
+              styles={styles}
+              isMobileViewport={isMobileViewport}
+              viewMode={viewMode}
+              theme={theme}
+              toplam={tumToplam}
+              odenen={tumOdenenTutar}
+              kalan={tumKalanTutar}
+              exportMenuRef={exportMenuRef}
+              exportMenuOpen={exportMenuOpen}
+              onToggleExportMenu={() => setExportMenuOpen((prev) => !prev)}
+              onExportWord={() => {
+                exportWord();
+                setExportMenuOpen(false);
+              }}
+              onExportExcel={() => {
+                exportExcel();
+                setExportMenuOpen(false);
+              }}
+              onExportPdf={() => {
+                void exportPDF();
+                setExportMenuOpen(false);
+              }}
+              onToggleSearch={() => setShowMobileSearch((prev) => !prev)}
+              onToggleTheme={() => setTheme((p) => (p === "light" ? "dark" : "light"))}
+              onSignOut={() => void cikisYap()}
+            />
 
-                    <button
-                      type="button"
-                      className="hover-button"
-                      style={styles.heroMobileIconBtn}
-                      onClick={() => setTheme((p) => (p === "light" ? "dark" : "light"))}
-                      aria-label={theme === "light" ? "Karanlık tema" : "Açık tema"}
-                      title={theme === "light" ? "Karanlık tema" : "Açık tema"}
-                    >
-                      {theme === "light" ? <Moon size={15} /> : <SunMedium size={15} />}
-                    </button>
+            <input
+              ref={invoiceInputRef}
+              type="file"
+              accept=".pdf,image/*"
+              style={{ display: "none" }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                const row =
+                  invoiceTargetId === null
+                    ? null
+                    : data.find((item) => item.id === invoiceTargetId) || null;
 
-                    <button
-                      type="button"
-                      className="hover-button"
-                      style={styles.heroMobileIconBtn}
-                      onClick={() => void cikisYap()}
-                      aria-label="Çıkış"
-                      title="Çıkış"
-                    >
-                      <LogOut size={15} />
-                    </button>
-                  </div>
-                ) : null}
-                <div
-                  style={styles.heroExportWrap}
-                  className="hero-actions no-print"
-                  ref={exportMenuRef}
-                >
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setExportMenuOpen((prev) => !prev);
-                  }}
-                  style={styles.heroExportToggle}
-                  className="hero-export-toggle"
-                >
-                  <span style={styles.heroExportToggleInner}>
-                    <Download size={14} />
-                    <span className="hero-export-label">Dışa Aktar</span>
-                    <ChevronDown size={14} />
-                  </span>
-                </button>
+                if (file && row) {
+                  await uploadInvoice(row, file);
+                }
 
-                {exportMenuOpen ? (
-                  <div style={styles.heroExportMenu} className="export-menu">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        exportWord();
-                        setExportMenuOpen(false);
-                      }}
-                      style={styles.heroExportMenuItem}
-                    >
-                      <span
-                        style={{
-                          ...styles.heroExportMenuIcon,
-                          ...styles.heroExportMenuIconWord,
-                        }}
-                      >
-                        <FileText size={14} />
-                      </span>
-                      <span>Word</span>
-                    </button>
+                setInvoiceTargetId(null);
+                e.currentTarget.value = "";
+              }}
+            />
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        exportExcel();
-                        setExportMenuOpen(false);
-                      }}
-                      style={styles.heroExportMenuItem}
-                    >
-                      <span
-                        style={{
-                          ...styles.heroExportMenuIcon,
-                          ...styles.heroExportMenuIconExcel,
-                        }}
-                      >
-                        <Download size={14} />
-                      </span>
-                      <span>Excel</span>
-                    </button>
+            <SummaryStatsGrid
+              styles={styles}
+              viewMode={viewMode}
+              filteredHomeRowsLength={filteredHomeRows.length}
+              filteredActiveRowsLength={filteredActiveKayitlar.length}
+              homeSummary={{
+                tumOdeme,
+                tumFatura,
+                toplam: tumToplam,
+              }}
+              projectSummary={{
+                odemesiAlinanAdet,
+                faturasiKesilenAdet,
+                kalan,
+              }}
+              activeTabMeta={aktifTabMeta}
+              palette={palette}
+            />
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void exportPDF();
-                        setExportMenuOpen(false);
-                      }}
-                      style={styles.heroExportMenuItem}
-                    >
-                      <span
-                        style={{
-                          ...styles.heroExportMenuIcon,
-                          ...styles.heroExportMenuIconPdf,
-                        }}
-                      >
-                        <FileText size={14} />
-                      </span>
-                      <span>PDF</span>
-                    </button>
-                  </div>
-                ) : null}
-
-                <input
-                  ref={invoiceInputRef}
-                  type="file"
-                  accept=".pdf,image/*"
-                  style={{ display: "none" }}
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    const row =
-                      invoiceTargetId === null
-                        ? null
-                        : data.find((item) => item.id === invoiceTargetId) || null;
-
-                    if (file && row) {
-                      await uploadInvoice(row, file);
-                    }
-
-                    setInvoiceTargetId(null);
-                    e.currentTarget.value = "";
-                  }}
-                />
-
-              </div>
-            </div>
-
-            <div style={styles.heroSubRow}>
-              <div>
-                <div style={styles.heroSubTitle}>ÖDENEN</div>
-                <div style={styles.heroSubValue}>
-                  {tl(tumOdenenTutar)}
-                </div>
-              </div>
-
-              <div style={styles.heroDivider} />
-
-              <div>
-                <div style={styles.heroSubTitle}>KALAN</div>
-                <div style={styles.heroSubValue}>
-                  {tl(tumKalanTutar)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style={styles.statsGrid} className="stats-grid">
-            {viewMode === "home" ? (
-              <>
-                <Stat
-                  styles={styles}
-                  title="Toplam Kayıt"
-                  value={String(filteredHomeRows.length)}
-                  icon={<FolderKanban size={16} color={palette.blue} />}
-                  iconWrapStyle={styles.statIconBlue}
-                />
-                <Stat
-                  styles={styles}
-                  title="Ödeme Alındı"
-                  value={String(tumOdeme)}
-                  icon={<CheckCircle2 size={16} color={palette.teal} />}
-                  iconWrapStyle={styles.statIconTeal}
-                />
-                <Stat
-                  styles={styles}
-                  title="Fatura Kesildi"
-                  value={String(tumFatura)}
-                  icon={<Receipt size={16} color={palette.amber} />}
-                  iconWrapStyle={styles.statIconAmber}
-                />
-                <Stat
-                  styles={styles}
-                  title="Toplam Tutar"
-                  value={tl(tumToplam)}
-                  icon={<Wallet size={16} color={palette.blue} />}
-                  iconWrapStyle={styles.statIconBlue}
-                />
-              </>
-            ) : (
-              <>
-                <Stat
-                  styles={styles}
-                  title="Toplam Kayıt"
-                  value={String(filteredActiveKayitlar.length)}
-                  icon={<FolderKanban size={16} color={aktifTabMeta.color} />}
-                  iconWrapStyle={styles.statIconBlue}
-                />
-                <Stat
-                  styles={styles}
-                  title="Ödeme Alındı"
-                  value={String(odemesiAlinanAdet)}
-                  icon={<CheckCircle2 size={16} color={palette.teal} />}
-                  iconWrapStyle={styles.statIconTeal}
-                />
-                <Stat
-                  styles={styles}
-                  title="Fatura Kesildi"
-                  value={String(faturasiKesilenAdet)}
-                  icon={<Receipt size={16} color={palette.amber} />}
-                  iconWrapStyle={styles.statIconAmber}
-                />
-                <Stat
-                  styles={styles}
-                  title="Kalan Tahsilat"
-                  value={tl(kalan)}
-                  icon={<Clock3 size={16} color={palette.red} />}
-                  iconWrapStyle={styles.statIconRed}
-                />
-              </>
-            )}
-          </div>
-
-          {viewMode === "home" ? (
-            <div style={styles.quickGrid} className="quick-grid">
-              <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
-                <div style={styles.quickTitle} className="quick-title">Tahsilat Özeti</div>
-                <div style={styles.projectSummaryAmount} className="quick-amount">{tl(tumOdenenTutar)}</div>
-                <div style={styles.quickMuted} className="quick-muted">Filtreye göre tahsil edilen tutar</div>
-
-                <div style={styles.progressWrap}>
-                  <div
-                    style={{
-                      ...styles.progressBar,
-                      width: `${tahsilatYuzdesiGenel}%`,
-                    }}
-                  />
-                </div>
-
-                <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
-                  <span>Tahsilat Oranı</span>
-                  <strong>%{tahsilatYuzdesiGenel}</strong>
-                </div>
-
-                <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
-                  <span>{"Kalan Tutar"}</span>
-                  <strong>{tl(tumKalanTutar)}</strong>
-                </div>
-              </div>
-
-              <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
-                <div style={styles.quickTitle} className="quick-title">Hızlı Durum</div>
-                <div style={styles.projectInfoList}>
-                  <div style={styles.projectInfoRow}>
-                    <span>Proje</span>
-                    <strong>{homeProjectStats.length}</strong>
-                  </div>
-                  <div style={styles.projectInfoRow}>
-                    <span>Ödeme</span>
-                    <strong>{tumOdeme}</strong>
-                  </div>
-                  <div style={styles.projectInfoRow}>
-                    <span>Fatura</span>
-                    <strong>{tumFatura}</strong>
-                  </div>
-                  <div style={styles.projectInfoRow}>
-                    <span>Bekleyen</span>
-                    <strong>{filteredHomeRows.filter((x) => !x.odendi).length}</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div style={styles.quickGrid} className="quick-grid">
-              <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
-                <div style={styles.quickTitle} className="quick-title">Sekme Özeti</div>
-                <div style={styles.projectSummaryAmount} className="quick-amount">{tl(toplam)}</div>
-                <div style={styles.quickMuted} className="quick-muted">Bu sekmenin toplamı</div>
-
-                <div style={styles.progressWrap}>
-                  <div
-                    style={{
-                      ...styles.progressBar,
-                      width: `${tahsilatYuzdesiAktif}%`,
-                      background: `linear-gradient(90deg, ${aktifTabMeta.color}, var(--teal))`,
-                    }}
-                  />
-                </div>
-
-                <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
-                  <span>Tahsilat Oranı</span>
-                  <strong>%{tahsilatYuzdesiAktif}</strong>
-                </div>
-
-                <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
-                  <span>Ödenen</span>
-                  <strong>{tl(odenen)}</strong>
-                </div>
-
-                <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
-                  <span>Kalan</span>
-                  <strong>{tl(kalan)}</strong>
-                </div>
-              </div>
-
-              <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
-                <div style={styles.quickTitle} className="quick-title">Hızlı Bilgi</div>
-                <div style={styles.projectInfoList}>
-                  <div style={styles.projectInfoRow}>
-                    <span>Ödeme Alınan</span>
-                    <strong>{odemesiAlinanAdet}</strong>
-                  </div>
-                  <div style={styles.projectInfoRow}>
-                    <span>{"Fatura Kesilen"}</span>
-                    <strong>{faturasiKesilenAdet}</strong>
-                  </div>
-                  <div style={styles.projectInfoRow}>
-                    <span>Bekleyen</span>
-                    <strong>{filteredActiveKayitlar.filter((x) => !x.odendi).length}</strong>
-                  </div>
-                  <div style={styles.projectInfoRow}>
-                    <span>Seçili Kayıt</span>
-                    <strong>{selectedVisibleIds.length}</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+            <SummaryQuickPanels
+              styles={styles}
+              viewMode={viewMode}
+              homeProjectStats={homeProjectStats}
+              filteredHomeRowsLength={filteredHomeRows.length}
+              filteredActiveRowsLength={filteredActiveKayitlar.length}
+              tumOdeme={tumOdeme}
+              tumFatura={tumFatura}
+              tumOdenenTutar={tumOdenenTutar}
+              tumKalanTutar={tumKalanTutar}
+              tahsilatYuzdesiGenel={tahsilatYuzdesiGenel}
+              toplam={toplam}
+              tahsilatYuzdesiAktif={tahsilatYuzdesiAktif}
+              odenen={odenen}
+              kalan={kalan}
+              odemesiAlinanAdet={odemesiAlinanAdet}
+              faturasiKesilenAdet={faturasiKesilenAdet}
+              selectedVisibleIdsLength={selectedVisibleIds.length}
+              aktifTabMeta={aktifTabMeta}
+            />
 
           {viewMode === "home" ? (
             <div style={styles.card} className="content-card">
