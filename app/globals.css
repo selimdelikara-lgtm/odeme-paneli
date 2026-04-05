@@ -34,6 +34,8 @@ body {
     Arial,
     sans-serif;
   font-feature-settings: "liga" 1, "kern" 1;
+  font-kerning: normal;
+  font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
