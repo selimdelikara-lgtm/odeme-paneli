@@ -2286,10 +2286,24 @@ export default function Page() {
           .sidebar-bottom{border-top:none !important;padding-top:6px !important}
           .app-content{padding:10px !important}
           .app-content{padding-bottom:92px !important}
-          .top-search input{font-size:16px !important}
+          .app-top-bar{flex-direction:row !important;align-items:flex-start !important;justify-content:space-between !important}
+          .top-search{width:40px !important;min-width:40px !important;height:40px !important;padding:0 !important;justify-content:center !important;border-radius:12px !important}
+          .top-search input{display:none !important}
+          .page-title{font-size:22px !important;line-height:1.05 !important}
+          .page-subtitle{font-size:11px !important;margin-top:4px !important;max-width:220px !important}
+          .top-action-btn .btn-label{display:none !important}
           .hero-card{padding:14px !important}
           .hero-value{font-size:28px !important}
           .hero-actions{width:100% !important}
+          .hero-top-row{align-items:flex-start !important}
+          .hero-export-toggle{padding:8px 10px !important;border-radius:10px !important}
+          .hero-export-toggle .hero-export-label{display:none !important}
+          .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px !important}
+          .quick-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px !important}
+          .quick-grid > div{padding:12px !important;min-height:0 !important}
+          .quick-grid > div .quick-title{font-size:14px !important}
+          .quick-grid > div .quick-amount{font-size:24px !important}
+          .quick-grid > div .quick-muted{font-size:11px !important}
           .mobile-bottom-nav{display:grid !important}
           .mobile-projects-sheet{display:block !important}
           .login-wrap{padding:0 !important}
@@ -2424,14 +2438,14 @@ export default function Page() {
         <main style={styles.content} className="app-content" ref={exportRef}>
           <div style={styles.topBar} className="app-top-bar">
             <div>
-              <h1 style={styles.pageTitle}>
+              <h1 style={styles.pageTitle} className="page-title">
                 {viewMode === "home"
                   ? "Ana Sayfa"
                   : viewMode === "settings"
                     ? "Hesap Ayarları"
                     : aktifSekme || "Proje"}
               </h1>
-              <div style={styles.pageSubtitle}>
+              <div style={styles.pageSubtitle} className="page-subtitle">
                 {viewMode === "home"
                   ? "Tahsilat ve fatura takibinin genel özeti"
                   : viewMode === "settings"
@@ -2457,7 +2471,7 @@ export default function Page() {
                 </div>
               ) : null}
               <button
-                className="hover-button"
+                className="hover-button top-action-btn"
                 onClick={() =>
                   setTheme((p) => (p === "light" ? "dark" : "light"))
                 }
@@ -2465,18 +2479,20 @@ export default function Page() {
               >
                 <span style={styles.btnInner}>
                   {theme === "light" ? <Moon size={16} /> : <SunMedium size={16} />}
-                  {theme === "light" ? "Karanlık Tema" : "Açık Tema"}
+                  <span className="btn-label">
+                    {theme === "light" ? "Karanlık Tema" : "Açık Tema"}
+                  </span>
                 </span>
               </button>
 
               <button
-                className="hover-button"
+                className="hover-button top-action-btn"
                 onClick={() => void cikisYap()}
                 style={styles.secondaryBtn}
               >
                 <span style={styles.btnInner}>
                   <LogOut size={16} />
-                  Çıkış Yap
+                  <span className="btn-label">Çıkış Yap</span>
                 </span>
               </button>
             </div>
@@ -2501,7 +2517,7 @@ export default function Page() {
           ) : (
             <div className={`view-panel view-panel-${viewMode}`}>
           <div style={styles.heroCard} className="hero-card">
-            <div style={styles.heroTopRow}>
+            <div style={styles.heroTopRow} className="hero-top-row">
               <div>
                 <div style={styles.heroLabel}>
                   {viewMode === "home" ? "TOPLAM" : "GENEL TOPLAM"}
@@ -2522,10 +2538,11 @@ export default function Page() {
                     setExportMenuOpen((prev) => !prev);
                   }}
                   style={styles.heroExportToggle}
+                  className="hero-export-toggle"
                 >
                   <span style={styles.heroExportToggleInner}>
                     <Download size={14} />
-                    Dışa Aktar
+                    <span className="hero-export-label">Dışa Aktar</span>
                     <ChevronDown size={14} />
                   </span>
                 </button>
@@ -2703,9 +2720,9 @@ export default function Page() {
           {viewMode === "home" ? (
             <div style={styles.quickGrid} className="quick-grid">
               <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
-                <div style={styles.quickTitle}>Tahsilat Özeti</div>
-                <div style={styles.projectSummaryAmount}>{tl(tumOdenenTutar)}</div>
-                <div style={styles.quickMuted}>Filtreye göre tahsil edilen tutar</div>
+                <div style={styles.quickTitle} className="quick-title">Tahsilat Özeti</div>
+                <div style={styles.projectSummaryAmount} className="quick-amount">{tl(tumOdenenTutar)}</div>
+                <div style={styles.quickMuted} className="quick-muted">Filtreye göre tahsil edilen tutar</div>
 
                 <div style={styles.progressWrap}>
                   <div
@@ -2728,7 +2745,7 @@ export default function Page() {
               </div>
 
               <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
-                <div style={styles.quickTitle}>Hızlı Durum</div>
+                <div style={styles.quickTitle} className="quick-title">Hızlı Durum</div>
                 <div style={styles.projectInfoList}>
                   <div style={styles.projectInfoRow}>
                     <span>Proje</span>
@@ -2752,9 +2769,9 @@ export default function Page() {
           ) : (
             <div style={styles.quickGrid} className="quick-grid">
               <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
-                <div style={styles.quickTitle}>Sekme Özeti</div>
-                <div style={styles.projectSummaryAmount}>{tl(toplam)}</div>
-                <div style={styles.quickMuted}>Bu sekmenin toplamı</div>
+                <div style={styles.quickTitle} className="quick-title">Sekme Özeti</div>
+                <div style={styles.projectSummaryAmount} className="quick-amount">{tl(toplam)}</div>
+                <div style={styles.quickMuted} className="quick-muted">Bu sekmenin toplamı</div>
 
                 <div style={styles.progressWrap}>
                   <div
@@ -2783,7 +2800,7 @@ export default function Page() {
               </div>
 
               <div style={{ ...styles.quickCard, ...styles.projectSummaryCard }}>
-                <div style={styles.quickTitle}>Hızlı Bilgi</div>
+                <div style={styles.quickTitle} className="quick-title">Hızlı Bilgi</div>
                 <div style={styles.projectInfoList}>
                   <div style={styles.projectInfoRow}>
                     <span>Ödeme Alınan</span>
