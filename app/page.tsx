@@ -2074,8 +2074,14 @@ export default function Page() {
     const response = await fetch("/api/account", {
       method: "DELETE",
       headers: {
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
+      body: JSON.stringify({
+        currentPassword: authProviders.includes("email")
+          ? settingsCurrentPassword.trim()
+          : undefined,
+      }),
     });
 
     const payload = (await response.json().catch(() => ({}))) as { error?: string };

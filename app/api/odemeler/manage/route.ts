@@ -17,7 +17,15 @@ type ManagePayload = {
 };
 
 const jsonError = (message: string, status: number) =>
-  NextResponse.json({ error: message }, { status });
+  NextResponse.json(
+    { error: message },
+    {
+      status,
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    }
+  );
 
 const getClientIp = (request: Request) =>
   request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -117,7 +125,7 @@ export async function POST(request: Request) {
     return jsonError("Kullanıcı doğrulanamadı.", 401);
   }
 
-  const limiter = rateLimit(`manage:${clientIp}:${user.id}`, 20, 60 * 1000);
+  const limiter = await rateLimit(`manage:${clientIp}:${user.id}`, 20, 60 * 1000);
   if (!limiter.ok) {
     return jsonError("Çok fazla işlem denemesi yapıldı. Biraz sonra tekrar dene.", 429);
   }
@@ -152,7 +160,14 @@ export async function POST(request: Request) {
       return jsonError("Kayıt silinemedi.", 500);
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json(
+      { ok: true },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
   }
 
   if (action === "delete_tab") {
@@ -188,7 +203,14 @@ export async function POST(request: Request) {
       return jsonError("Sekme silinemedi.", 500);
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json(
+      { ok: true },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
   }
 
   const tabName = body?.tabName?.trim();
@@ -208,5 +230,12 @@ export async function POST(request: Request) {
     return jsonError("Sekme adı güncellenemedi.", 500);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json(
+    { ok: true },
+    {
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    }
+  );
 }

@@ -8,7 +8,15 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const jsonError = (message: string, status: number) =>
-  NextResponse.json({ error: message }, { status });
+  NextResponse.json(
+    { error: message },
+    {
+      status,
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    }
+  );
 
 type BulkAction = "invoice" | "paid" | "delete";
 
@@ -45,7 +53,7 @@ export async function POST(request: Request) {
     return jsonError("Kullanıcı doğrulanamadı.", 401);
   }
 
-  const limiter = rateLimit(`bulk:${clientIp}:${user.id}`, 20, 60 * 1000);
+  const limiter = await rateLimit(`bulk:${clientIp}:${user.id}`, 20, 60 * 1000);
   if (!limiter.ok) {
     return jsonError("Çok fazla toplu işlem denemesi yapıldı. Biraz sonra tekrar dene.", 429);
   }
@@ -83,10 +91,10 @@ export async function POST(request: Request) {
       return jsonError("Fatura ekleri alınamadı.", 500);
     }
 
-    const typedAttachments = ((attachments || []) as Array<{
+    const typedAttachments = (attachments || []) as Array<{
       id: number | null;
       path: string | null;
-    }>);
+    }>;
 
     const attachmentPaths = typedAttachments
       .map((item) => item.path || "")
@@ -128,7 +136,14 @@ export async function POST(request: Request) {
       return jsonError("Kayıtlar silinemedi.", 500);
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json(
+      { ok: true },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
   }
 
   const values =
@@ -146,5 +161,12 @@ export async function POST(request: Request) {
     return jsonError("Toplu işlem uygulanamadı.", 500);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json(
+    { ok: true },
+    {
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    }
+  );
 }

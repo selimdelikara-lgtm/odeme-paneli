@@ -2,12 +2,8 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
 
 const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  "https://mhoidirxbxqaktkhhavp.supabase.co";
-
-const supabaseKey =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  "sb_publishable_4M8RAgm3SzrWEMrxm8HDUw_3fRU8cMr";
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://missing-supabase-project.invalid";
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "missing-anon-key";
 
 const AUTH_STORAGE_PREFERENCE_KEY = "odeme-auth-storage";
 const SUPABASE_STORAGE_KEY_PREFIX = "sb-";
