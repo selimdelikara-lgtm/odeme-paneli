@@ -10,7 +10,6 @@ import {
   Download,
   FileText,
   FolderKanban,
-  LayoutDashboard,
   LogOut,
   Moon,
   Palette,
@@ -19,7 +18,6 @@ import {
   Receipt,
   RotateCcw,
   Search,
-  Settings2,
   Square,
   SunMedium,
   Trash2,
@@ -91,6 +89,8 @@ import {
   SettingsContent,
   Stat,
 } from "./_components/PageBits";
+import { DesktopSidebar } from "./_components/DesktopSidebar";
+import { MobileNavigation } from "./_components/MobileNavigation";
 import type {
   FaturaEkiInsert,
   OdemeInsert,
@@ -1319,15 +1319,32 @@ export default function Page() {
       })
     );
 
-    const res = await Promise.all(
-      updated.map((row, i) =>
-        odemelerTable().update({ sira: i + 1 } satisfies OdemeUpdate).eq("id", row.id)
-      )
-    );
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    const failed = res.find((r) => r.error);
-    if (failed?.error) {
-      setMsg("Sıralama kaydedilemedi: " + failed.error.message);
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      setMsg("Sıralama için oturum doğrulanamadı.");
+      await yukle();
+      return;
+    }
+
+    const response = await fetch("/api/odemeler/reorder", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        ids: updated.map((row) => row.id),
+      }),
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+    if (!response.ok) {
+      setMsg(payload.error || "Sıralama kaydedilemedi.");
       await yukle();
     }
   }
@@ -2393,107 +2410,21 @@ export default function Page() {
 
       <div style={styles.shell} className="app-shell">
         {!isMobileViewport ? (
-        <aside style={styles.sidebar} className="app-sidebar">
-          <div>
-            <div style={styles.sidebarTitle}>Panel</div>
-            <div style={styles.sidebarSub}>
-              {authEmail ? authEmail : "Tahsilat paneli"}
-            </div>
-          </div>
-
-          <div style={styles.sidebarTabs} className="sidebar-tabs">
-            <button
-              className="sidebar-item"
-              onClick={() => {
-                setViewMode("home");
-                setSelectedIds([]);
-              }}
-              style={viewMode === "home" ? styles.activeTab : styles.tab}
-            >
-              <span style={styles.sidebarTabInner}>
-                <LayoutDashboard size={16} />
-                Ana Sayfa
-              </span>
-            </button>
-
-            <button
-              className="sidebar-item hover-button"
-              onClick={yeniProjeOlustur}
-              style={styles.sidebarIconOnlyBtn}
-              title="Yeni Proje"
-              aria-label="Yeni Proje"
-            >
-              <span style={styles.sidebarIconOnlyInner}>
-                <Plus size={16} />
-              </span>
-            </button>
-
-            {gorunenSekmeler.map((tab) => {
-              const meta = tabMeta[tab] || { color: "var(--blue)" };
-
-              return (
-                <button
-                  key={tab}
-                  className="sidebar-item"
-                  onClick={() => openProjectTab(tab)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    setTabMenu({
-                      visible: true,
-                      x: e.clientX,
-                      y: e.clientY,
-                      tabName: tab,
-                      mode: "menu",
-                    });
-                  }}
-                  style={
-                    viewMode === "project" && aktifSekme === tab
-                      ? styles.activeTab
-                      : styles.tab
-                  }
-                  title="Sağ tık: sekme seçenekleri"
-                >
-                  <span style={styles.sidebarTabInner}>
-                    <span
-                      style={{
-                        ...styles.tabColorDot,
-                        background: meta.color,
-                      }}
-                    />
-                    <span>{tab}</span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div
-            style={styles.sidebarBottom}
-            data-sidebar-bottom="true"
-            className="sidebar-bottom"
-          >
-            <button
-              className="hover-button"
-              onClick={() => setViewMode("settings")}
-              style={viewMode === "settings" ? styles.activeTab : styles.tab}
-            >
-              <span style={styles.sidebarTabInner}>
-                <Settings2 size={16} />
-                Hesap Ayarları
-              </span>
-            </button>
-            <button
-              className="hover-button"
-              onClick={() => setShowArchivedTabs((p) => !p)}
-              style={styles.secondaryBtn}
-            >
-              <span style={styles.btnInner}>
-                <Archive size={16} />
-                {showArchivedTabs ? "Aktifleri Göster" : "Arşivleri Göster"}
-              </span>
-            </button>
-          </div>
-        </aside>
+        <DesktopSidebar
+          styles={styles}
+          authEmail={authEmail}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          setSelectedIds={setSelectedIds}
+          yeniProjeOlustur={yeniProjeOlustur}
+          gorunenSekmeler={gorunenSekmeler}
+          tabMeta={tabMeta}
+          aktifSekme={aktifSekme}
+          openProjectTab={openProjectTab}
+          setTabMenu={setTabMenu}
+          showArchivedTabs={showArchivedTabs}
+          setShowArchivedTabs={setShowArchivedTabs}
+        />
         ) : null}
 
         <main style={styles.content} className="app-content" ref={exportRef}>
@@ -3565,147 +3496,25 @@ export default function Page() {
       </div>
 
       {isMobileViewport ? (
-        <>
-          <div
-            className="mobile-projects-sheet"
-            style={{
-              ...styles.mobileProjectsBackdrop,
-              opacity: showMobileProjects ? 1 : 0,
-              pointerEvents: showMobileProjects ? "auto" : "none",
-            }}
-            onClick={() => setShowMobileProjects(false)}
-          >
-            <div
-              style={{
-                ...styles.mobileProjectsSheet,
-                transform: showMobileProjects ? "translateY(0)" : "translateY(24px)",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div style={styles.mobileProjectsSheetHeader}>
-                <strong>Projeler</strong>
-                <button
-                  type="button"
-                  className="hover-button"
-                  style={styles.mobileProjectsSheetAction}
-                  onClick={() => setShowArchivedTabs((p) => !p)}
-                >
-                  {showArchivedTabs ? "Aktifler" : "Arşiv"}
-                </button>
-              </div>
-
-              <div style={styles.mobileProjectsList}>
-                {gorunenSekmeler.map((tab) => {
-                  const meta = tabMeta[tab] || { color: "var(--blue)" };
-                  const active = viewMode === "project" && aktifSekme === tab;
-
-                  return (
-                    <button
-                      key={tab}
-                      type="button"
-                      className="hover-button"
-                      style={active ? styles.mobileProjectItemActive : styles.mobileProjectItem}
-                      onClick={() => {
-                        openProjectTab(tab);
-                        setShowMobileProjects(false);
-                      }}
-                    >
-                      <span
-                        style={{
-                          ...styles.tabColorDot,
-                          background: meta.color,
-                        }}
-                      />
-                      <span>{tab}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {isMobileViewport && viewMode !== "settings" && showMobileSearch ? (
-            <div style={styles.mobileSearchPanel}>
-              <div style={styles.mobileSearchField}>
-                <Search size={15} color={palette.muted} />
-                <input
-                  className="soft-input"
-                  placeholder="Ara"
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setSelectedIds([]);
-                  }}
-                  style={styles.topSearchInput}
-                  autoFocus
-                />
-              </div>
-            </div>
-          ) : null}
-
-          <div style={styles.mobileBottomNav} className="mobile-bottom-nav no-print">
-            <button
-              type="button"
-              className="hover-button"
-              style={viewMode === "home" ? styles.mobileNavItemActive : styles.mobileNavItem}
-              onClick={() => {
-                setViewMode("home");
-                setSelectedIds([]);
-                setShowMobileProjects(false);
-              }}
-            >
-              <LayoutDashboard size={15} />
-              <span>Ana Sayfa</span>
-            </button>
-
-            <button
-              type="button"
-              className="hover-button"
-              style={viewMode === "project" ? styles.mobileNavItemActive : styles.mobileNavItem}
-              onClick={() => setShowMobileProjects(true)}
-            >
-              <FolderKanban size={15} />
-              <span>Projeler</span>
-            </button>
-
-            <button
-              type="button"
-              className="hover-button"
-              style={styles.mobileNavPlus}
-              onClick={yeniProjeOlustur}
-              aria-label="Yeni Proje"
-              title="Yeni Proje"
-            >
-              <Plus size={22} />
-            </button>
-
-            <button
-              type="button"
-              className="hover-button"
-              style={showArchivedTabs ? styles.mobileNavItemActive : styles.mobileNavItem}
-              onClick={() => {
-                setShowArchivedTabs((prev) => !prev);
-                setShowMobileProjects(false);
-              }}
-            >
-              <Archive size={15} />
-              <span>Arşiv</span>
-            </button>
-
-            <button
-              type="button"
-              className="hover-button"
-              style={viewMode === "settings" ? styles.mobileNavItemActive : styles.mobileNavItem}
-              onClick={() => {
-                setViewMode("settings");
-                setShowMobileProjects(false);
-              }}
-            >
-              <Settings2 size={15} />
-              <span>Ayarlar</span>
-            </button>
-          </div>
-        </>
+        <MobileNavigation
+          styles={styles}
+          showMobileProjects={showMobileProjects}
+          setShowMobileProjects={setShowMobileProjects}
+          showArchivedTabs={showArchivedTabs}
+          setShowArchivedTabs={setShowArchivedTabs}
+          gorunenSekmeler={gorunenSekmeler}
+          tabMeta={tabMeta}
+          viewMode={viewMode}
+          aktifSekme={aktifSekme}
+          openProjectTab={openProjectTab}
+          setViewMode={setViewMode}
+          setSelectedIds={setSelectedIds}
+          yeniProjeOlustur={yeniProjeOlustur}
+          showMobileSearch={showMobileSearch}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          mutedColor={palette.muted}
+        />
       ) : null}
 
       {tabMenu.visible ? (
