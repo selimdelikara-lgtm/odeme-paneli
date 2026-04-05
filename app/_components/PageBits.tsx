@@ -472,7 +472,7 @@ export function SettingsContent({
             </div>
             <div>
               <div style={styles.settingsMetaLabel}>E-posta</div>
-              <div style={styles.settingsEmail}>{authEmail || "â€”"}</div>
+              <div style={styles.settingsEmail}>{authEmail || "?"}</div>
             </div>
             <div style={styles.settingsButtonRow}>
               <button
@@ -702,7 +702,7 @@ export function MobileProjectCards({
           >
             <div style={styles.mobileProjectHead}>
               <div>
-                <div style={styles.mobileProjectTitle}>{row.proje || "â€”"}</div>
+                <div style={styles.mobileProjectTitle}>{row.proje || "?"}</div>
                 <div style={styles.mobileProjectMeta}>
                   {shortDate(row.fatura_tarihi)} · {row.tutar ? tl(Number(row.tutar)) : "—"}
                 </div>
