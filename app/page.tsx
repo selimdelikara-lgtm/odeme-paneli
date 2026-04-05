@@ -3800,17 +3800,19 @@ const styles: Record<string, CSSProperties> = {
     overflow: "visible",
   },
   mobileBottomNavLeft: {
-    flex: 1,
+    flex: "0 0 calc(50% - 32px)",
     display: "flex",
     justifyContent: "flex-start",
     minWidth: 0,
+    paddingRight: 34,
   },
   mobileBottomNavRight: {
-    flex: 1,
+    flex: "0 0 calc(50% - 32px)",
     display: "flex",
     justifyContent: "flex-end",
     gap: 4,
     minWidth: 0,
+    paddingLeft: 34,
   },
   mobileNavItem: {
     minHeight: 38,
