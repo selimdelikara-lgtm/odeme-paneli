@@ -2466,58 +2466,60 @@ export default function Page() {
                 </div>
               ) : null}
 
-              <div style={isMobileViewport ? { display: "none" } : styles.topBarActions}>
+              <div style={isMobileViewport ? styles.mobileTopActions : styles.topBarActions}>
                 {viewMode !== "settings" ? (
                   isMobileViewport ? (
                     <button
-                    type="button"
-                    className="hover-button top-search"
-                    style={styles.mobileSearchToggle}
-                    onClick={() => setShowMobileSearch((prev) => !prev)}
-                    aria-label="Ara"
-                    title="Ara"
-                  >
-                    <Search size={16} color={palette.muted} />
-                  </button>
-                ) : (
-                  <div style={styles.topSearchWrap} className="top-search">
-                    <Search size={15} color={palette.muted} />
-                    <input
-                      className="soft-input"
-                      placeholder="Ara"
-                      value={searchTerm}
-                      onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setSelectedIds([]);
-                      }}
-                      style={styles.topSearchInput}
-                    />
-                  </div>
-                )
-              ) : null}
+                      type="button"
+                      className="hover-button top-search"
+                      style={styles.mobileSearchToggle}
+                      onClick={() => setShowMobileSearch((prev) => !prev)}
+                      aria-label="Ara"
+                      title="Ara"
+                    >
+                      <Search size={16} color={palette.muted} />
+                    </button>
+                  ) : (
+                    <div style={styles.topSearchWrap} className="top-search">
+                      <Search size={15} color={palette.muted} />
+                      <input
+                        className="soft-input"
+                        placeholder="Ara"
+                        value={searchTerm}
+                        onChange={(e) => {
+                          setSearchTerm(e.target.value);
+                          setSelectedIds([]);
+                        }}
+                        style={styles.topSearchInput}
+                      />
+                    </div>
+                  )
+                ) : null}
               <button
                 className="hover-button top-action-btn"
                 onClick={() =>
                   setTheme((p) => (p === "light" ? "dark" : "light"))
                 }
-                style={styles.secondaryBtn}
+                style={isMobileViewport ? styles.mobileTopIconBtn : styles.secondaryBtn}
               >
                 <span style={styles.btnInner}>
                   {theme === "light" ? <Moon size={16} /> : <SunMedium size={16} />}
-                  <span className="btn-label">
-                    {theme === "light" ? "Karanlık Tema" : "Açık Tema"}
-                  </span>
+                  {isMobileViewport ? null : (
+                    <span className="btn-label">
+                      {theme === "light" ? "Karanlık Tema" : "Açık Tema"}
+                    </span>
+                  )}
                 </span>
               </button>
 
               <button
                 className="hover-button top-action-btn"
                 onClick={() => void cikisYap()}
-                style={styles.secondaryBtn}
+                style={isMobileViewport ? styles.mobileTopIconBtn : styles.secondaryBtn}
               >
                 <span style={styles.btnInner}>
                   <LogOut size={16} />
-                  <span className="btn-label">Çıkış Yap</span>
+                  {isMobileViewport ? null : <span className="btn-label">Çıkış Yap</span>}
                 </span>
               </button>
             </div>
@@ -2539,31 +2541,6 @@ export default function Page() {
 
             {viewMode === "settings" ? (
               <>
-                {isMobileViewport ? (
-                  <div style={styles.mobileSettingsTopActions}>
-                    <button
-                      className="hover-button"
-                      onClick={() => setTheme((p) => (p === "light" ? "dark" : "light"))}
-                      style={styles.mobileSettingsTopBtn}
-                    >
-                      <span style={styles.btnInner}>
-                        {theme === "light" ? <Moon size={16} /> : <SunMedium size={16} />}
-                        <span>{theme === "light" ? "Karanlık" : "Açık"}</span>
-                      </span>
-                    </button>
-
-                    <button
-                      className="hover-button"
-                      onClick={() => void cikisYap()}
-                      style={styles.mobileSettingsTopBtn}
-                    >
-                      <span style={styles.btnInner}>
-                        <LogOut size={16} />
-                        <span>Çıkış</span>
-                      </span>
-                    </button>
-                  </div>
-                ) : null}
                 {renderSettingsContent()}
               </>
             ) : (
@@ -3576,17 +3553,6 @@ export default function Page() {
               <button
                 type="button"
                 className="hover-button"
-                style={styles.mobileNavUtility}
-                onClick={() => setShowMobileSearch((prev) => !prev)}
-                aria-label="Ara"
-                title="Ara"
-              >
-                <Search size={15} />
-              </button>
-
-              <button
-                type="button"
-                className="hover-button"
                 style={viewMode === "home" ? styles.mobileNavItemActive : styles.mobileNavItem}
                 onClick={() => {
                   setViewMode("home");
@@ -4130,6 +4096,27 @@ const styles: Record<string, CSSProperties> = {
     gap: 10,
     flexWrap: "wrap",
     justifyContent: "flex-end",
+  },
+  mobileTopActions: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 8,
+    width: "100%",
+  },
+  mobileTopIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    border: "1px solid var(--border)",
+    background: "var(--card)",
+    color: "var(--text)",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    boxShadow: "var(--shadow)",
+    padding: 0,
   },
   mobileSettingsTopActions: {
     display: "none",
