@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   CircleAlert,
@@ -110,6 +110,7 @@ export function Stat({
 
 type AuthScreenProps = {
   themeVars: CSSProperties;
+  isMobileViewport: boolean;
   signupMode: boolean;
   setSignupMode: Dispatch<SetStateAction<boolean>>;
   email: string;
@@ -128,6 +129,7 @@ type AuthScreenProps = {
 
 export function AuthScreen({
   themeVars,
+  isMobileViewport,
   signupMode,
   setSignupMode,
   email,
@@ -143,6 +145,13 @@ export function AuthScreen({
   msg,
   styles,
 }: AuthScreenProps) {
+  const authTitle = isMobileViewport ? "Giriş Yap" : signupMode ? "Hesap Oluştur" : "Giriş Yap";
+  const primaryLabel = isMobileViewport
+    ? "Giriş Yap"
+    : signupMode
+      ? "Hesap Oluştur"
+      : "Giriş Yap";
+
   return (
     <div style={{ ...styles.loginWrap, ...themeVars }} className="login-wrap">
       <div style={styles.loginShell} className="login-shell">
@@ -152,17 +161,15 @@ export function AuthScreen({
           <div style={styles.loginOrbThree} />
 
           <div style={styles.loginBrand} className="login-brand">
-            ÖDEDİ Mİ
+            Ã–DEDÄ° MÄ°
           </div>
           <h1 style={styles.loginHeadline} className="login-headline">
-            Paracıklar Geldi Mi Acep...
+            ParacÄ±klar Geldi Mi Acep...
           </h1>
         </div>
 
         <div style={styles.loginCard} className="login-card">
-          <div style={styles.loginCardTitle}>
-            {signupMode ? "Hesap Oluştur" : "Giriş Yap"}
-          </div>
+          <div style={styles.loginCardTitle}>{authTitle}</div>
 
           <div style={styles.loginSection}>
             <div style={styles.loginLabel}>E-posta</div>
@@ -174,11 +181,11 @@ export function AuthScreen({
               onChange={(e) => setEmail(e.target.value)}
               style={styles.loginInput}
             />
-            <div style={styles.loginLabel}>Şifre</div>
+            <div style={styles.loginLabel}>Åifre</div>
             <input
               className="soft-input"
               type="password"
-              placeholder="Şifre"
+              placeholder="Åifre"
               value={authPassword}
               onChange={(e) => setAuthPassword(e.target.value)}
               style={styles.loginInput}
@@ -190,7 +197,7 @@ export function AuthScreen({
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                 />
-                <span>Beni Hatırla</span>
+                <span>Beni HatÄ±rla</span>
               </label>
               <button
                 type="button"
@@ -198,28 +205,28 @@ export function AuthScreen({
                 onClick={() => void authResetPassword()}
                 style={styles.forgotLink}
               >
-                Şifremi Unuttum
+                Åifremi Unuttum
               </button>
             </div>
             <button
               className="hover-button"
-              onClick={() => void (signupMode ? authSignUp() : authLogin())}
+              onClick={() => void (isMobileViewport ? authLogin() : signupMode ? authSignUp() : authLogin())}
               style={styles.loginPrimaryAction}
             >
               <span style={styles.btnInner}>
                 <Mail size={16} />
-                {signupMode ? "Hesap Oluştur" : "Giriş Yap"}
+                {primaryLabel}
               </span>
             </button>
           </div>
 
-          <div style={styles.loginDividerText}>
+          <div style={styles.loginDividerText} className="login-signup-block">
             <span style={styles.loginDividerTextLine} />
-            <span>Veya hesap oluştur</span>
+            <span>Veya hesap oluÅŸtur</span>
             <span style={styles.loginDividerTextLine} />
           </div>
 
-          <div style={styles.loginSocialRow}>
+          <div style={styles.loginSocialRow} className="login-signup-block">
             <button
               className="hover-button"
               onClick={() => void authLoginWithGoogle()}
@@ -233,7 +240,7 @@ export function AuthScreen({
               className="hover-button"
               onClick={() => setSignupMode(true)}
               style={styles.mailIconBtn}
-              title="Normal e-posta ile hesap oluştur"
+              title="Normal e-posta ile hesap oluÅŸtur"
             >
               <Mail size={18} />
             </button>
@@ -246,7 +253,7 @@ export function AuthScreen({
               onClick={() => setSignupMode(false)}
               style={styles.switchAuthLink}
             >
-              Giriş ekranına dön
+              GiriÅŸ ekranÄ±na dÃ¶n
             </button>
           ) : null}
 
@@ -308,7 +315,7 @@ export function SettingsContent({
     <div style={styles.settingsGrid}>
       <div style={styles.settingsCard}>
         <div style={styles.sectionHead}>
-          <h2 style={styles.h2}>Hesap Ayarları</h2>
+          <h2 style={styles.h2}>Hesap AyarlarÄ±</h2>
           <Settings2 size={18} color={mutedColor} />
         </div>
 
@@ -318,7 +325,7 @@ export function SettingsContent({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={settingsAvatarUrl}
-                alt="Profil fotoğrafı"
+                alt="Profil fotoÄŸrafÄ±"
                 style={styles.settingsAvatarImage}
               />
             ) : (
@@ -328,7 +335,7 @@ export function SettingsContent({
 
           <div style={{ display: "grid", gap: 10 }}>
             <div>
-              <div style={styles.settingsMetaLabel}>Görünen Ad</div>
+              <div style={styles.settingsMetaLabel}>GÃ¶rÃ¼nen Ad</div>
               <input
                 className="soft-input"
                 value={settingsName}
@@ -339,7 +346,7 @@ export function SettingsContent({
             </div>
             <div>
               <div style={styles.settingsMetaLabel}>E-posta</div>
-              <div style={styles.settingsEmail}>{authEmail || "—"}</div>
+              <div style={styles.settingsEmail}>{authEmail || "â€”"}</div>
             </div>
             <div style={styles.settingsButtonRow}>
               <button
@@ -350,7 +357,7 @@ export function SettingsContent({
               >
                 <span style={styles.btnInner}>
                   <ImageUp size={15} />
-                  Fotoğraf Yükle
+                  FotoÄŸraf YÃ¼kle
                 </span>
               </button>
               <button
@@ -371,30 +378,30 @@ export function SettingsContent({
 
       <div style={styles.settingsCard}>
         <div style={styles.sectionHead}>
-          <h2 style={styles.h2}>Güvenlik</h2>
+          <h2 style={styles.h2}>GÃ¼venlik</h2>
           <LockKeyhole size={18} color={mutedColor} />
         </div>
 
         <div style={styles.settingsStack}>
           <div>
-            <div style={styles.settingsMetaLabel}>Yeni Şifre</div>
+            <div style={styles.settingsMetaLabel}>Yeni Åifre</div>
             <input
               className="soft-input"
               type="password"
               value={settingsPassword}
               onChange={(e) => setSettingsPassword(e.target.value)}
-              placeholder="Yeni şifre"
+              placeholder="Yeni ÅŸifre"
               style={styles.input}
             />
           </div>
           <div>
-            <div style={styles.settingsMetaLabel}>Yeni Şifre Tekrar</div>
+            <div style={styles.settingsMetaLabel}>Yeni Åifre Tekrar</div>
             <input
               className="soft-input"
               type="password"
               value={settingsPasswordRepeat}
               onChange={(e) => setSettingsPasswordRepeat(e.target.value)}
-              placeholder="Yeni şifre tekrar"
+              placeholder="Yeni ÅŸifre tekrar"
               style={styles.input}
             />
           </div>
@@ -407,7 +414,7 @@ export function SettingsContent({
             >
               <span style={styles.btnInner}>
                 <KeyRound size={15} />
-                Şifreyi Güncelle
+                Åifreyi GÃ¼ncelle
               </span>
             </button>
             <button
@@ -418,7 +425,7 @@ export function SettingsContent({
             >
               <span style={styles.btnInner}>
                 <Mail size={15} />
-                Sıfırlama Bağlantısı Gönder
+                SÄ±fÄ±rlama BaÄŸlantÄ±sÄ± GÃ¶nder
               </span>
             </button>
           </div>
@@ -432,17 +439,17 @@ export function SettingsContent({
         </div>
         <div style={styles.settingsStack}>
           <div style={styles.settingsDangerText}>
-            Bu işlem hesabı, panel verilerini ve yüklenen dosyaları kalıcı olarak siler.
+            Bu iÅŸlem hesabÄ±, panel verilerini ve yÃ¼klenen dosyalarÄ± kalÄ±cÄ± olarak siler.
           </div>
           {authProviders.includes("email") ? (
             <div>
-              <div style={styles.settingsMetaLabel}>Mevcut Şifre</div>
+              <div style={styles.settingsMetaLabel}>Mevcut Åifre</div>
               <input
                 className="soft-input"
                 type="password"
                 value={settingsCurrentPassword}
                 onChange={(e) => setSettingsCurrentPassword(e.target.value)}
-                placeholder="Mevcut şifre"
+                placeholder="Mevcut ÅŸifre"
                 style={styles.input}
               />
             </div>
@@ -455,7 +462,7 @@ export function SettingsContent({
           >
             <span style={styles.btnInner}>
               <Trash2 size={15} />
-              Hesabı Kapat
+              HesabÄ± Kapat
             </span>
           </button>
         </div>
@@ -463,7 +470,7 @@ export function SettingsContent({
 
       <div style={styles.settingsCard}>
         <div style={styles.sectionHead}>
-          <h2 style={styles.h2}>İşlem Geçmişi</h2>
+          <h2 style={styles.h2}>Ä°ÅŸlem GeÃ§miÅŸi</h2>
           <CircleAlert size={18} color={mutedColor} />
         </div>
         {activityLog.length ? (
@@ -479,7 +486,7 @@ export function SettingsContent({
             ))}
           </div>
         ) : (
-          <div style={styles.settingsDangerText}>Henüz kayıtlı bir işlem yok.</div>
+          <div style={styles.settingsDangerText}>HenÃ¼z kayÄ±tlÄ± bir iÅŸlem yok.</div>
         )}
       </div>
     </div>
@@ -567,9 +574,9 @@ export function MobileProjectCards({
           >
             <div style={styles.mobileProjectHead}>
               <div>
-                <div style={styles.mobileProjectTitle}>{row.proje || "—"}</div>
+                <div style={styles.mobileProjectTitle}>{row.proje || "â€”"}</div>
                 <div style={styles.mobileProjectMeta}>
-                  {shortDate(row.fatura_tarihi)} · {row.tutar ? tl(Number(row.tutar)) : "—"}
+                  {shortDate(row.fatura_tarihi)} Â· {row.tutar ? tl(Number(row.tutar)) : "â€”"}
                 </div>
               </div>
               <div
@@ -586,8 +593,8 @@ export function MobileProjectCards({
             </div>
 
             <div style={styles.mobileProjectSubMeta}>
-              <span>Oluşturma: {shortDateTime(meta?.createdAt || null)}</span>
-              <span>Güncelleme: {shortDateTime(meta?.updatedAt || null)}</span>
+              <span>OluÅŸturma: {shortDateTime(meta?.createdAt || null)}</span>
+              <span>GÃ¼ncelleme: {shortDateTime(meta?.updatedAt || null)}</span>
             </div>
 
             {invoices.length ? (
@@ -608,7 +615,7 @@ export function MobileProjectCards({
 
             <div style={styles.mobileProjectActions}>
               <button className="hover-button" type="button" onClick={() => editAc(row)} style={styles.secondaryBtn}>
-                Düzenle
+                DÃ¼zenle
               </button>
               <button
                 className="hover-button"
@@ -629,3 +636,6 @@ export function MobileProjectCards({
     </div>
   );
 }
+
+
+

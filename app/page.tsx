@@ -2150,7 +2150,8 @@ export default function Page() {
   const renderAuthScreen = () => (
     <AuthScreen
       themeVars={themeVars}
-      signupMode={signupMode}
+      isMobileViewport={isMobileViewport}
+      signupMode={isMobileViewport ? false : signupMode}
       setSignupMode={setSignupMode}
       email={email}
       setEmail={setEmail}
@@ -2238,11 +2239,10 @@ export default function Page() {
           .hero-value{font-size:32px !important}
           .hero-actions{justify-content:flex-start !important}
           .login-wrap{padding:12px !important}
-          .login-shell{border-radius:20px !important;max-width:100% !important}
-          .login-showcase{padding:24px 20px !important;min-height:190px !important;justify-content:flex-end !important}
-          .login-card{padding:28px 22px !important}
-          .login-brand{font-size:46px !important;letter-spacing:-1px !important;max-width:180px !important}
-          .login-headline{font-size:20px !important;max-width:240px !important}
+          .login-shell{grid-template-columns:1fr !important;border-radius:20px !important;max-width:440px !important;min-height:auto !important}
+          .login-showcase{display:none !important}
+          .login-card{padding:28px 22px !important;max-width:none !important;width:100% !important}
+          .login-signup-block{display:none !important}
           .stats-grid{grid-template-columns:1fr !important}
           .quick-grid{gap:10px !important}
         }
@@ -2254,17 +2254,11 @@ export default function Page() {
           .hero-value{font-size:28px !important}
           .hero-actions{width:100% !important}
           .login-wrap{padding:0 !important}
-          .login-shell{border-radius:0 !important;box-shadow:none !important;min-height:100vh !important}
-          .login-showcase{padding:20px 16px !important;min-height:150px !important}
+          .login-shell{border-radius:0 !important;box-shadow:none !important;min-height:100vh !important;max-width:100% !important}
           .login-card{padding:24px 16px !important}
-          .login-brand{font-size:38px !important;max-width:150px !important}
-          .login-headline{font-size:16px !important;max-width:200px !important}
         }
         @media (max-width: 420px){
-          .login-showcase{padding:18px 14px !important;min-height:132px !important}
           .login-card{padding:20px 14px !important}
-          .login-brand{font-size:34px !important;max-width:132px !important}
-          .login-headline{font-size:14px !important;max-width:170px !important}
         }
         @media print{
           *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important}
