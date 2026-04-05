@@ -2437,11 +2437,19 @@ export default function Page() {
         ) : null}
 
         <main style={styles.content} className="app-content" ref={exportRef}>
-          <div style={styles.topBar} className="app-top-bar">
-            <div>
-              <h1 style={styles.pageTitle} className="page-title">
-                {viewMode === "home"
-                  ? "Ana Sayfa"
+            <div
+              style={{
+                ...styles.topBar,
+                ...(isMobileViewport
+                  ? { flexDirection: "column", alignItems: "center", textAlign: "center" }
+                  : {}),
+              }}
+              className="app-top-bar"
+            >
+              <div style={isMobileViewport ? { width: "100%", textAlign: "center" } : undefined}>
+                <h1 style={styles.pageTitle} className="page-title">
+                  {viewMode === "home"
+                    ? "Ana Sayfa"
                   : viewMode === "settings"
                     ? "Hesap Ayarları"
                     : aktifSekme || "Proje"}
@@ -4038,6 +4046,7 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 850,
     color: "var(--text)",
     letterSpacing: "-0.7px",
+    textAlign: "center",
   },
   pageSubtitle: {
     color: "var(--muted)",
@@ -4045,6 +4054,7 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 12,
     fontWeight: 500,
     letterSpacing: "-0.1px",
+    textAlign: "center",
   },
   topBar: {
     display: "flex",
@@ -5435,9 +5445,9 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 34,
     fontWeight: 900,
     letterSpacing: "-0.8px",
-    textAlign: "left",
+    textAlign: "center",
     lineHeight: 1.05,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   mobileAuthLabel: {
     fontSize: 12,
