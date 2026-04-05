@@ -3630,7 +3630,7 @@ export default function Page() {
               }}
             >
               <Archive size={15} />
-              <span>Ar?iv</span>
+              <span>Arşiv</span>
             </button>
 
             <button
