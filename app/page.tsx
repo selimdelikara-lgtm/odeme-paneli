@@ -3650,6 +3650,9 @@ const styles: Record<string, CSSProperties> = {
     color: "white",
     padding: 16,
     borderRadius: 15,
+    position: "relative",
+    zIndex: 2,
+    overflow: "visible",
   },
   heroTopRow: {
     display: "flex",
@@ -3661,6 +3664,7 @@ const styles: Record<string, CSSProperties> = {
   heroExportWrap: {
     position: "relative",
     marginLeft: "auto",
+    zIndex: 6,
   },
   heroExportToggle: {
     border: "1px solid rgba(255,255,255,0.16)",
