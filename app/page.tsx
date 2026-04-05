@@ -3544,11 +3544,9 @@ export default function Page() {
                 setShowMobileProjects(false);
               }}
             >
-              <LayoutDashboard size={18} />
+              <LayoutDashboard size={16} />
               <span>Ana Sayfa</span>
             </button>
-
-            <div />
 
             <button
               type="button"
@@ -3558,7 +3556,7 @@ export default function Page() {
               aria-label="Yeni Proje"
               title="Yeni Proje"
             >
-              <Plus size={20} />
+              <Plus size={18} />
             </button>
 
             <button
@@ -3567,7 +3565,7 @@ export default function Page() {
               style={viewMode === "project" ? styles.mobileNavItemActive : styles.mobileNavItem}
               onClick={() => setShowMobileProjects(true)}
             >
-              <FolderKanban size={18} />
+              <FolderKanban size={16} />
               <span>Projeler</span>
             </button>
 
@@ -3580,11 +3578,9 @@ export default function Page() {
                 setShowMobileProjects(false);
               }}
             >
-              <Settings2 size={18} />
+              <Settings2 size={16} />
               <span>Ayarlar</span>
             </button>
-
-            <div />
           </div>
         </>
       ) : null}
@@ -3776,57 +3772,57 @@ const styles: Record<string, CSSProperties> = {
   mobileBottomNav: {
     display: "none",
     position: "fixed",
-    left: 10,
-    right: 10,
-    bottom: 10,
-    gridTemplateColumns: "1fr 1fr auto 1fr 1fr",
+    left: 12,
+    right: 12,
+    bottom: 12,
+    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
     alignItems: "center",
-    gap: 6,
-    padding: 7,
-    borderRadius: 20,
+    gap: 4,
+    padding: "6px 8px",
+    borderRadius: 18,
     background: "rgba(255,255,255,0.94)",
     border: "1px solid rgba(148,163,184,0.22)",
-    boxShadow: "0 14px 30px rgba(15,23,42,0.12)",
+    boxShadow: "0 12px 26px rgba(15,23,42,0.10)",
     backdropFilter: "blur(16px)",
     zIndex: 40,
   },
   mobileNavItem: {
-    minHeight: 46,
+    minHeight: 38,
     border: "none",
     background: "transparent",
-    borderRadius: 14,
+    borderRadius: 12,
     color: "var(--muted)",
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
-    padding: "0 10px",
-    fontSize: 12,
+    gap: 6,
+    padding: "0 8px",
+    fontSize: 11,
     fontWeight: 700,
     cursor: "pointer",
     whiteSpace: "nowrap",
   },
   mobileNavItemActive: {
-    minHeight: 46,
+    minHeight: 38,
     border: "none",
     background: "rgba(37,99,235,0.10)",
-    borderRadius: 14,
+    borderRadius: 12,
     color: "var(--blue)",
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
-    padding: "0 10px",
-    fontSize: 12,
+    gap: 6,
+    padding: "0 8px",
+    fontSize: 11,
     fontWeight: 800,
     cursor: "pointer",
     whiteSpace: "nowrap",
   },
   mobileNavPlus: {
-    width: 48,
-    height: 48,
+    width: 42,
+    height: 42,
     border: "none",
     borderRadius: 999,
     background: "linear-gradient(180deg, #2563EB 0%, #194AC6 100%)",
@@ -3835,8 +3831,9 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-    boxShadow: "0 10px 22px rgba(37,99,235,0.22)",
-    marginTop: -16,
+    justifySelf: "center",
+    boxShadow: "0 8px 18px rgba(37,99,235,0.18)",
+    marginTop: 0,
   },
   mobileProjectsBackdrop: {
     display: "none",
