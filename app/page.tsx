@@ -163,6 +163,7 @@ export default function Page() {
   );
   const [showArchivedTabs, setShowArchivedTabs] = useState(false);
   const [showMobileProjects, setShowMobileProjects] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [projectColumnOrder, setProjectColumnOrder] = useState<ProjectColumnKey[]>(() => {
     const stored = readStoredState<ProjectColumnKey[]>(
       "odeme-project-columns-v1",
@@ -2456,19 +2457,32 @@ export default function Page() {
 
             <div style={styles.topBarActions}>
               {viewMode !== "settings" ? (
-                <div style={styles.topSearchWrap} className="top-search">
-                  <Search size={15} color={palette.muted} />
-                  <input
-                    className="soft-input"
-                    placeholder="Ara"
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setSelectedIds([]);
-                    }}
-                    style={styles.topSearchInput}
-                  />
-                </div>
+                isMobileViewport ? (
+                  <button
+                    type="button"
+                    className="hover-button top-search"
+                    style={styles.mobileSearchToggle}
+                    onClick={() => setShowMobileSearch((prev) => !prev)}
+                    aria-label="Ara"
+                    title="Ara"
+                  >
+                    <Search size={16} color={palette.muted} />
+                  </button>
+                ) : (
+                  <div style={styles.topSearchWrap} className="top-search">
+                    <Search size={15} color={palette.muted} />
+                    <input
+                      className="soft-input"
+                      placeholder="Ara"
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setSelectedIds([]);
+                      }}
+                      style={styles.topSearchInput}
+                    />
+                  </div>
+                )
               ) : null}
               <button
                 className="hover-button top-action-btn"
@@ -2841,6 +2855,36 @@ export default function Page() {
                   styles={styles}
                 />
               ) : (
+              isMobileViewport ? (
+              <div style={styles.mobileHomeSummaryList}>
+                {homeProjectStats.map((item) => {
+                  const meta = tabMeta[item.tab] || { color: palette.blue };
+
+                  return (
+                    <button
+                      key={item.tab}
+                      type="button"
+                      className="hover-button"
+                      style={{
+                        ...styles.mobileHomeSummaryCard,
+                        borderLeft: `4px solid ${meta.color}`,
+                      }}
+                      onClick={() => openProjectTab(item.tab)}
+                    >
+                      <div style={styles.mobileHomeSummaryHead}>
+                        <strong style={styles.mobileHomeSummaryTitle}>{item.tab}</strong>
+                        <span style={styles.mobileHomeSummaryAmount}>{tl(item.toplam)}</span>
+                      </div>
+                      <div style={styles.mobileHomeSummaryMeta}>
+                        <span>{item.kayit} kayıt</span>
+                        <span>{item.odenen} ödeme</span>
+                        <span>{item.fatura} fatura</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              ) : (
               <div style={styles.tableWrap}>
                 <table style={styles.table}>
                   <thead>
@@ -2963,6 +3007,7 @@ export default function Page() {
                   </tbody>
                 </table>
               </div>
+              )
               )}
             </div>
           ) : (
@@ -3469,6 +3514,25 @@ export default function Page() {
             </div>
           </div>
 
+          {isMobileViewport && viewMode !== "settings" && showMobileSearch ? (
+            <div style={styles.mobileSearchPanel}>
+              <div style={styles.mobileSearchField}>
+                <Search size={15} color={palette.muted} />
+                <input
+                  className="soft-input"
+                  placeholder="Ara"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setSelectedIds([]);
+                  }}
+                  style={styles.topSearchInput}
+                  autoFocus
+                />
+              </div>
+            </div>
+          ) : null}
+
           <div style={styles.mobileBottomNav} className="mobile-bottom-nav no-print">
             <button
               type="button"
@@ -3843,6 +3907,73 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 800,
     cursor: "pointer",
     textAlign: "left",
+  },
+  mobileSearchToggle: {
+    width: 40,
+    height: 40,
+    border: "1px solid var(--border)",
+    background: "var(--card)",
+    borderRadius: 12,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    boxShadow: "var(--shadow)",
+  },
+  mobileSearchPanel: {
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  mobileSearchField: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "10px 12px",
+    borderRadius: 14,
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+    boxShadow: "var(--shadow)",
+  },
+  mobileHomeSummaryList: {
+    display: "grid",
+    gap: 10,
+  },
+  mobileHomeSummaryCard: {
+    width: "100%",
+    border: "1px solid var(--border)",
+    background: "var(--card)",
+    borderRadius: 16,
+    padding: "14px 14px 12px",
+    display: "grid",
+    gap: 8,
+    cursor: "pointer",
+    textAlign: "left",
+    boxShadow: "var(--shadow)",
+  },
+  mobileHomeSummaryHead: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  mobileHomeSummaryTitle: {
+    fontSize: 15,
+    fontWeight: 800,
+    color: "var(--text)",
+  },
+  mobileHomeSummaryAmount: {
+    fontSize: 14,
+    fontWeight: 900,
+    color: "var(--textSoft)",
+  },
+  mobileHomeSummaryMeta: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    flexWrap: "wrap",
+    fontSize: 12,
+    fontWeight: 700,
+    color: "var(--muted)",
   },
   sidebarTabInner: {
     display: "flex",
