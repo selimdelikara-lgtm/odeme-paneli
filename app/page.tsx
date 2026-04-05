@@ -3585,34 +3585,29 @@ export default function Page() {
           ) : null}
 
           <div style={styles.mobileBottomNav} className="mobile-bottom-nav no-print">
-            <div style={styles.mobileBottomNavLeft}>
-              <button
-                type="button"
-                className="hover-button"
-                style={showArchivedTabs ? styles.mobileNavItemActive : styles.mobileNavItem}
-                onClick={() => {
-                  setShowArchivedTabs((prev) => !prev);
-                  setShowMobileProjects(false);
-                }}
-              >
-                <Archive size={16} />
-                <span>Arşiv</span>
-              </button>
+            <button
+              type="button"
+              className="hover-button"
+              style={viewMode === "home" ? styles.mobileNavItemActive : styles.mobileNavItem}
+              onClick={() => {
+                setViewMode("home");
+                setSelectedIds([]);
+                setShowMobileProjects(false);
+              }}
+            >
+              <LayoutDashboard size={15} />
+              <span>Ana Sayfa</span>
+            </button>
 
-              <button
-                type="button"
-                className="hover-button"
-                style={viewMode === "home" ? styles.mobileNavItemActive : styles.mobileNavItem}
-                onClick={() => {
-                  setViewMode("home");
-                  setSelectedIds([]);
-                  setShowMobileProjects(false);
-                }}
-              >
-                <LayoutDashboard size={16} />
-                <span>Ana Sayfa</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              className="hover-button"
+              style={viewMode === "project" ? styles.mobileNavItemActive : styles.mobileNavItem}
+              onClick={() => setShowMobileProjects(true)}
+            >
+              <FolderKanban size={15} />
+              <span>Projeler</span>
+            </button>
 
             <button
               type="button"
@@ -3622,33 +3617,34 @@ export default function Page() {
               aria-label="Yeni Proje"
               title="Yeni Proje"
             >
-              <Plus size={20} />
+              <Plus size={22} />
             </button>
 
-            <div style={styles.mobileBottomNavRight}>
-              <button
-                type="button"
-                className="hover-button"
-                style={viewMode === "project" ? styles.mobileNavItemActive : styles.mobileNavItem}
-                onClick={() => setShowMobileProjects(true)}
-              >
-                <FolderKanban size={16} />
-                <span>Projeler</span>
-              </button>
+            <button
+              type="button"
+              className="hover-button"
+              style={showArchivedTabs ? styles.mobileNavItemActive : styles.mobileNavItem}
+              onClick={() => {
+                setShowArchivedTabs((prev) => !prev);
+                setShowMobileProjects(false);
+              }}
+            >
+              <Archive size={15} />
+              <span>Ar?iv</span>
+            </button>
 
-              <button
-                type="button"
-                className="hover-button"
-                style={viewMode === "settings" ? styles.mobileNavItemActive : styles.mobileNavItem}
-                onClick={() => {
-                  setViewMode("settings");
-                  setShowMobileProjects(false);
-                }}
-              >
-                <Settings2 size={16} />
-                <span>Ayarlar</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              className="hover-button"
+              style={viewMode === "settings" ? styles.mobileNavItemActive : styles.mobileNavItem}
+              onClick={() => {
+                setViewMode("settings");
+                setShowMobileProjects(false);
+              }}
+            >
+              <Settings2 size={15} />
+              <span>Ayarlar</span>
+            </button>
           </div>
         </>
       ) : null}
@@ -3842,11 +3838,11 @@ const styles: Record<string, CSSProperties> = {
     left: 12,
     right: 12,
     bottom: 12,
-    minHeight: 58,
+    minHeight: 60,
     display: "grid",
-    gridTemplateColumns: "1fr 56px 1fr",
+    gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
     alignItems: "center",
-    padding: "6px 10px",
+    padding: "6px 8px",
     borderRadius: 18,
     background: "rgba(255,255,255,0.94)",
     border: "1px solid rgba(148,163,184,0.22)",
@@ -3854,20 +3850,6 @@ const styles: Record<string, CSSProperties> = {
     backdropFilter: "blur(16px)",
     zIndex: 40,
     overflow: "visible",
-  },
-  mobileBottomNavLeft: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    gap: 6,
-    minWidth: 0,
-  },
-  mobileBottomNavRight: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: 4,
-    minWidth: 0,
   },
   mobileNavItem: {
     minHeight: 38,
@@ -3880,8 +3862,8 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    padding: "0 8px",
-    fontSize: 11,
+    padding: "0 4px",
+    fontSize: 10,
     fontWeight: 700,
     cursor: "pointer",
     whiteSpace: "nowrap",
@@ -3910,15 +3892,15 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    padding: "0 8px",
-    fontSize: 11,
+    padding: "0 4px",
+    fontSize: 10,
     fontWeight: 800,
     cursor: "pointer",
     whiteSpace: "nowrap",
   },
   mobileNavPlus: {
-    width: 50,
-    height: 50,
+    width: 52,
+    height: 52,
     border: "none",
     borderRadius: 999,
     background: "linear-gradient(180deg, #2563EB 0%, #194AC6 100%)",
@@ -3927,6 +3909,7 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
+    gridColumn: 3,
     justifySelf: "center",
     boxShadow: "0 8px 18px rgba(37,99,235,0.18)",
     marginTop: 0,
