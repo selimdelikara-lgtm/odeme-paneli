@@ -31,6 +31,7 @@ import {
   DARK,
   DEFAULT_COLORS,
   HOME_PROJECT_COLUMN_ORDER_DEFAULT,
+  INVOICE_FILE_ACCEPT,
   LIGHT,
   MAX_INVOICE_FILE_SIZE_BYTES,
   MAX_INVOICE_FILE_SIZE_MB,
@@ -55,6 +56,7 @@ import {
 import {
   faturaEkleriTable,
   isHomeProjectColumnKey,
+  isAllowedInvoiceFile,
   isProjectColumnKey,
   loadScript,
   odemelerTable,
@@ -808,6 +810,11 @@ export default function Page() {
   const uploadInvoice = async (row: Odeme, file: File) => {
     if (!authUserId) return;
 
+    if (!isAllowedInvoiceFile(file)) {
+      setMsg("Fatura yüklenemedi: PDF, PNG, JPG, JPEG, WEBP, GIF, HEIC veya HEIF yükleyebilirsin.");
+      return;
+    }
+
     if (file.size > MAX_INVOICE_FILE_SIZE_BYTES) {
       setMsg(
         `Fatura yüklenemedi: Dosya boyutu en fazla ${MAX_INVOICE_FILE_SIZE_MB} MB olabilir.`
@@ -822,7 +829,7 @@ export default function Page() {
 
     const { error } = await supabase.storage
       .from("faturalar")
-      .upload(path, file, { upsert: false });
+      .upload(path, file, { upsert: false, contentType: file.type || undefined });
 
     if (error) {
       setMsg("Fatura yüklenemedi: " + error.message);
@@ -2561,12 +2568,12 @@ export default function Page() {
               onSignOut={() => void cikisYap()}
             />
 
-            <input
-              ref={invoiceInputRef}
-              type="file"
-              accept=".pdf,image/*"
-              style={{ display: "none" }}
-              onChange={async (e) => {
+                <input
+                  ref={invoiceInputRef}
+                  type="file"
+                  accept={INVOICE_FILE_ACCEPT}
+                  style={{ display: "none" }}
+                  onChange={async (e) => {
                 const file = e.target.files?.[0];
                 const row =
                   invoiceTargetId === null
@@ -3613,8 +3620,11 @@ const styles: Record<string, CSSProperties> = {
     boxShadow: "var(--shadow)",
   },
   mobileSearchPanel: {
-    marginTop: 6,
-    marginBottom: 2,
+    position: "fixed",
+    left: 12,
+    right: 12,
+    top: 88,
+    zIndex: 38,
   },
   mobileSearchField: {
     display: "flex",

@@ -1,5 +1,7 @@
 import { browserSupabase as supabase } from "@/lib/supabase";
 import {
+  ALLOWED_INVOICE_EXTENSIONS,
+  ALLOWED_INVOICE_MIME_TYPES,
   HOME_PROJECT_COLUMN_ORDER_DEFAULT,
   PROJECT_COLUMN_ORDER_DEFAULT,
   type HomeProjectColumnKey,
@@ -31,6 +33,17 @@ export const readStoredTheme = (): ThemeMode => {
 
 export const sanitizeFileName = (name: string) =>
   name.replace(/[^a-zA-Z0-9._-]/g, "-");
+
+export const isAllowedInvoiceFile = (file: File) => {
+  const lowerName = file.name.toLowerCase();
+  const hasAllowedExtension = ALLOWED_INVOICE_EXTENSIONS.some((ext) =>
+    lowerName.endsWith(ext)
+  );
+  const hasAllowedMime =
+    !file.type || ALLOWED_INVOICE_MIME_TYPES.includes(file.type as (typeof ALLOWED_INVOICE_MIME_TYPES)[number]);
+
+  return hasAllowedExtension && hasAllowedMime;
+};
 
 export const isProjectColumnKey = (value: string): value is ProjectColumnKey =>
   PROJECT_COLUMN_ORDER_DEFAULT.includes(value as ProjectColumnKey);

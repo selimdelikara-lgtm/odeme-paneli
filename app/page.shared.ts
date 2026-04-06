@@ -132,6 +132,28 @@ export const DEFAULT_COLORS = [
 
 export const MAX_INVOICE_FILE_SIZE_MB = 1;
 export const MAX_INVOICE_FILE_SIZE_BYTES = MAX_INVOICE_FILE_SIZE_MB * 1024 * 1024;
+export const ALLOWED_INVOICE_EXTENSIONS = [
+  ".pdf",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".webp",
+  ".gif",
+  ".heic",
+  ".heif",
+] as const;
+export const ALLOWED_INVOICE_MIME_TYPES = [
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "image/heic",
+  "image/heif",
+  "image/heic-sequence",
+  "image/heif-sequence",
+] as const;
+export const INVOICE_FILE_ACCEPT = ALLOWED_INVOICE_EXTENSIONS.join(",");
 
 export const PROJECT_COLUMN_ORDER_DEFAULT: ProjectColumnKey[] = [
   "select",
