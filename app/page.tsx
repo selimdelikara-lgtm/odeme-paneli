@@ -31,6 +31,7 @@ import {
   DARK,
   DEFAULT_COLORS,
   HOME_PROJECT_COLUMN_ORDER_DEFAULT,
+  IMAGE_IMPORT_ACCEPT,
   INVOICE_FILE_ACCEPT,
   LIGHT,
   MAX_INVOICE_FILE_SIZE_BYTES,
@@ -40,6 +41,7 @@ import {
   type DropPosition,
   type HomeProjectColumnKey,
   type InvoiceAttachment,
+  type ImportedDraftRow,
   type ActivityItem,
   type Odeme,
   type PdfWindow,
@@ -60,6 +62,7 @@ import {
   isProjectColumnKey,
   loadScript,
   odemelerTable,
+  parsePaymentTableFromOcr,
   readStoredState,
   readStoredTheme,
   sanitizeFileName,
@@ -185,6 +188,8 @@ export default function Page() {
   const [invoiceMap, setInvoiceMap] = useState<Record<number, InvoiceAttachment[]>>({});
   const [invoiceTargetId, setInvoiceTargetId] = useState<number | null>(null);
   const [uploadingInvoiceId, setUploadingInvoiceId] = useState<number | null>(null);
+  const [imageImportBusy, setImageImportBusy] = useState(false);
+  const [imageImportRows, setImageImportRows] = useState<ImportedDraftRow[]>([]);
   const [settingsName, setSettingsName] = useState("");
   const [settingsAvatarUrl, setSettingsAvatarUrl] = useState<string | null>(null);
   const [settingsCurrentPassword, setSettingsCurrentPassword] = useState("");
@@ -197,6 +202,7 @@ export default function Page() {
   const exportRef = useRef<HTMLElement | null>(null);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
   const invoiceInputRef = useRef<HTMLInputElement | null>(null);
+  const imageImportInputRef = useRef<HTMLInputElement | null>(null);
   const profileInputRef = useRef<HTMLInputElement | null>(null);
   const initialLoadRef = useRef(false);
   const draggedColumnRef = useRef<ProjectColumnKey | null>(null);
@@ -878,6 +884,82 @@ export default function Page() {
     setMsg("Fatura yüklendi.");
     pushActivity("Fatura yüklendi", `${row.proje || "Kayıt"} · ${file.name}`);
     setUploadingInvoiceId(null);
+  };
+
+  const openImageImportPicker = () => {
+    setMsg("");
+    imageImportInputRef.current?.click();
+  };
+
+  const importRowsFromImage = async (file: File) => {
+    if (!aktifSekme) {
+      setMsg("Önce bir proje sekmesi açman gerekiyor.");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setMsg("Yalnızca görsel dosyaları analiz edilebilir.");
+      return;
+    }
+
+    setImageImportBusy(true);
+    setImageImportRows([]);
+
+    try {
+      const { createWorker } = await import("tesseract.js");
+      const worker = await createWorker(["tur", "eng"]);
+      const result = await worker.recognize(file);
+      await worker.terminate();
+
+      const parsedRows = parsePaymentTableFromOcr(result.data.text || "");
+      if (!parsedRows.length) {
+        setMsg("Görsel okunamadı. Daha net bir tablo görseli yükle.");
+        return;
+      }
+
+      setImageImportRows(parsedRows);
+      setMsg(`${parsedRows.length} kayıt taslağı çıkarıldı. Kontrol edip projeye ekleyebilirsin.`);
+    } catch (error) {
+      setMsg(
+        error instanceof Error
+          ? `Görsel analiz edilemedi: ${error.message}`
+          : "Görsel analiz edilemedi."
+      );
+    } finally {
+      setImageImportBusy(false);
+    }
+  };
+
+  const confirmImageImport = async () => {
+    if (!authUserId || !aktifSekme || !imageImportRows.length) return;
+
+    const currentMaxSira =
+      aktifKayitlar.length > 0
+        ? Math.max(...aktifKayitlar.map((row) => row.sira ?? 0))
+        : 0;
+
+    const payload: OdemeInsert[] = imageImportRows.map((row, index) => ({
+      user_id: authUserId,
+      proje: row.proje,
+      tutar: row.tutar,
+      odendi: row.odemeAlindi,
+      grup: aktifSekme,
+      fatura_tarihi: row.tarih || null,
+      fatura_kesildi: row.faturaKesildi,
+      kdvli: row.kdvli,
+      sira: currentMaxSira + index + 1,
+    }));
+
+    const { error } = await odemelerTable().insert(payload);
+    if (error) {
+      setMsg("Görselden çıkarılan kayıtlar eklenemedi: " + error.message);
+      return;
+    }
+
+    setImageImportRows([]);
+    setMsg(`${payload.length} kayıt projeye eklendi.`);
+    pushActivity("Görselden kayıt eklendi", `${aktifSekme} · ${payload.length} kayıt`);
+    await yukle();
   };
 
   const removeInvoice = async (rowId: number, attachment: InvoiceAttachment) => {
@@ -2589,6 +2671,20 @@ export default function Page() {
               }}
             />
 
+                <input
+                  ref={imageImportInputRef}
+                  type="file"
+                  accept={IMAGE_IMPORT_ACCEPT}
+                  style={{ display: "none" }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      await importRowsFromImage(file);
+                    }
+                    e.currentTarget.value = "";
+                  }}
+                />
+
             <SummaryStatsGrid
               styles={styles}
               viewMode={viewMode}
@@ -2811,6 +2907,70 @@ export default function Page() {
                     Taslak otomatik kaydediliyor
                   </div>
                 </div>
+
+                <div style={styles.imageImportHead}>
+                  <div style={styles.imageImportInfo}>
+                    <div style={styles.formSectionTitle}>Görselden Kayıt Çıkar</div>
+                    <div style={styles.imageImportHint}>
+                      Ödeme tablosu görselini yükle, satırları çıkarıp önce önizleyelim.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openImageImportPicker}
+                    disabled={imageImportBusy}
+                    style={styles.secondaryBtn}
+                  >
+                    {imageImportBusy ? "Analiz ediliyor..." : "Görsel Yükle"}
+                  </button>
+                </div>
+
+                {imageImportRows.length > 0 ? (
+                  <div style={styles.imageImportCard}>
+                    <div style={styles.imageImportPreviewHead}>
+                      <div style={styles.imageImportPreviewTitle}>
+                        Çıkarılan kayıtlar
+                      </div>
+                      <div style={styles.imageImportHint}>
+                        Satırları kontrol edip toplu ekleme yap.
+                      </div>
+                    </div>
+
+                    <div style={styles.imageImportPreviewList}>
+                      {imageImportRows.map((row, index) => (
+                        <div key={`${row.proje}-${index}`} style={styles.imageImportPreviewRow}>
+                          <div>
+                            <div style={styles.imageImportPreviewName}>{row.proje}</div>
+                            <div style={styles.imageImportPreviewMeta}>
+                              {row.rawStatus}
+                              {row.tarih ? ` · ${shortDate(row.tarih)}` : ""}
+                            </div>
+                          </div>
+                          <div style={styles.imageImportPreviewAmount}>
+                            {row.amountLabel}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={styles.imageImportActions}>
+                      <button
+                        type="button"
+                        onClick={confirmImageImport}
+                        style={styles.primaryBtn}
+                      >
+                        Projeye Ekle
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setImageImportRows([])}
+                        style={styles.secondaryBtn}
+                      >
+                        Temizle
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
 
 <div style={styles.formLayout} className="form-layout">
                   <div style={styles.formSection}>
@@ -4469,6 +4629,74 @@ const styles: Record<string, CSSProperties> = {
     letterSpacing: 0.4,
     textTransform: "uppercase",
     color: "var(--muted)",
+  },
+  imageImportHead: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "0 0 14px",
+  },
+  imageImportInfo: {
+    display: "grid",
+    gap: 4,
+  },
+  imageImportHint: {
+    fontSize: 12,
+    color: "var(--muted)",
+  },
+  imageImportCard: {
+    display: "grid",
+    gap: 12,
+    marginBottom: 14,
+    padding: 14,
+    borderRadius: 14,
+    background: "var(--slateSoft)",
+    border: "1px solid var(--border)",
+  },
+  imageImportPreviewHead: {
+    display: "grid",
+    gap: 4,
+  },
+  imageImportPreviewTitle: {
+    fontSize: 14,
+    fontWeight: 800,
+    color: "var(--text)",
+  },
+  imageImportPreviewList: {
+    display: "grid",
+    gap: 8,
+  },
+  imageImportPreviewRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "10px 12px",
+    borderRadius: 12,
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+  },
+  imageImportPreviewName: {
+    fontSize: 13,
+    fontWeight: 800,
+    color: "var(--text)",
+  },
+  imageImportPreviewMeta: {
+    marginTop: 2,
+    fontSize: 12,
+    color: "var(--muted)",
+  },
+  imageImportPreviewAmount: {
+    fontSize: 13,
+    fontWeight: 800,
+    color: "var(--text)",
+    whiteSpace: "nowrap",
+  },
+  imageImportActions: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
   },
   formGrid: {
     display: "grid",

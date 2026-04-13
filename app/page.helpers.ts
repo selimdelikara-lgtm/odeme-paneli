@@ -5,6 +5,7 @@ import {
   HOME_PROJECT_COLUMN_ORDER_DEFAULT,
   PROJECT_COLUMN_ORDER_DEFAULT,
   type HomeProjectColumnKey,
+  type ImportedDraftRow,
   type Odeme,
   type ProjectColumnKey,
   type StoredState,
@@ -40,9 +41,128 @@ export const isAllowedInvoiceFile = (file: File) => {
     lowerName.endsWith(ext)
   );
   const hasAllowedMime =
-    !file.type || ALLOWED_INVOICE_MIME_TYPES.includes(file.type as (typeof ALLOWED_INVOICE_MIME_TYPES)[number]);
+    !file.type ||
+    ALLOWED_INVOICE_MIME_TYPES.includes(
+      file.type as (typeof ALLOWED_INVOICE_MIME_TYPES)[number]
+    );
 
   return hasAllowedExtension && hasAllowedMime;
+};
+
+const OCR_MONTH_MAP: Record<string, string> = {
+  ocak: "01",
+  subat: "02",
+  şubat: "02",
+  mart: "03",
+  nisan: "04",
+  mayis: "05",
+  mayıs: "05",
+  haziran: "06",
+  temmuz: "07",
+  agustos: "08",
+  ağustos: "08",
+  eylul: "09",
+  eylül: "09",
+  ekim: "10",
+  kasim: "11",
+  kasım: "11",
+  aralik: "12",
+  aralık: "12",
+};
+
+const normalizeOcrText = (input: string) =>
+  input
+    .replace(/\r/g, " ")
+    .replace(/\n+/g, " ")
+    .replace(/[|]/g, " ")
+    .replace(/["“”]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const normalizeForLookup = (input: string) =>
+  input
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ı/g, "i")
+    .replace(/İ/g, "i")
+    .replace(/ş/g, "s")
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ö/g, "o")
+    .replace(/ç/g, "c");
+
+const parseKAmount = (input: string) => {
+  const match = input.match(/(\d+(?:[.,]\d+)?)\s*K/i);
+  if (!match) return null;
+  return Number(match[1].replace(",", ".")) * 1000;
+};
+
+const parseStatus = (input: string) => {
+  const normalized = normalizeForLookup(input);
+  if (normalized.includes("odemesi alindi")) {
+    return {
+      rawStatus: "Ödemesi alındı",
+      faturaKesildi: true,
+      odemeAlindi: true,
+    };
+  }
+
+  if (normalized.includes("fatura kesildi")) {
+    return {
+      rawStatus: "Fatura kesildi",
+      faturaKesildi: true,
+      odemeAlindi: false,
+    };
+  }
+
+  return {
+    rawStatus: "Henüz fatura kesilmedi",
+    faturaKesildi: false,
+    odemeAlindi: false,
+  };
+};
+
+const parseDateLabel = (input: string, currentYear = new Date().getFullYear()) => {
+  const normalized = normalizeForLookup(input);
+  const match = normalized.match(
+    /(\d{1,2})\s+(ocak|subat|mart|nisan|mayis|haziran|temmuz|agustos|eylul|ekim|kasim|aralik)/i
+  );
+  if (!match) return "";
+  const month = OCR_MONTH_MAP[match[2].toLowerCase()];
+  if (!month) return "";
+  return `${currentYear}-${month}-${match[1].padStart(2, "0")}`;
+};
+
+export const parsePaymentTableFromOcr = (rawText: string): ImportedDraftRow[] => {
+  const compact = normalizeOcrText(rawText);
+  if (!compact) return [];
+
+  const rows =
+    compact.match(/B(?:ö|o)l(?:ü|u)m\s*\d+.*?(?=B(?:ö|o)l(?:ü|u)m\s*\d+|$)/gi) || [];
+
+  return rows
+    .map((rowText) => {
+      const projeMatch = rowText.match(/B(?:ö|o)l(?:ü|u)m\s*\d+/i);
+      const amountMatch = rowText.match(
+        /(\d+(?:[.,]\d+)?)\s*K(?:\s*\+\s*%20\s*KDV)?/i
+      );
+      const status = parseStatus(rowText);
+      const amountLabel = amountMatch
+        ? amountMatch[0].replace(/\s+/g, " ").trim()
+        : "—";
+      const date = parseDateLabel(rowText);
+
+      return {
+        proje: projeMatch?.[0]?.replace(/\s+/g, " ").trim() || "",
+        tutar: amountLabel === "—" ? null : parseKAmount(amountLabel),
+        tarih: date,
+        kdvli: /\+\s*%20\s*KDV/i.test(rowText),
+        faturaKesildi: status.faturaKesildi,
+        odemeAlindi: status.odemeAlindi,
+        amountLabel,
+        rawStatus: status.rawStatus,
+      } satisfies ImportedDraftRow;
+    })
+    .filter((row) => row.proje);
 };
 
 export const isProjectColumnKey = (value: string): value is ProjectColumnKey =>
