@@ -2781,12 +2781,13 @@ export default function Page() {
                   </select>
                 </div>
 
-                <div style={styles.formChecks}>
+                <div style={styles.projectModalToggleGrid}>
                   <button
                     type="button"
                     onClick={() => setNewProjectInvoice((prev) => !prev)}
                     style={{
                       ...styles.statusToggle,
+                      ...styles.projectModalToggle,
                       ...(newProjectInvoice ? styles.statusToggleActive : {}),
                     }}
                   >
@@ -2814,7 +2815,9 @@ export default function Page() {
                       >
                         <Receipt size={14} />
                       </span>
-                      <span style={styles.statusToggleLabel}>Fatura Kesildi</span>
+                      <span style={{ ...styles.statusToggleLabel, ...styles.projectModalToggleLabel }}>
+                        Fatura Kesildi
+                      </span>
                     </span>
                   </button>
 
@@ -2827,6 +2830,7 @@ export default function Page() {
                     }}
                     style={{
                       ...styles.statusToggle,
+                      ...styles.projectModalToggle,
                       ...(newProjectPaid ? styles.statusToggleActive : {}),
                     }}
                   >
@@ -2854,7 +2858,9 @@ export default function Page() {
                       >
                         <CheckCircle2 size={14} />
                       </span>
-                      <span style={styles.statusToggleLabel}>Ödeme Alındı</span>
+                      <span style={{ ...styles.statusToggleLabel, ...styles.projectModalToggleLabel }}>
+                        Ödeme Alındı
+                      </span>
                     </span>
                   </button>
                 </div>
@@ -4791,6 +4797,20 @@ const styles: Record<string, CSSProperties> = {
     gap: 10,
     padding: 12,
     borderRadius: 16,
+  },
+  projectModalToggleGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 8,
+  },
+  projectModalToggle: {
+    gap: 10,
+    padding: "8px 10px",
+    borderRadius: 14,
+    minHeight: 0,
+  },
+  projectModalToggleLabel: {
+    fontSize: 13,
   },
   ocrOverlay: {
     position: "fixed",
