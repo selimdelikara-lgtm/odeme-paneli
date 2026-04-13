@@ -1665,7 +1665,7 @@ export default function Page() {
           ...styles.th,
           background: "var(--blueSoft)",
           cursor: "pointer",
-          width: 280,
+          width: 240,
         },
         onClick: () => sortToggle("proje"),
       };
@@ -1887,7 +1887,7 @@ export default function Page() {
 
     if (column === "durum") {
       return (
-        <td key={column} style={{ ...styles.td, width: 180 }}>
+        <td key={column} style={{ ...styles.td, width: 150 }}>
           {editing ? (
             <select
               className="soft-input"
@@ -1936,7 +1936,7 @@ export default function Page() {
           key={column}
           onDoubleClick={() => editAc(row)}
           title="Düzenlemek için çift tıkla"
-          style={{ ...styles.td, width: 120, cursor: "pointer" }}
+          style={{ ...styles.td, width: 100, cursor: "pointer" }}
         >
           {editing ? (
             <input
@@ -1961,7 +1961,7 @@ export default function Page() {
           title="Düzenlemek için çift tıkla"
           style={{
             ...styles.td,
-            width: 120,
+            width: 110,
             cursor: "pointer",
             fontWeight: 700,
           }}
@@ -2008,7 +2008,7 @@ export default function Page() {
     }
 
     return (
-      <td key={column} style={{ ...styles.td, width: 122 }} className="no-print">
+      <td key={column} style={{ ...styles.td, width: 108 }} className="no-print">
         <div style={styles.rowActions} className="row-actions-fade">
           <button
             className="hover-button"
@@ -5175,22 +5175,22 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 13,
   },
   metaText: {
-    fontSize: 11,
+    fontSize: 10,
     color: "var(--muted)",
-    marginTop: 3,
+    marginTop: 2,
   },
   invoiceList: {
     display: "flex",
     flexWrap: "wrap",
-    gap: 6,
-    marginTop: 8,
-    marginBottom: 6,
+    gap: 4,
+    marginTop: 6,
+    marginBottom: 4,
   },
   invoiceChip: {
     display: "inline-flex",
     alignItems: "center",
-    gap: 6,
-    padding: "4px 8px",
+    gap: 4,
+    padding: "3px 6px",
     borderRadius: 999,
     border: "1px solid var(--border)",
     background: "var(--slateSoft)",
@@ -5199,9 +5199,9 @@ const styles: Record<string, CSSProperties> = {
   invoiceLink: {
     color: "var(--blue)",
     textDecoration: "none",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 700,
-    maxWidth: 180,
+    maxWidth: 130,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
@@ -5246,7 +5246,7 @@ const styles: Record<string, CSSProperties> = {
     width: "100%",
     borderCollapse: "separate",
     borderSpacing: "0 6px",
-    minWidth: 930,
+    minWidth: 820,
   },
   dragNotice: {
     marginBottom: 10,
@@ -5279,14 +5279,14 @@ const styles: Record<string, CSSProperties> = {
   },
   th: {
     textAlign: "left",
-    padding: "10px 10px",
+    padding: "8px 8px",
     color: "var(--text)",
     borderBottom: "1px solid var(--border)",
     fontSize: 11,
     fontWeight: 800,
   },
   td: {
-    padding: "12px 10px",
+    padding: "10px 8px",
     color: "var(--text)",
     borderBottom: "1px solid var(--border)",
     verticalAlign: "middle",
@@ -5303,15 +5303,15 @@ const styles: Record<string, CSSProperties> = {
   },
   rowActions: {
     display: "flex",
-    gap: 6,
+    gap: 4,
     alignItems: "center",
     flexWrap: "wrap",
     justifyContent: "flex-end",
   },
   iconActionBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 9,
     border: "1px solid var(--border)",
     background: "var(--card)",
     color: "var(--text)",
@@ -5321,9 +5321,9 @@ const styles: Record<string, CSSProperties> = {
     cursor: "pointer",
   },
   iconDeleteBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 9,
     border: "1px solid var(--red)",
     background: "var(--redSoft)",
     color: "var(--red)",
@@ -5335,11 +5335,11 @@ const styles: Record<string, CSSProperties> = {
   status: {
     display: "inline-flex",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
     borderRadius: 999,
-    padding: "6px 11px",
+    padding: "5px 9px",
     fontWeight: 700,
-    fontSize: 12,
+    fontSize: 11,
     cursor: "pointer",
     appearance: "none",
     WebkitAppearance: "none",
