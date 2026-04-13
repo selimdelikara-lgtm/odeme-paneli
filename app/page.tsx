@@ -31,7 +31,6 @@ import {
   DARK,
   DEFAULT_COLORS,
   HOME_PROJECT_COLUMN_ORDER_DEFAULT,
-  IMAGE_IMPORT_ACCEPT,
   INVOICE_FILE_ACCEPT,
   LIGHT,
   MAX_INVOICE_FILE_SIZE_BYTES,
@@ -41,7 +40,6 @@ import {
   type DropPosition,
   type HomeProjectColumnKey,
   type InvoiceAttachment,
-  type ImportedDraftRow,
   type ActivityItem,
   type Odeme,
   type PdfWindow,
@@ -62,7 +60,6 @@ import {
   isProjectColumnKey,
   loadScript,
   odemelerTable,
-  parsePaymentTableFromOcr,
   readStoredState,
   readStoredTheme,
   sanitizeFileName,
@@ -202,9 +199,6 @@ export default function Page() {
   const [invoiceMap, setInvoiceMap] = useState<Record<number, InvoiceAttachment[]>>({});
   const [invoiceTargetId, setInvoiceTargetId] = useState<number | null>(null);
   const [uploadingInvoiceId, setUploadingInvoiceId] = useState<number | null>(null);
-  const [imageImportBusy, setImageImportBusy] = useState(false);
-  const [imageImportMinimized, setImageImportMinimized] = useState(false);
-  const [imageImportRows, setImageImportRows] = useState<ImportedDraftRow[]>([]);
   const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectColor, setNewProjectColor] = useState<string>(DEFAULT_COLORS[0]);
@@ -226,7 +220,6 @@ export default function Page() {
   const exportRef = useRef<HTMLElement | null>(null);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
   const invoiceInputRef = useRef<HTMLInputElement | null>(null);
-  const imageImportInputRef = useRef<HTMLInputElement | null>(null);
   const profileInputRef = useRef<HTMLInputElement | null>(null);
   const initialLoadRef = useRef(false);
   const draggedColumnRef = useRef<ProjectColumnKey | null>(null);
@@ -909,141 +902,6 @@ export default function Page() {
     pushActivity("Fatura yüklendi", `${row.proje || "Kayıt"} · ${file.name}`);
     setUploadingInvoiceId(null);
   };
-
-  const openImageImportPicker = () => {
-    setMsg("");
-    imageImportInputRef.current?.click();
-  };
-
-  const prepareImageForOcr = async (file: File) => {
-    const objectUrl = URL.createObjectURL(file);
-
-    try {
-      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error("Görsel yüklenemedi."));
-        img.src = objectUrl;
-      });
-
-      const scale = Math.min(2.2, Math.max(1.4, 1800 / Math.max(image.width, image.height)));
-      const width = Math.round(image.width * scale);
-      const height = Math.round(image.height * scale);
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas hazırlanamıyor.");
-
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, width, height);
-      ctx.filter = "grayscale(1) contrast(1.28) brightness(1.06)";
-      ctx.drawImage(image, 0, 0, width, height);
-
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((value) => {
-          if (value) resolve(value);
-          else reject(new Error("OCR görseli hazırlanamadı."));
-        }, "image/png");
-      });
-
-      return blob;
-    } finally {
-      URL.revokeObjectURL(objectUrl);
-    }
-  };
-
-  const importRowsFromImage = async (file: File) => {
-    if (!aktifSekme) {
-      setMsg("Önce bir proje sekmesi açman gerekiyor.");
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      setMsg("Yalnızca görsel dosyaları analiz edilebilir.");
-      return;
-    }
-
-    setImageImportBusy(true);
-    setImageImportMinimized(false);
-    setImageImportRows([]);
-    setMsg("Görsel OCR için hazırlanıyor.");
-
-    try {
-      const preparedImage = await prepareImageForOcr(file);
-      const { recognize } = await import("tesseract.js");
-      const result = await Promise.race([
-        recognize(preparedImage, "eng", {
-          logger: (info) => {
-            if (!info?.status) return;
-            const percent = info.progress ? ` %${Math.round(info.progress * 100)}` : "";
-            setMsg(`Görsel analiz ediliyor: ${info.status}${percent}`);
-          },
-        }),
-        new Promise<never>((_, reject) => {
-          window.setTimeout(() => {
-            reject(
-              new Error("OCR zaman aşımına uğradı. Daha küçük veya daha net bir görsel deneyin.")
-            );
-          }, 30000);
-        }),
-      ]);
-
-      const parsedRows = parsePaymentTableFromOcr(result.data.text || "");
-      if (!parsedRows.length) {
-        setMsg("Görsel okunamadı. Daha net bir tablo görseli yükle.");
-        return;
-      }
-
-      setImageImportRows(parsedRows);
-      setMsg(`${parsedRows.length} kayıt taslağı çıkarıldı. Kontrol edip projeye ekleyebilirsin.`);
-    } catch (error) {
-      setMsg(
-        error instanceof Error
-          ? `Görsel analiz edilemedi: ${error.message}`
-          : "Görsel analiz edilemedi."
-      );
-    } finally {
-      setImageImportBusy(false);
-      setImageImportMinimized(false);
-    }
-  };
-
-  const confirmImageImport = async () => {
-    if (!authUserId || !aktifSekme || !imageImportRows.length) return;
-
-    const currentMaxSira =
-      aktifKayitlar.length > 0
-        ? Math.max(...aktifKayitlar.map((row) => row.sira ?? 0))
-        : 0;
-
-    const payload: OdemeInsert[] = imageImportRows.map((row, index) => ({
-      user_id: authUserId,
-      proje: row.proje,
-      tutar: row.tutar,
-      odendi: row.odemeAlindi,
-      grup: aktifSekme,
-      fatura_tarihi: row.tarih || null,
-      fatura_kesildi: row.faturaKesildi,
-      kdvli: row.kdvli,
-      sira: currentMaxSira + index + 1,
-    }));
-
-    const { error } = await odemelerTable().insert(payload);
-    if (error) {
-      setMsg("Görselden çıkarılan kayıtlar eklenemedi: " + error.message);
-      return;
-    }
-
-    setImageImportRows([]);
-    setImageImportMinimized(false);
-    setMsg(`${payload.length} kayıt projeye eklendi.`);
-    pushActivity("Görselden kayıt eklendi", `${aktifSekme} · ${payload.length} kayıt`);
-    await yukle();
-  };
-
   const removeInvoice = async (rowId: number, attachment: InvoiceAttachment) => {
     const metadataDelete = attachment.id
       ? await faturaEkleriTable().delete().eq("id", attachment.id)
@@ -2514,23 +2372,6 @@ export default function Page() {
           from{opacity:0;transform:translateY(10px)}
           to{opacity:1;transform:translateY(0)}
         }
-        @keyframes ocrSpin{
-          from{transform:rotate(0deg)}
-          to{transform:rotate(360deg)}
-        }
-        @keyframes catWalk{
-          0%{left:-8px}
-          100%{left:calc(100% - 26px)}
-        }
-        @keyframes catTail{
-          0%{transform:rotate(18deg)}
-          50%{transform:rotate(-16deg)}
-          100%{transform:rotate(18deg)}
-        }
-        @keyframes catBubble{
-          0%,100%{transform:translateY(0);opacity:.85}
-          50%{transform:translateY(-4px);opacity:1}
-        }
         @keyframes floatIn{
           from{opacity:0;transform:translateY(14px) scale(.985)}
           to{opacity:1;transform:translateY(0) scale(1)}
@@ -2652,54 +2493,6 @@ export default function Page() {
           .no-print{display:none !important}
         }
       `}</style>
-
-      {imageImportBusy && !imageImportMinimized ? (
-        <div style={styles.ocrOverlay} onClick={() => setImageImportMinimized(true)}>
-          <div style={styles.ocrOverlayCard} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.ocrCatWrap}>
-              <div style={styles.ocrCatTrack}>
-                <div className="ocr-cat-runner" style={styles.ocrCatRunner}>
-                  <div style={styles.ocrCatBody}>
-                    <div style={styles.ocrCatEarLeft} />
-                    <div style={styles.ocrCatEarRight} />
-                    <div style={styles.ocrCatEyeLeft} />
-                    <div style={styles.ocrCatEyeRight} />
-                    <div className="ocr-cat-tail" style={styles.ocrCatTail} />
-                  </div>
-                  <div className="ocr-cat-bubble" style={styles.ocrCatBubble}>
-                    ?
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div style={styles.ocrOverlayTitle}>Görsel analiz ediliyor</div>
-            <div style={styles.ocrOverlayText}>
-              {msg || "İlk kullanımda OCR dosyaları indirildiği için biraz sürebilir."}
-            </div>
-            <button
-              type="button"
-              onClick={() => setImageImportMinimized(true)}
-              style={styles.ocrOverlayMinimizeBtn}
-            >
-              Arka planda sürdür
-            </button>
-          </div>
-        </div>
-      ) : null}
-
-      {imageImportBusy && imageImportMinimized ? (
-        <button
-          type="button"
-          onClick={() => setImageImportMinimized(false)}
-          style={styles.ocrMiniDock}
-        >
-          <div style={styles.ocrMiniDot} />
-          <div style={styles.ocrMiniTextWrap}>
-            <div style={styles.ocrMiniTitle}>Görsel işleniyor</div>
-            <div style={styles.ocrMiniText}>OCR arka planda çalışıyor</div>
-          </div>
-        </button>
-      ) : null}
 
       {showCreateProjectModal ? (
         <div style={styles.projectModalOverlay} onClick={() => setShowCreateProjectModal(false)}>
@@ -3075,20 +2868,6 @@ export default function Page() {
               }}
             />
 
-                <input
-                  ref={imageImportInputRef}
-                  type="file"
-                  accept={IMAGE_IMPORT_ACCEPT}
-                  style={{ display: "none" }}
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      await importRowsFromImage(file);
-                    }
-                    e.currentTarget.value = "";
-                  }}
-                />
-
             <SummaryStatsGrid
               styles={styles}
               viewMode={viewMode}
@@ -3311,70 +3090,6 @@ export default function Page() {
                     Taslak otomatik kaydediliyor
                   </div>
                 </div>
-
-                <div style={styles.imageImportHead}>
-                  <div style={styles.imageImportInfo}>
-                    <div style={styles.formSectionTitle}>Görselden Kayıt Çıkar</div>
-                    <div style={styles.imageImportHint}>
-                      Ödeme tablosu görselini yükle, satırları çıkarıp önce önizleyelim.
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={openImageImportPicker}
-                    disabled={imageImportBusy}
-                    style={styles.secondaryBtn}
-                  >
-                    {imageImportBusy ? "Analiz ediliyor..." : "Görsel Yükle"}
-                  </button>
-                </div>
-
-                {imageImportRows.length > 0 ? (
-                  <div style={styles.imageImportCard}>
-                    <div style={styles.imageImportPreviewHead}>
-                      <div style={styles.imageImportPreviewTitle}>
-                        Çıkarılan kayıtlar
-                      </div>
-                      <div style={styles.imageImportHint}>
-                        Satırları kontrol edip toplu ekleme yap.
-                      </div>
-                    </div>
-
-                    <div style={styles.imageImportPreviewList}>
-                      {imageImportRows.map((row, index) => (
-                        <div key={`${row.proje}-${index}`} style={styles.imageImportPreviewRow}>
-                          <div>
-                            <div style={styles.imageImportPreviewName}>{row.proje}</div>
-                            <div style={styles.imageImportPreviewMeta}>
-                              {row.rawStatus}
-                              {row.tarih ? ` · ${shortDate(row.tarih)}` : ""}
-                            </div>
-                          </div>
-                          <div style={styles.imageImportPreviewAmount}>
-                            {row.amountLabel}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div style={styles.imageImportActions}>
-                      <button
-                        type="button"
-                        onClick={confirmImageImport}
-                        style={styles.primaryBtn}
-                      >
-                        Projeye Ekle
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setImageImportRows([])}
-                        style={styles.secondaryBtn}
-                      >
-                        Temizle
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
 
 <div style={styles.formLayout} className="form-layout">
                   <div style={styles.formSection}>
@@ -4831,189 +4546,7 @@ const styles: Record<string, CSSProperties> = {
   projectModalToggleLabel: {
     fontSize: 13,
   },
-  ocrOverlay: {
-    position: "fixed",
-    inset: 0,
-    zIndex: 400,
-    background: "rgba(15,23,42,0.42)",
-    backdropFilter: "blur(8px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  ocrOverlayCard: {
-    width: "100%",
-    maxWidth: 360,
-    borderRadius: 24,
-    padding: "24px 20px",
-    background: "var(--card)",
-    border: "1px solid var(--border)",
-    boxShadow: "0 24px 60px rgba(15,23,42,0.22)",
-    display: "grid",
-    gap: 12,
-    justifyItems: "center",
-    textAlign: "center",
-  },
-  ocrCatWrap: {
-    width: "100%",
-    display: "grid",
-    gap: 8,
-    justifyItems: "center",
-  },
-  ocrCatTrack: {
-    position: "relative",
-    width: "100%",
-    maxWidth: 240,
-    height: 28,
-    borderRadius: 999,
-    background: "transparent",
-    borderBottom: "2px solid rgba(37,99,235,0.18)",
-    overflow: "hidden",
-  },
-  ocrCatRunner: {
-    position: "absolute",
-    top: 2,
-    left: -8,
-    width: 28,
-    height: 20,
-    animation: "catWalk 2.8s linear infinite",
-  },
-  ocrCatBody: {
-    position: "relative",
-    width: 22,
-    height: 14,
-    borderRadius: "10px 10px 8px 8px",
-    background: "linear-gradient(180deg, #3459D9, #2345BF)",
-    boxShadow: "0 8px 16px rgba(37,99,235,0.18)",
-  },
-  ocrCatEarLeft: {
-    position: "absolute",
-    top: -4,
-    left: 3,
-    width: 0,
-    height: 0,
-    borderLeft: "4px solid transparent",
-    borderRight: "4px solid transparent",
-    borderBottom: "6px solid #3459D9",
-  },
-  ocrCatEarRight: {
-    position: "absolute",
-    top: -4,
-    right: 3,
-    width: 0,
-    height: 0,
-    borderLeft: "4px solid transparent",
-    borderRight: "4px solid transparent",
-    borderBottom: "6px solid #3459D9",
-  },
-  ocrCatEyeLeft: {
-    position: "absolute",
-    top: 6,
-    left: 6,
-    width: 2,
-    height: 2,
-    borderRadius: 999,
-    background: "#F8FAFC",
-  },
-  ocrCatEyeRight: {
-    position: "absolute",
-    top: 6,
-    right: 6,
-    width: 2,
-    height: 2,
-    borderRadius: 999,
-    background: "#F8FAFC",
-  },
-  ocrCatTail: {
-    position: "absolute",
-    top: 2,
-    right: -5,
-    width: 8,
-    height: 2,
-    borderRadius: 999,
-    background: "#2345BF",
-    transformOrigin: "left center",
-    animation: "catTail .75s ease-in-out infinite",
-  },
-  ocrCatBubble: {
-    position: "absolute",
-    top: -10,
-    right: -10,
-    width: 14,
-    height: 14,
-    borderRadius: 999,
-    background: "#F8FAFC",
-    color: "#2345BF",
-    fontSize: 9,
-    fontWeight: 900,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 8px 18px rgba(15,23,42,0.16)",
-    animation: "catBubble 1.1s ease-in-out infinite",
-  },
-  ocrOverlayTitle: {
-    fontSize: 18,
-    fontWeight: 900,
-    color: "var(--text)",
-    letterSpacing: "-0.3px",
-  },
-  ocrOverlayText: {
-    fontSize: 13,
-    lineHeight: 1.5,
-    color: "var(--muted)",
-    maxWidth: 280,
-  },
-  ocrOverlayMinimizeBtn: {
-    padding: "10px 14px",
-    borderRadius: 12,
-    border: "1px solid var(--border)",
-    background: "var(--slateSoft)",
-    color: "var(--text)",
-    fontWeight: 700,
-    fontSize: 12,
-    cursor: "pointer",
-  },
-  ocrMiniDock: {
-    position: "fixed",
-    right: 16,
-    bottom: 18,
-    zIndex: 410,
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    minWidth: 210,
-    padding: "12px 14px",
-    borderRadius: 18,
-    border: "1px solid rgba(37,99,235,0.14)",
-    background: "rgba(255,255,255,0.95)",
-    boxShadow: "0 18px 36px rgba(15,23,42,0.18)",
-    backdropFilter: "blur(10px)",
-    cursor: "pointer",
-  },
-  ocrMiniDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    background: "var(--blue)",
-    boxShadow: "0 0 0 6px rgba(37,99,235,0.14)",
-    animation: "ocrSpin 1.2s linear infinite",
-  },
-  ocrMiniTextWrap: {
-    display: "grid",
-    gap: 2,
-    textAlign: "left",
-  },
-  ocrMiniTitle: {
-    fontSize: 13,
-    fontWeight: 800,
-    color: "var(--text)",
-  },
-  ocrMiniText: {
-    fontSize: 11,
-    color: "var(--muted)",
-  },
+
   settingsGrid: {
     display: "grid",
     gap: 12,
@@ -5309,74 +4842,7 @@ const styles: Record<string, CSSProperties> = {
     textTransform: "uppercase",
     color: "var(--muted)",
   },
-  imageImportHead: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    padding: "0 0 14px",
-  },
-  imageImportInfo: {
-    display: "grid",
-    gap: 4,
-  },
-  imageImportHint: {
-    fontSize: 12,
-    color: "var(--muted)",
-  },
-  imageImportCard: {
-    display: "grid",
-    gap: 12,
-    marginBottom: 14,
-    padding: 14,
-    borderRadius: 14,
-    background: "var(--slateSoft)",
-    border: "1px solid var(--border)",
-  },
-  imageImportPreviewHead: {
-    display: "grid",
-    gap: 4,
-  },
-  imageImportPreviewTitle: {
-    fontSize: 14,
-    fontWeight: 800,
-    color: "var(--text)",
-  },
-  imageImportPreviewList: {
-    display: "grid",
-    gap: 8,
-  },
-  imageImportPreviewRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    padding: "10px 12px",
-    borderRadius: 12,
-    background: "var(--card)",
-    border: "1px solid var(--border)",
-  },
-  imageImportPreviewName: {
-    fontSize: 13,
-    fontWeight: 800,
-    color: "var(--text)",
-  },
-  imageImportPreviewMeta: {
-    marginTop: 2,
-    fontSize: 12,
-    color: "var(--muted)",
-  },
-  imageImportPreviewAmount: {
-    fontSize: 13,
-    fontWeight: 800,
-    color: "var(--text)",
-    whiteSpace: "nowrap",
-  },
-  imageImportActions: {
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-  },
+
   formGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -6253,5 +5719,6 @@ const styles: Record<string, CSSProperties> = {
     letterSpacing: 1,
   },
 };
+
 
 

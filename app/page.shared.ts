@@ -76,17 +76,6 @@ export type ActivityItem = {
   createdAt: string;
 };
 
-export type ImportedDraftRow = {
-  proje: string;
-  tutar: number | null;
-  tarih: string;
-  kdvli: boolean;
-  faturaKesildi: boolean;
-  odemeAlindi: boolean;
-  amountLabel: string;
-  rawStatus: string;
-};
-
 export type PdfWindow = Window &
   typeof globalThis & {
     html2canvas?: (
@@ -165,14 +154,6 @@ export const ALLOWED_INVOICE_MIME_TYPES = [
   "image/heif-sequence",
 ] as const;
 export const INVOICE_FILE_ACCEPT = ALLOWED_INVOICE_EXTENSIONS.join(",");
-export const IMAGE_IMPORT_ACCEPT = [
-  "image/png",
-  "image/jpeg",
-  "image/jpg",
-  "image/webp",
-  "image/heic",
-  "image/heif",
-].join(",");
 
 export const PROJECT_COLUMN_ORDER_DEFAULT: ProjectColumnKey[] = [
   "select",
