@@ -11,7 +11,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data: https:",
-  "connect-src 'self' https://mhoidirxbxqaktkhhavp.supabase.co https://*.supabase.co",
+  "connect-src 'self' https://mhoidirxbxqaktkhhavp.supabase.co https://*.supabase.co https://cdn.jsdelivr.net https://tessdata.projectnaptha.com",
   "frame-src 'self' https://mhoidirxbxqaktkhhavp.supabase.co https://*.supabase.co",
   "worker-src 'self' blob:",
   "manifest-src 'self'",

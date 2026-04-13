@@ -904,11 +904,25 @@ export default function Page() {
 
     setImageImportBusy(true);
     setImageImportRows([]);
+    setMsg("Görsel analiz başlatıldı. İlk kullanımda dil dosyaları indirildiği için biraz sürebilir.");
 
     try {
       const { createWorker } = await import("tesseract.js");
-      const worker = await createWorker(["tur", "eng"]);
-      const result = await worker.recognize(file);
+      const worker = await createWorker(["tur", "eng"], 1, {
+        logger: (info) => {
+          if (!info?.status) return;
+          const percent = info.progress ? ` %${Math.round(info.progress * 100)}` : "";
+          setMsg(`Görsel analiz ediliyor: ${info.status}${percent}`);
+        },
+      });
+      const result = await Promise.race([
+        worker.recognize(file),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => {
+            reject(new Error("OCR zaman aşımına uğradı. Daha küçük veya daha net bir görsel deneyin."));
+          }, 45000);
+        }),
+      ]);
       await worker.terminate();
 
       const parsedRows = parsePaymentTableFromOcr(result.data.text || "");
