@@ -2509,6 +2509,18 @@ export default function Page() {
         }
       `}</style>
 
+      {imageImportBusy ? (
+        <div style={styles.ocrOverlay}>
+          <div style={styles.ocrOverlayCard}>
+            <div style={styles.ocrOverlaySpinner} />
+            <div style={styles.ocrOverlayTitle}>Görsel analiz ediliyor</div>
+            <div style={styles.ocrOverlayText}>
+              {msg || "İlk kullanımda OCR dosyaları indirildiği için biraz sürebilir."}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div style={styles.shell} className="app-shell">
         {!isMobileViewport ? (
         <DesktopSidebar
@@ -4348,6 +4360,50 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 16,
     padding: 16,
     boxShadow: "var(--shadow)",
+  },
+  ocrOverlay: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 400,
+    background: "rgba(15,23,42,0.42)",
+    backdropFilter: "blur(8px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  ocrOverlayCard: {
+    width: "100%",
+    maxWidth: 360,
+    borderRadius: 24,
+    padding: "24px 20px",
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+    boxShadow: "0 24px 60px rgba(15,23,42,0.22)",
+    display: "grid",
+    gap: 12,
+    justifyItems: "center",
+    textAlign: "center",
+  },
+  ocrOverlaySpinner: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    border: "3px solid rgba(37,99,235,0.14)",
+    borderTopColor: "var(--blue)",
+    animation: "ocrSpin .9s linear infinite",
+  },
+  ocrOverlayTitle: {
+    fontSize: 18,
+    fontWeight: 900,
+    color: "var(--text)",
+    letterSpacing: "-0.3px",
+  },
+  ocrOverlayText: {
+    fontSize: 13,
+    lineHeight: 1.5,
+    color: "var(--muted)",
+    maxWidth: 280,
   },
   settingsGrid: {
     display: "grid",
