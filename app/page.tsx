@@ -908,24 +908,41 @@ export default function Page() {
     setImageImportRows([]);
     setMsg("Görsel analiz başlatıldı. İlk kullanımda dil dosyaları indirildiği için biraz sürebilir.");
 
+    let worker: Awaited<ReturnType<(typeof import("tesseract.js"))["createWorker"]>> | null = null;
+
     try {
       const { createWorker } = await import("tesseract.js");
-      const worker = await createWorker(["tur", "eng"], 1, {
-        logger: (info) => {
-          if (!info?.status) return;
-          const percent = info.progress ? ` %${Math.round(info.progress * 100)}` : "";
-          setMsg(`Görsel analiz ediliyor: ${info.status}${percent}`);
-        },
-      });
+      worker = await Promise.race([
+        createWorker(["tur", "eng"], 1, {
+          logger: (info) => {
+            if (!info?.status) return;
+            const percent = info.progress ? ` %${Math.round(info.progress * 100)}` : "";
+            setMsg(`Görsel analiz ediliyor: ${info.status}${percent}`);
+          },
+        }),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => {
+            reject(
+              new Error(
+                "OCR başlatılamadı. Tarayıcı worker kurulumu takıldı; sayfayı yenileyip tekrar dene."
+              )
+            );
+          }, 20000);
+        }),
+      ]);
+
       const result = await Promise.race([
         worker.recognize(file),
         new Promise<never>((_, reject) => {
           window.setTimeout(() => {
-            reject(new Error("OCR zaman aşımına uğradı. Daha küçük veya daha net bir görsel deneyin."));
-          }, 45000);
+            reject(
+              new Error("OCR zaman aşımına uğradı. Daha küçük veya daha net bir görsel deneyin.")
+            );
+          }, 30000);
         }),
       ]);
       await worker.terminate();
+      worker = null;
 
       const parsedRows = parsePaymentTableFromOcr(result.data.text || "");
       if (!parsedRows.length) {
@@ -942,7 +959,13 @@ export default function Page() {
           : "Görsel analiz edilemedi."
       );
     } finally {
+      if (worker) {
+        try {
+          await worker.terminate();
+        } catch {}
+      }
       setImageImportBusy(false);
+      setImageImportMinimized(false);
     }
   };
 
@@ -2395,9 +2418,8 @@ export default function Page() {
           to{transform:rotate(360deg)}
         }
         @keyframes catWalk{
-          0%{left:0%}
-          50%{left:calc(100% - 34px)}
-          100%{left:0%}
+          0%{left:-8px}
+          100%{left:calc(100% - 26px)}
         }
         @keyframes catTail{
           0%{transform:rotate(18deg)}
@@ -4452,72 +4474,72 @@ const styles: Record<string, CSSProperties> = {
     position: "relative",
     width: "100%",
     maxWidth: 240,
-    height: 34,
+    height: 28,
     borderRadius: 999,
-    background: "linear-gradient(180deg, rgba(37,99,235,0.08), rgba(37,99,235,0.03))",
-    border: "1px solid rgba(37,99,235,0.12)",
+    background: "transparent",
+    borderBottom: "2px solid rgba(37,99,235,0.18)",
     overflow: "hidden",
   },
   ocrCatRunner: {
     position: "absolute",
-    top: 6,
-    left: 0,
-    width: 34,
-    height: 22,
-    animation: "catWalk 2.3s ease-in-out infinite",
+    top: 2,
+    left: -8,
+    width: 28,
+    height: 20,
+    animation: "catWalk 2.8s linear infinite",
   },
   ocrCatBody: {
     position: "relative",
-    width: 28,
-    height: 18,
-    borderRadius: "12px 12px 10px 10px",
+    width: 22,
+    height: 14,
+    borderRadius: "10px 10px 8px 8px",
     background: "linear-gradient(180deg, #3459D9, #2345BF)",
-    boxShadow: "0 10px 22px rgba(37,99,235,0.24)",
+    boxShadow: "0 8px 16px rgba(37,99,235,0.18)",
   },
   ocrCatEarLeft: {
     position: "absolute",
-    top: -5,
-    left: 4,
+    top: -4,
+    left: 3,
     width: 0,
     height: 0,
-    borderLeft: "5px solid transparent",
-    borderRight: "5px solid transparent",
-    borderBottom: "7px solid #3459D9",
+    borderLeft: "4px solid transparent",
+    borderRight: "4px solid transparent",
+    borderBottom: "6px solid #3459D9",
   },
   ocrCatEarRight: {
     position: "absolute",
-    top: -5,
-    right: 4,
+    top: -4,
+    right: 3,
     width: 0,
     height: 0,
-    borderLeft: "5px solid transparent",
-    borderRight: "5px solid transparent",
-    borderBottom: "7px solid #3459D9",
+    borderLeft: "4px solid transparent",
+    borderRight: "4px solid transparent",
+    borderBottom: "6px solid #3459D9",
   },
   ocrCatEyeLeft: {
     position: "absolute",
-    top: 7,
-    left: 8,
-    width: 3,
-    height: 3,
+    top: 6,
+    left: 6,
+    width: 2,
+    height: 2,
     borderRadius: 999,
     background: "#F8FAFC",
   },
   ocrCatEyeRight: {
     position: "absolute",
-    top: 7,
-    right: 8,
-    width: 3,
-    height: 3,
+    top: 6,
+    right: 6,
+    width: 2,
+    height: 2,
     borderRadius: 999,
     background: "#F8FAFC",
   },
   ocrCatTail: {
     position: "absolute",
-    top: 3,
-    right: -6,
-    width: 10,
-    height: 3,
+    top: 2,
+    right: -5,
+    width: 8,
+    height: 2,
     borderRadius: 999,
     background: "#2345BF",
     transformOrigin: "left center",
@@ -4525,14 +4547,14 @@ const styles: Record<string, CSSProperties> = {
   },
   ocrCatBubble: {
     position: "absolute",
-    top: -9,
-    right: -8,
-    width: 16,
-    height: 16,
+    top: -10,
+    right: -10,
+    width: 14,
+    height: 14,
     borderRadius: 999,
     background: "#F8FAFC",
     color: "#2345BF",
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 900,
     display: "flex",
     alignItems: "center",
