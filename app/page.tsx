@@ -1634,7 +1634,7 @@ export default function Page() {
         key,
         label: "SEÇ",
         className: "no-print",
-        style: { ...styles.th, width: 52 },
+        style: { ...styles.th, width: 44 },
       };
     }
 
@@ -1647,7 +1647,7 @@ export default function Page() {
           ...styles.th,
           background: "var(--slateSoft)",
           cursor: "pointer",
-          width: 70,
+          width: 52,
         },
         onClick: () => {
           setSortKey("manual");
@@ -1665,6 +1665,7 @@ export default function Page() {
           ...styles.th,
           background: "var(--blueSoft)",
           cursor: "pointer",
+          width: 280,
         },
         onClick: () => sortToggle("proje"),
       };
@@ -1679,6 +1680,7 @@ export default function Page() {
           ...styles.th,
           background: "var(--tealSoft)",
           cursor: "pointer",
+          width: 180,
         },
         onClick: () => sortToggle("durum"),
       };
@@ -1693,6 +1695,7 @@ export default function Page() {
           ...styles.th,
           background: "var(--amberSoft)",
           cursor: "pointer",
+          width: 120,
         },
         onClick: () => sortToggle("fatura_tarihi"),
       };
@@ -1707,6 +1710,7 @@ export default function Page() {
           ...styles.th,
           background: "var(--redSoft)",
           cursor: "pointer",
+          width: 120,
         },
         onClick: () => sortToggle("tutar"),
       };
@@ -1716,7 +1720,7 @@ export default function Page() {
       key,
       label: "İŞLEM",
       className: "no-print",
-      style: { ...styles.th, width: 160 },
+      style: { ...styles.th, width: 122 },
     };
   });
 
@@ -1775,7 +1779,7 @@ export default function Page() {
 
     if (column === "select") {
       return (
-        <td key={column} style={{ ...styles.td, width: 52 }} className="no-print">
+        <td key={column} style={{ ...styles.td, width: 44 }} className="no-print">
           <button
             type="button"
             onClick={() => toggleSelected(row.id)}
@@ -1806,7 +1810,7 @@ export default function Page() {
           }}
           style={{
             ...styles.td,
-            width: 70,
+            width: 52,
             cursor: sortKey === "manual" ? "grab" : "default",
             color: "var(--muted)",
             fontWeight: 700,
@@ -1830,7 +1834,8 @@ export default function Page() {
           title="Düzenlemek için çift tıkla"
           style={{
             ...styles.td,
-            borderLeft: `5px solid ${aktifTabMeta.color}`,
+            width: 280,
+            borderLeft: `4px solid ${aktifTabMeta.color}`,
             cursor: "pointer",
           }}
         >
@@ -1882,7 +1887,7 @@ export default function Page() {
 
     if (column === "durum") {
       return (
-        <td key={column} style={styles.td}>
+        <td key={column} style={{ ...styles.td, width: 180 }}>
           {editing ? (
             <select
               className="soft-input"
@@ -1931,7 +1936,7 @@ export default function Page() {
           key={column}
           onDoubleClick={() => editAc(row)}
           title="Düzenlemek için çift tıkla"
-          style={{ ...styles.td, cursor: "pointer" }}
+          style={{ ...styles.td, width: 120, cursor: "pointer" }}
         >
           {editing ? (
             <input
@@ -1956,6 +1961,7 @@ export default function Page() {
           title="Düzenlemek için çift tıkla"
           style={{
             ...styles.td,
+            width: 120,
             cursor: "pointer",
             fontWeight: 700,
           }}
@@ -2002,7 +2008,7 @@ export default function Page() {
     }
 
     return (
-      <td key={column} style={styles.td} className="no-print">
+      <td key={column} style={{ ...styles.td, width: 122 }} className="no-print">
         <div style={styles.rowActions} className="row-actions-fade">
           <button
             className="hover-button"
@@ -5240,7 +5246,7 @@ const styles: Record<string, CSSProperties> = {
     width: "100%",
     borderCollapse: "separate",
     borderSpacing: "0 6px",
-    minWidth: 1120,
+    minWidth: 930,
   },
   dragNotice: {
     marginBottom: 10,
@@ -5273,18 +5279,18 @@ const styles: Record<string, CSSProperties> = {
   },
   th: {
     textAlign: "left",
-    padding: "12px 12px",
+    padding: "10px 10px",
     color: "var(--text)",
     borderBottom: "1px solid var(--border)",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 800,
   },
   td: {
-    padding: "16px 12px",
+    padding: "12px 10px",
     color: "var(--text)",
     borderBottom: "1px solid var(--border)",
     verticalAlign: "middle",
-    fontSize: 14,
+    fontSize: 13,
   },
   checkboxBtn: {
     border: "none",
@@ -5297,15 +5303,15 @@ const styles: Record<string, CSSProperties> = {
   },
   rowActions: {
     display: "flex",
-    gap: 8,
+    gap: 6,
     alignItems: "center",
     flexWrap: "wrap",
     justifyContent: "flex-end",
   },
   iconActionBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     border: "1px solid var(--border)",
     background: "var(--card)",
     color: "var(--text)",
@@ -5315,9 +5321,9 @@ const styles: Record<string, CSSProperties> = {
     cursor: "pointer",
   },
   iconDeleteBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     border: "1px solid var(--red)",
     background: "var(--redSoft)",
     color: "var(--red)",
@@ -5329,18 +5335,18 @@ const styles: Record<string, CSSProperties> = {
   status: {
     display: "inline-flex",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     borderRadius: 999,
-    padding: "8px 14px",
+    padding: "6px 11px",
     fontWeight: 700,
-    fontSize: 13,
+    fontSize: 12,
     cursor: "pointer",
     appearance: "none",
     WebkitAppearance: "none",
   },
   dot: {
-    width: 10,
-    height: 10,
+    width: 8,
+    height: 8,
     borderRadius: 999,
     display: "inline-block",
     boxShadow: "inset 0 0 0 2px rgba(0,0,0,0.08)",
