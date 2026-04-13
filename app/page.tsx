@@ -191,6 +191,15 @@ export default function Page() {
   const [imageImportBusy, setImageImportBusy] = useState(false);
   const [imageImportMinimized, setImageImportMinimized] = useState(false);
   const [imageImportRows, setImageImportRows] = useState<ImportedDraftRow[]>([]);
+  const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectColor, setNewProjectColor] = useState<string>(DEFAULT_COLORS[0]);
+  const [newProjectFirstItem, setNewProjectFirstItem] = useState("");
+  const [newProjectAmount, setNewProjectAmount] = useState("");
+  const [newProjectDate, setNewProjectDate] = useState("");
+  const [newProjectKdvli, setNewProjectKdvli] = useState(false);
+  const [newProjectInvoice, setNewProjectInvoice] = useState(false);
+  const [newProjectPaid, setNewProjectPaid] = useState(false);
   const [settingsName, setSettingsName] = useState("");
   const [settingsAvatarUrl, setSettingsAvatarUrl] = useState<string | null>(null);
   const [settingsCurrentPassword, setSettingsCurrentPassword] = useState("");
@@ -2302,22 +2311,71 @@ export default function Page() {
   }
 
   function yeniProjeOlustur() {
-    const ad = window.prompt("Proje adı");
-    if (!ad || !ad.trim()) return;
+    setNewProjectName("");
+    setNewProjectFirstItem("");
+    setNewProjectAmount("");
+    setNewProjectDate("");
+    setNewProjectKdvli(false);
+    setNewProjectInvoice(false);
+    setNewProjectPaid(false);
+    setNewProjectColor(
+      DEFAULT_COLORS[Object.keys(tabMeta).length % DEFAULT_COLORS.length] || DEFAULT_COLORS[0]
+    );
+    setShowCreateProjectModal(true);
+  }
 
-    const clean = ad.trim();
-    setTabMeta((prev) => {
-      if (prev[clean]) return prev;
-      return {
-        ...prev,
-        [clean]: {
-          color: DEFAULT_COLORS[Object.keys(prev).length % DEFAULT_COLORS.length],
-        },
+  async function yeniProjeKaydet() {
+    if (!authUserId) return;
+
+    const clean = newProjectName.trim();
+    if (!clean) {
+      setMsg("Proje adı gerekli.");
+      return;
+    }
+
+    if (sekmeler.includes(clean)) {
+      setMsg("Bu proje adı zaten var.");
+      return;
+    }
+
+    setTabMeta((prev) => ({
+      ...prev,
+      [clean]: {
+        color: newProjectColor,
+      },
+    }));
+
+    const firstItemName = newProjectFirstItem.trim();
+
+    if (firstItemName) {
+      const nextSira =
+        data.filter((item) => (item.grup || "") === clean).length > 0
+          ? Math.max(
+              ...data
+                .filter((item) => (item.grup || "") === clean)
+                .map((item) => item.sira ?? 0)
+            ) + 1
+          : 1;
+
+      const payload: OdemeInsert = {
+        user_id: authUserId,
+        proje: firstItemName,
+        tutar: newProjectAmount ? Number(newProjectAmount) : null,
+        odendi: newProjectPaid,
+        grup: clean,
+        fatura_tarihi: newProjectDate || null,
+        fatura_kesildi: newProjectPaid ? true : newProjectInvoice,
+        kdvli: newProjectKdvli,
+        sira: nextSira,
       };
-    });
-    setData((prev) => {
-      if (prev.some((item) => (item.grup || "") === clean)) return prev;
-      return [
+
+      const { error } = await odemelerTable().insert([payload]);
+      if (error) {
+        setMsg("Proje oluşturulamadı: " + error.message);
+        return;
+      }
+    } else {
+      setData((prev) => [
         ...prev,
         {
           id: -Date.now(),
@@ -2331,10 +2389,14 @@ export default function Page() {
           kdvli: false,
           sira: null,
         },
-      ];
-    });
+      ]);
+    }
 
+    setShowCreateProjectModal(false);
     openProjectTab(clean);
+    setMsg("Proje oluşturuldu.");
+    pushActivity("Proje oluşturuldu", clean);
+    await yukle();
   }
 
   function sekmeGorunumDuzenle(tabName: string) {
@@ -2604,6 +2666,198 @@ export default function Page() {
             <div style={styles.ocrMiniText}>OCR arka planda çalışıyor</div>
           </div>
         </button>
+      ) : null}
+
+      {showCreateProjectModal ? (
+        <div style={styles.projectModalOverlay} onClick={() => setShowCreateProjectModal(false)}>
+          <div
+            style={{
+              ...styles.projectModalCard,
+              ...(isMobileViewport ? styles.projectModalCardMobile : {}),
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={styles.projectModalHead}>
+              <div>
+                <div style={styles.projectModalTitle}>Yeni Proje</div>
+                <div style={styles.projectModalHint}>
+                  Proje adını belirle, istersen ilk kaydı da aynı anda oluştur.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCreateProjectModal(false)}
+                style={styles.secondaryBtn}
+              >
+                Kapat
+              </button>
+            </div>
+
+            <div
+              style={{
+                ...styles.projectModalGrid,
+                ...(isMobileViewport ? styles.projectModalGridMobile : {}),
+              }}
+            >
+              <div style={styles.formSection}>
+                <div style={styles.formSectionTitle}>Proje Bilgileri</div>
+                <div style={styles.formGrid}>
+                  <input
+                    className="soft-input"
+                    placeholder="Proje adı"
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    style={styles.input}
+                    autoFocus
+                  />
+
+                  <div style={styles.projectColorPicker}>
+                    {DEFAULT_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setNewProjectColor(color)}
+                        style={{
+                          ...styles.projectColorSwatch,
+                          background: color,
+                          boxShadow:
+                            newProjectColor === color
+                              ? "0 0 0 3px rgba(37,99,235,.18)"
+                              : undefined,
+                        }}
+                        title={color}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div style={styles.formSection}>
+                <div style={styles.formSectionTitle}>İsteğe Bağlı İlk Kayıt</div>
+                <div style={styles.formGrid}>
+                  <input
+                    className="soft-input"
+                    placeholder="İlk kayıt adı"
+                    value={newProjectFirstItem}
+                    onChange={(e) => setNewProjectFirstItem(e.target.value)}
+                    style={styles.input}
+                  />
+                  <input
+                    className="soft-input"
+                    placeholder="Tutar"
+                    value={newProjectAmount}
+                    onChange={(e) => setNewProjectAmount(e.target.value)}
+                    style={styles.input}
+                  />
+                  <input
+                    className="soft-input"
+                    type="date"
+                    value={newProjectDate}
+                    onChange={(e) => setNewProjectDate(e.target.value)}
+                    style={styles.input}
+                  />
+                  <select
+                    className="soft-input"
+                    value={newProjectKdvli ? "kdvli" : "kdvsiz"}
+                    onChange={(e) => setNewProjectKdvli(e.target.value === "kdvli")}
+                    style={styles.input}
+                  >
+                    <option value="kdvsiz">KDV&apos;siz</option>
+                    <option value="kdvli">+ %20 KDV</option>
+                  </select>
+                </div>
+
+                <div style={styles.formChecks}>
+                  <button
+                    type="button"
+                    onClick={() => setNewProjectInvoice((prev) => !prev)}
+                    style={{
+                      ...styles.statusToggle,
+                      ...(newProjectInvoice ? styles.statusToggleActive : {}),
+                    }}
+                  >
+                    <span
+                      style={{
+                        ...styles.statusToggleTrack,
+                        ...(newProjectInvoice ? styles.statusToggleTrackActive : {}),
+                      }}
+                    >
+                      <span
+                        style={{
+                          ...styles.statusToggleThumb,
+                          ...(newProjectInvoice ? styles.statusToggleThumbActive : {}),
+                        }}
+                      />
+                    </span>
+                    <span style={styles.statusToggleInfo}>
+                      <span
+                        style={{
+                          ...styles.statusToggleIconWrap,
+                          ...(newProjectInvoice
+                            ? styles.statusToggleIconWrapAmber
+                            : styles.statusToggleIconWrapMuted),
+                        }}
+                      >
+                        <Receipt size={14} />
+                      </span>
+                      <span style={styles.statusToggleLabel}>Fatura Kesildi</span>
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !newProjectPaid;
+                      setNewProjectPaid(next);
+                      if (next) setNewProjectInvoice(true);
+                    }}
+                    style={{
+                      ...styles.statusToggle,
+                      ...(newProjectPaid ? styles.statusToggleActive : {}),
+                    }}
+                  >
+                    <span
+                      style={{
+                        ...styles.statusToggleTrack,
+                        ...(newProjectPaid ? styles.statusToggleTrackActive : {}),
+                      }}
+                    >
+                      <span
+                        style={{
+                          ...styles.statusToggleThumb,
+                          ...(newProjectPaid ? styles.statusToggleThumbActive : {}),
+                        }}
+                      />
+                    </span>
+                    <span style={styles.statusToggleInfo}>
+                      <span
+                        style={{
+                          ...styles.statusToggleIconWrap,
+                          ...(newProjectPaid
+                            ? styles.statusToggleIconWrapTeal
+                            : styles.statusToggleIconWrapMuted),
+                        }}
+                      >
+                        <CheckCircle2 size={14} />
+                      </span>
+                      <span style={styles.statusToggleLabel}>Ödeme Alındı</span>
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.projectModalActions}>
+              <button
+                type="button"
+                onClick={yeniProjeKaydet}
+                style={styles.primaryBtn}
+              >
+                Projeyi Oluştur
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       <div style={styles.shell} className="app-shell">
@@ -4445,6 +4699,78 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 16,
     padding: 16,
     boxShadow: "var(--shadow)",
+  },
+  projectModalOverlay: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 390,
+    background: "rgba(15,23,42,0.36)",
+    backdropFilter: "blur(8px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  projectModalCard: {
+    width: "100%",
+    maxWidth: 760,
+    borderRadius: 24,
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+    boxShadow: "0 28px 60px rgba(15,23,42,0.2)",
+    padding: 20,
+    display: "grid",
+    gap: 16,
+  },
+  projectModalCardMobile: {
+    maxWidth: 520,
+    padding: 16,
+  },
+  projectModalHead: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+  projectModalTitle: {
+    fontSize: 20,
+    fontWeight: 900,
+    color: "var(--text)",
+    letterSpacing: "-0.4px",
+  },
+  projectModalHint: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "var(--muted)",
+    lineHeight: 1.5,
+  },
+  projectModalGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1.15fr",
+    gap: 14,
+    alignItems: "start",
+  },
+  projectModalGridMobile: {
+    gridTemplateColumns: "1fr",
+  },
+  projectModalActions: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 10,
+  },
+  projectColorPicker: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap",
+    alignItems: "center",
+    padding: "6px 0",
+  },
+  projectColorSwatch: {
+    width: 22,
+    height: 22,
+    borderRadius: 999,
+    border: "none",
+    cursor: "pointer",
   },
   ocrOverlay: {
     position: "fixed",
