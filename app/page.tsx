@@ -931,12 +931,10 @@ export default function Page() {
     setImageImportRows([]);
     setMsg("Görsel analiz başlatıldı. İlk kullanımda dil dosyaları indirildiği için biraz sürebilir.");
 
-    let worker: Awaited<ReturnType<(typeof import("tesseract.js"))["createWorker"]>> | null = null;
-
     try {
-      const { createWorker } = await import("tesseract.js");
-      worker = await Promise.race([
-        createWorker(["tur", "eng"], 1, {
+      const { recognize } = await import("tesseract.js");
+      const result = await Promise.race([
+        recognize(file, "tur+eng", {
           logger: (info) => {
             if (!info?.status) return;
             const percent = info.progress ? ` %${Math.round(info.progress * 100)}` : "";
@@ -946,26 +944,11 @@ export default function Page() {
         new Promise<never>((_, reject) => {
           window.setTimeout(() => {
             reject(
-              new Error(
-                "OCR başlatılamadı. Tarayıcı worker kurulumu takıldı; sayfayı yenileyip tekrar dene."
-              )
-            );
-          }, 20000);
-        }),
-      ]);
-
-      const result = await Promise.race([
-        worker.recognize(file),
-        new Promise<never>((_, reject) => {
-          window.setTimeout(() => {
-            reject(
               new Error("OCR zaman aşımına uğradı. Daha küçük veya daha net bir görsel deneyin.")
             );
           }, 30000);
         }),
       ]);
-      await worker.terminate();
-      worker = null;
 
       const parsedRows = parsePaymentTableFromOcr(result.data.text || "");
       if (!parsedRows.length) {
@@ -982,11 +965,6 @@ export default function Page() {
           : "Görsel analiz edilemedi."
       );
     } finally {
-      if (worker) {
-        try {
-          await worker.terminate();
-        } catch {}
-      }
       setImageImportBusy(false);
       setImageImportMinimized(false);
     }
