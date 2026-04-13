@@ -189,6 +189,7 @@ export default function Page() {
   const [invoiceTargetId, setInvoiceTargetId] = useState<number | null>(null);
   const [uploadingInvoiceId, setUploadingInvoiceId] = useState<number | null>(null);
   const [imageImportBusy, setImageImportBusy] = useState(false);
+  const [imageImportMinimized, setImageImportMinimized] = useState(false);
   const [imageImportRows, setImageImportRows] = useState<ImportedDraftRow[]>([]);
   const [settingsName, setSettingsName] = useState("");
   const [settingsAvatarUrl, setSettingsAvatarUrl] = useState<string | null>(null);
@@ -903,6 +904,7 @@ export default function Page() {
     }
 
     setImageImportBusy(true);
+    setImageImportMinimized(false);
     setImageImportRows([]);
     setMsg("Görsel analiz başlatıldı. İlk kullanımda dil dosyaları indirildiği için biraz sürebilir.");
 
@@ -971,6 +973,7 @@ export default function Page() {
     }
 
     setImageImportRows([]);
+    setImageImportMinimized(false);
     setMsg(`${payload.length} kayıt projeye eklendi.`);
     pushActivity("Görselden kayıt eklendi", `${aktifSekme} · ${payload.length} kayıt`);
     await yukle();
@@ -2387,6 +2390,24 @@ export default function Page() {
           from{opacity:0;transform:translateY(10px)}
           to{opacity:1;transform:translateY(0)}
         }
+        @keyframes ocrSpin{
+          from{transform:rotate(0deg)}
+          to{transform:rotate(360deg)}
+        }
+        @keyframes catWalk{
+          0%{left:0%}
+          50%{left:calc(100% - 34px)}
+          100%{left:0%}
+        }
+        @keyframes catTail{
+          0%{transform:rotate(18deg)}
+          50%{transform:rotate(-16deg)}
+          100%{transform:rotate(18deg)}
+        }
+        @keyframes catBubble{
+          0%,100%{transform:translateY(0);opacity:.85}
+          50%{transform:translateY(-4px);opacity:1}
+        }
         @keyframes floatIn{
           from{opacity:0;transform:translateY(14px) scale(.985)}
           to{opacity:1;transform:translateY(0) scale(1)}
@@ -2509,16 +2530,52 @@ export default function Page() {
         }
       `}</style>
 
-      {imageImportBusy ? (
-        <div style={styles.ocrOverlay}>
-          <div style={styles.ocrOverlayCard}>
-            <div style={styles.ocrOverlaySpinner} />
+      {imageImportBusy && !imageImportMinimized ? (
+        <div style={styles.ocrOverlay} onClick={() => setImageImportMinimized(true)}>
+          <div style={styles.ocrOverlayCard} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.ocrCatWrap}>
+              <div style={styles.ocrCatTrack}>
+                <div className="ocr-cat-runner" style={styles.ocrCatRunner}>
+                  <div style={styles.ocrCatBody}>
+                    <div style={styles.ocrCatEarLeft} />
+                    <div style={styles.ocrCatEarRight} />
+                    <div style={styles.ocrCatEyeLeft} />
+                    <div style={styles.ocrCatEyeRight} />
+                    <div className="ocr-cat-tail" style={styles.ocrCatTail} />
+                  </div>
+                  <div className="ocr-cat-bubble" style={styles.ocrCatBubble}>
+                    ?
+                  </div>
+                </div>
+              </div>
+            </div>
             <div style={styles.ocrOverlayTitle}>Görsel analiz ediliyor</div>
             <div style={styles.ocrOverlayText}>
               {msg || "İlk kullanımda OCR dosyaları indirildiği için biraz sürebilir."}
             </div>
+            <button
+              type="button"
+              onClick={() => setImageImportMinimized(true)}
+              style={styles.ocrOverlayMinimizeBtn}
+            >
+              Arka planda sürdür
+            </button>
           </div>
         </div>
+      ) : null}
+
+      {imageImportBusy && imageImportMinimized ? (
+        <button
+          type="button"
+          onClick={() => setImageImportMinimized(false)}
+          style={styles.ocrMiniDock}
+        >
+          <div style={styles.ocrMiniDot} />
+          <div style={styles.ocrMiniTextWrap}>
+            <div style={styles.ocrMiniTitle}>Görsel işleniyor</div>
+            <div style={styles.ocrMiniText}>OCR arka planda çalışıyor</div>
+          </div>
+        </button>
       ) : null}
 
       <div style={styles.shell} className="app-shell">
@@ -4385,13 +4442,103 @@ const styles: Record<string, CSSProperties> = {
     justifyItems: "center",
     textAlign: "center",
   },
-  ocrOverlaySpinner: {
-    width: 44,
-    height: 44,
+  ocrCatWrap: {
+    width: "100%",
+    display: "grid",
+    gap: 8,
+    justifyItems: "center",
+  },
+  ocrCatTrack: {
+    position: "relative",
+    width: "100%",
+    maxWidth: 240,
+    height: 34,
     borderRadius: 999,
-    border: "3px solid rgba(37,99,235,0.14)",
-    borderTopColor: "var(--blue)",
-    animation: "ocrSpin .9s linear infinite",
+    background: "linear-gradient(180deg, rgba(37,99,235,0.08), rgba(37,99,235,0.03))",
+    border: "1px solid rgba(37,99,235,0.12)",
+    overflow: "hidden",
+  },
+  ocrCatRunner: {
+    position: "absolute",
+    top: 6,
+    left: 0,
+    width: 34,
+    height: 22,
+    animation: "catWalk 2.3s ease-in-out infinite",
+  },
+  ocrCatBody: {
+    position: "relative",
+    width: 28,
+    height: 18,
+    borderRadius: "12px 12px 10px 10px",
+    background: "linear-gradient(180deg, #3459D9, #2345BF)",
+    boxShadow: "0 10px 22px rgba(37,99,235,0.24)",
+  },
+  ocrCatEarLeft: {
+    position: "absolute",
+    top: -5,
+    left: 4,
+    width: 0,
+    height: 0,
+    borderLeft: "5px solid transparent",
+    borderRight: "5px solid transparent",
+    borderBottom: "7px solid #3459D9",
+  },
+  ocrCatEarRight: {
+    position: "absolute",
+    top: -5,
+    right: 4,
+    width: 0,
+    height: 0,
+    borderLeft: "5px solid transparent",
+    borderRight: "5px solid transparent",
+    borderBottom: "7px solid #3459D9",
+  },
+  ocrCatEyeLeft: {
+    position: "absolute",
+    top: 7,
+    left: 8,
+    width: 3,
+    height: 3,
+    borderRadius: 999,
+    background: "#F8FAFC",
+  },
+  ocrCatEyeRight: {
+    position: "absolute",
+    top: 7,
+    right: 8,
+    width: 3,
+    height: 3,
+    borderRadius: 999,
+    background: "#F8FAFC",
+  },
+  ocrCatTail: {
+    position: "absolute",
+    top: 3,
+    right: -6,
+    width: 10,
+    height: 3,
+    borderRadius: 999,
+    background: "#2345BF",
+    transformOrigin: "left center",
+    animation: "catTail .75s ease-in-out infinite",
+  },
+  ocrCatBubble: {
+    position: "absolute",
+    top: -9,
+    right: -8,
+    width: 16,
+    height: 16,
+    borderRadius: 999,
+    background: "#F8FAFC",
+    color: "#2345BF",
+    fontSize: 10,
+    fontWeight: 900,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 8px 18px rgba(15,23,42,0.16)",
+    animation: "catBubble 1.1s ease-in-out infinite",
   },
   ocrOverlayTitle: {
     fontSize: 18,
@@ -4404,6 +4551,55 @@ const styles: Record<string, CSSProperties> = {
     lineHeight: 1.5,
     color: "var(--muted)",
     maxWidth: 280,
+  },
+  ocrOverlayMinimizeBtn: {
+    padding: "10px 14px",
+    borderRadius: 12,
+    border: "1px solid var(--border)",
+    background: "var(--slateSoft)",
+    color: "var(--text)",
+    fontWeight: 700,
+    fontSize: 12,
+    cursor: "pointer",
+  },
+  ocrMiniDock: {
+    position: "fixed",
+    right: 16,
+    bottom: 18,
+    zIndex: 410,
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    minWidth: 210,
+    padding: "12px 14px",
+    borderRadius: 18,
+    border: "1px solid rgba(37,99,235,0.14)",
+    background: "rgba(255,255,255,0.95)",
+    boxShadow: "0 18px 36px rgba(15,23,42,0.18)",
+    backdropFilter: "blur(10px)",
+    cursor: "pointer",
+  },
+  ocrMiniDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    background: "var(--blue)",
+    boxShadow: "0 0 0 6px rgba(37,99,235,0.14)",
+    animation: "ocrSpin 1.2s linear infinite",
+  },
+  ocrMiniTextWrap: {
+    display: "grid",
+    gap: 2,
+    textAlign: "left",
+  },
+  ocrMiniTitle: {
+    fontSize: 13,
+    fontWeight: 800,
+    color: "var(--text)",
+  },
+  ocrMiniText: {
+    fontSize: 11,
+    color: "var(--muted)",
   },
   settingsGrid: {
     display: "grid",
