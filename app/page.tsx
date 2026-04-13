@@ -99,6 +99,20 @@ import type {
   OdemeInsert,
   OdemeUpdate,
 } from "@/lib/database.types";
+
+const PROJECT_MODAL_COLORS = [
+  DEFAULT_COLORS[0],
+  DEFAULT_COLORS[1],
+  DEFAULT_COLORS[2],
+  DEFAULT_COLORS[3],
+  DEFAULT_COLORS[4],
+  DEFAULT_COLORS[5],
+  DEFAULT_COLORS[8],
+  DEFAULT_COLORS[10],
+  DEFAULT_COLORS[15],
+  DEFAULT_COLORS[16],
+];
+
 export default function Page() {
   const [data, setData] = useState<Odeme[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("home");
@@ -2699,9 +2713,9 @@ export default function Page() {
                 ...(isMobileViewport ? styles.projectModalGridMobile : {}),
               }}
             >
-              <div style={styles.formSection}>
+              <div style={{ ...styles.formSection, ...styles.projectModalSection }}>
                 <div style={styles.formSectionTitle}>Proje Bilgileri</div>
-                <div style={styles.formGrid}>
+                <div style={{ ...styles.formGrid, gridTemplateColumns: "1fr" }}>
                   <input
                     className="soft-input"
                     placeholder="Proje adı"
@@ -2712,7 +2726,7 @@ export default function Page() {
                   />
 
                   <div style={styles.projectColorPicker}>
-                    {DEFAULT_COLORS.map((color) => (
+                    {PROJECT_MODAL_COLORS.map((color) => (
                       <button
                         key={color}
                         type="button"
@@ -2732,7 +2746,7 @@ export default function Page() {
                 </div>
               </div>
 
-              <div style={styles.formSection}>
+              <div style={{ ...styles.formSection, ...styles.projectModalSection }}>
                 <div style={styles.formSectionTitle}>İsteğe Bağlı İlk Kayıt</div>
                 <div style={styles.formGrid}>
                   <input
@@ -4713,18 +4727,18 @@ const styles: Record<string, CSSProperties> = {
   },
   projectModalCard: {
     width: "100%",
-    maxWidth: 760,
-    borderRadius: 24,
+    maxWidth: 680,
+    borderRadius: 20,
     background: "var(--card)",
     border: "1px solid var(--border)",
-    boxShadow: "0 28px 60px rgba(15,23,42,0.2)",
-    padding: 20,
+    boxShadow: "0 24px 54px rgba(15,23,42,0.16)",
+    padding: 16,
     display: "grid",
-    gap: 16,
+    gap: 14,
   },
   projectModalCardMobile: {
-    maxWidth: 520,
-    padding: 16,
+    maxWidth: 500,
+    padding: 14,
   },
   projectModalHead: {
     display: "flex",
@@ -4733,21 +4747,21 @@ const styles: Record<string, CSSProperties> = {
     gap: 14,
   },
   projectModalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 900,
     color: "var(--text)",
     letterSpacing: "-0.4px",
   },
   projectModalHint: {
     marginTop: 4,
-    fontSize: 12,
+    fontSize: 11,
     color: "var(--muted)",
     lineHeight: 1.5,
   },
   projectModalGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1.15fr",
-    gap: 14,
+    gap: 12,
     alignItems: "start",
   },
   projectModalGridMobile: {
@@ -4759,18 +4773,24 @@ const styles: Record<string, CSSProperties> = {
     gap: 10,
   },
   projectColorPicker: {
-    display: "flex",
+    display: "grid",
+    gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
     gap: 8,
-    flexWrap: "wrap",
     alignItems: "center",
-    padding: "6px 0",
+    padding: "2px 0 0",
   },
   projectColorSwatch: {
-    width: 22,
-    height: 22,
+    width: 20,
+    height: 20,
     borderRadius: 999,
     border: "none",
     cursor: "pointer",
+    justifySelf: "start",
+  },
+  projectModalSection: {
+    gap: 10,
+    padding: 12,
+    borderRadius: 16,
   },
   ocrOverlay: {
     position: "fixed",
