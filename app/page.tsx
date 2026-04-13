@@ -3003,24 +3003,42 @@ export default function Page() {
 
               <div style={styles.card} className="content-card">
                 <div
-                  style={{
-                    display: "flex",
-                    gap: 12,
-                    marginBottom: 14,
-                    flexWrap: "wrap",
-                  }}
+                  style={
+                    isMobileViewport
+                      ? styles.mobileProjectSummaryStrip
+                      : {
+                          display: "flex",
+                          gap: 12,
+                          marginBottom: 14,
+                          flexWrap: "wrap",
+                        }
+                  }
                 >
-                  <div style={styles.miniSoft}>
+                  <div
+                    style={
+                      isMobileViewport ? styles.mobileProjectSummaryCard : styles.miniSoft
+                    }
+                  >
                     <div style={styles.miniLabel}>Ara Toplam</div>
                     <AnimatedMoney value={toplam} />
                   </div>
 
-                  <div style={styles.miniHighlight}>
+                  <div
+                    style={
+                      isMobileViewport
+                        ? styles.mobileProjectSummaryCardActive
+                        : styles.miniHighlight
+                    }
+                  >
                     <div style={styles.miniLabelStrong}>Ödenen</div>
                     <AnimatedMoney value={odenen} strong />
                   </div>
 
-                  <div style={styles.miniSoft}>
+                  <div
+                    style={
+                      isMobileViewport ? styles.mobileProjectSummaryCard : styles.miniSoft
+                    }
+                  >
                     <div style={styles.miniLabel}>Kalan</div>
                     <AnimatedMoney value={kalan} />
                   </div>
@@ -4307,27 +4325,90 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: "space-between",
     gap: 12,
   },
+  mobileProjectHeadMain: {
+    display: "grid",
+    gap: 6,
+    minWidth: 0,
+    flex: 1,
+  },
   mobileProjectTitle: {
     fontSize: 16,
     fontWeight: 800,
     color: "var(--text)",
     lineHeight: 1.3,
   },
+  mobileProjectMetaRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+  },
   mobileProjectMeta: {
-    fontSize: 13,
+    fontSize: 14,
+    fontWeight: 800,
+    color: "var(--textSoft)",
+  },
+  mobileProjectMetaMuted: {
+    fontSize: 11,
+    fontWeight: 700,
     color: "var(--muted)",
-    marginTop: 4,
+    background: "var(--slateSoft)",
+    border: "1px solid var(--border)",
+    borderRadius: 999,
+    padding: "4px 8px",
   },
   mobileProjectSubMeta: {
-    display: "grid",
-    gap: 4,
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap",
     fontSize: 12,
     color: "var(--muted)",
   },
   mobileProjectActions: {
-    display: "flex",
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
     gap: 8,
-    flexWrap: "wrap",
+  },
+  mobileProjectActionBtn: {
+    minHeight: 38,
+    borderRadius: 12,
+    border: "1px solid var(--border)",
+    background: "var(--slateSoft)",
+    color: "var(--text)",
+    fontWeight: 700,
+    fontSize: 12,
+    cursor: "pointer",
+  },
+  mobileProjectDeleteBtn: {
+    minHeight: 38,
+    borderRadius: 12,
+    border: "1px solid var(--red)",
+    background: "var(--redSoft)",
+    color: "var(--red)",
+    fontWeight: 700,
+    fontSize: 12,
+    cursor: "pointer",
+  },
+  mobileProjectSummaryStrip: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: 8,
+    marginBottom: 14,
+  },
+  mobileProjectSummaryCard: {
+    background: "var(--slateSoft)",
+    border: "1px solid var(--border)",
+    borderRadius: 14,
+    padding: "10px 12px",
+    minWidth: 0,
+  },
+  mobileProjectSummaryCardActive: {
+    background: "var(--blueSoft)",
+    border: "1px solid rgba(37,99,235,0.22)",
+    borderRadius: 14,
+    padding: "10px 12px",
+    minWidth: 0,
+    boxShadow: "0 8px 18px rgba(37,99,235,0.10)",
   },
   sectionHead: {
     display: "flex",

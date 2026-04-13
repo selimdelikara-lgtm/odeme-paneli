@@ -701,10 +701,18 @@ export function MobileProjectCards({
             }}
           >
             <div style={styles.mobileProjectHead}>
-              <div>
+              <div style={styles.mobileProjectHeadMain}>
                 <div style={styles.mobileProjectTitle}>{row.proje || "?"}</div>
-                <div style={styles.mobileProjectMeta}>
-                  {shortDate(row.fatura_tarihi)} · {row.tutar ? tl(Number(row.tutar)) : "—"}
+                <div style={styles.mobileProjectMetaRow}>
+                  <div style={styles.mobileProjectMeta}>
+                    {row.tutar ? tl(Number(row.tutar)) : "—"}
+                  </div>
+                  <div style={styles.mobileProjectMetaMuted}>
+                    {shortDate(row.fatura_tarihi)}
+                  </div>
+                  {invoices.length ? (
+                    <div style={styles.mobileProjectMetaMuted}>{invoices.length} fatura</div>
+                  ) : null}
                 </div>
               </div>
               <button
@@ -724,8 +732,10 @@ export function MobileProjectCards({
             </div>
 
             <div style={styles.mobileProjectSubMeta}>
-              <span>Oluşturma: {shortDateTime(meta?.createdAt || null)}</span>
               <span>Güncelleme: {shortDateTime(meta?.updatedAt || null)}</span>
+              {meta?.createdAt ? (
+                <span>Oluşturma: {shortDateTime(meta.createdAt)}</span>
+              ) : null}
             </div>
 
             {invoices.length ? (
@@ -745,19 +755,29 @@ export function MobileProjectCards({
             ) : null}
 
             <div style={styles.mobileProjectActions}>
-              <button className="hover-button" type="button" onClick={() => editAc(row)} style={styles.secondaryBtn}>
+              <button
+                className="hover-button"
+                type="button"
+                onClick={() => editAc(row)}
+                style={styles.mobileProjectActionBtn}
+              >
                 Düzenle
               </button>
               <button
                 className="hover-button"
                 type="button"
                 onClick={() => openInvoicePicker(row.id)}
-                style={styles.secondaryBtn}
+                style={styles.mobileProjectActionBtn}
                 disabled={uploadingInvoiceId === row.id}
               >
                 Fatura
               </button>
-              <button className="hover-button" type="button" onClick={() => void kayitSil(row.id)} style={styles.deleteBtn}>
+              <button
+                className="hover-button"
+                type="button"
+                onClick={() => void kayitSil(row.id)}
+                style={styles.mobileProjectDeleteBtn}
+              >
                 Sil
               </button>
             </div>
