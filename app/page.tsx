@@ -915,6 +915,46 @@ export default function Page() {
     imageImportInputRef.current?.click();
   };
 
+  const prepareImageForOcr = async (file: File) => {
+    const objectUrl = URL.createObjectURL(file);
+
+    try {
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("Görsel yüklenemedi."));
+        img.src = objectUrl;
+      });
+
+      const scale = Math.min(2.2, Math.max(1.4, 1800 / Math.max(image.width, image.height)));
+      const width = Math.round(image.width * scale);
+      const height = Math.round(image.height * scale);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas hazırlanamıyor.");
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+      ctx.filter = "grayscale(1) contrast(1.28) brightness(1.06)";
+      ctx.drawImage(image, 0, 0, width, height);
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((value) => {
+          if (value) resolve(value);
+          else reject(new Error("OCR görseli hazırlanamadı."));
+        }, "image/png");
+      });
+
+      return blob;
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  };
+
   const importRowsFromImage = async (file: File) => {
     if (!aktifSekme) {
       setMsg("Önce bir proje sekmesi açman gerekiyor.");
@@ -929,12 +969,13 @@ export default function Page() {
     setImageImportBusy(true);
     setImageImportMinimized(false);
     setImageImportRows([]);
-    setMsg("Görsel analiz başlatıldı. İlk kullanımda dil dosyaları indirildiği için biraz sürebilir.");
+    setMsg("Görsel OCR için hazırlanıyor.");
 
     try {
+      const preparedImage = await prepareImageForOcr(file);
       const { recognize } = await import("tesseract.js");
       const result = await Promise.race([
-        recognize(file, "tur+eng", {
+        recognize(preparedImage, "eng", {
           logger: (info) => {
             if (!info?.status) return;
             const percent = info.progress ? ` %${Math.round(info.progress * 100)}` : "";
