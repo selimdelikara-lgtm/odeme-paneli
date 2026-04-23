@@ -715,6 +715,8 @@ export function MobileProjectCards({
                   <div style={styles.mobileProjectMetaMuted}>
                     {shortDate(row.fatura_tarihi)}
                   </div>
+                  {row.kdvli ? <div style={styles.mobileProjectMetaMuted}>+ %20 KDV</div> : null}
+                  {row.gvkli ? <div style={styles.mobileProjectMetaMuted}>- %15 GVK</div> : null}
                   {invoices.length ? (
                     <div style={styles.mobileProjectMetaMuted}>{invoices.length} fatura</div>
                   ) : null}

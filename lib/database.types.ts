@@ -20,6 +20,7 @@ export type Database = {
           fatura_tarihi: string | null;
           fatura_kesildi: boolean | null;
           kdvli: boolean | null;
+          gvkli: boolean | null;
           sira: number | null;
         };
         Insert: {
@@ -32,6 +33,7 @@ export type Database = {
           fatura_tarihi?: string | null;
           fatura_kesildi?: boolean | null;
           kdvli?: boolean | null;
+          gvkli?: boolean | null;
           sira?: number | null;
         };
         Update: {
@@ -44,6 +46,7 @@ export type Database = {
           fatura_tarihi?: string | null;
           fatura_kesildi?: boolean | null;
           kdvli?: boolean | null;
+          gvkli?: boolean | null;
           sira?: number | null;
         };
         Relationships: [];

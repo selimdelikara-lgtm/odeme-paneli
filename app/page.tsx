@@ -112,6 +112,20 @@ const PROJECT_MODAL_COLORS = [
   DEFAULT_COLORS[16],
 ];
 
+type TaxMode = "none" | "kdv" | "gvk" | "kdv_gvk";
+
+const taxModeFromFlags = (hasKdv: boolean, hasGvk: boolean): TaxMode => {
+  if (hasKdv && hasGvk) return "kdv_gvk";
+  if (hasKdv) return "kdv";
+  if (hasGvk) return "gvk";
+  return "none";
+};
+
+const taxFlagsFromMode = (mode: string) => ({
+  kdvli: mode === "kdv" || mode === "kdv_gvk",
+  gvkli: mode === "gvk" || mode === "kdv_gvk",
+});
+
 export default function Page() {
   const [data, setData] = useState<Odeme[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("home");
@@ -137,6 +151,7 @@ export default function Page() {
   const [tutar, setTutar] = useState("");
   const [tarih, setTarih] = useState("");
   const [kdvli, setKdvli] = useState(false);
+  const [gvkli, setGvkli] = useState(false);
   const [faturaKesildi, setFaturaKesildi] = useState(false);
   const [odemeAlindi, setOdemeAlindi] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
@@ -212,6 +227,7 @@ export default function Page() {
   const [newProjectAmount, setNewProjectAmount] = useState("");
   const [newProjectDate, setNewProjectDate] = useState("");
   const [newProjectKdvli, setNewProjectKdvli] = useState(false);
+  const [newProjectGvkli, setNewProjectGvkli] = useState(false);
   const [newProjectInvoice, setNewProjectInvoice] = useState(false);
   const [newProjectPaid, setNewProjectPaid] = useState(false);
   const [settingsName, setSettingsName] = useState("");
@@ -263,6 +279,7 @@ export default function Page() {
     setTutar(draft?.tutar ?? "");
     setTarih(draft?.tarih ?? "");
     setKdvli(draft?.kdvli ?? false);
+    setGvkli(draft?.gvkli ?? false);
     setFaturaKesildi(draft?.faturaKesildi ?? false);
     setOdemeAlindi(draft?.odemeAlindi ?? false);
   };
@@ -326,6 +343,7 @@ export default function Page() {
         tutar,
         tarih,
         kdvli,
+        gvkli,
         faturaKesildi,
         odemeAlindi,
         ...patch,
@@ -713,6 +731,7 @@ export default function Page() {
     setTutar("");
     setTarih("");
     setKdvli(false);
+    setGvkli(false);
     setFaturaKesildi(false);
     setOdemeAlindi(false);
     setEditId(null);
@@ -1100,6 +1119,7 @@ export default function Page() {
     setTutar(row.tutar ? String(row.tutar) : "");
     setTarih(row.fatura_tarihi || "");
     setKdvli(Boolean(row.kdvli));
+    setGvkli(Boolean(row.gvkli));
     setFaturaKesildi(Boolean(row.fatura_kesildi));
     setOdemeAlindi(Boolean(row.odendi));
   };
@@ -1121,6 +1141,7 @@ export default function Page() {
       odendi: odemeAlindi,
       grup: aktifSekme,
       kdvli,
+      gvkli,
       ...(editId ? {} : { sira: nextSira }),
     };
 
@@ -1172,6 +1193,7 @@ export default function Page() {
         fatura_tarihi: row.fatura_tarihi,
         fatura_kesildi: row.fatura_kesildi,
         kdvli: row.kdvli,
+        gvkli: row.gvkli,
         sira: nextSira,
       },
     ] satisfies OdemeInsert[]);
@@ -1231,6 +1253,7 @@ export default function Page() {
       fatura_tarihi: row.fatura_tarihi,
       fatura_kesildi: row.fatura_kesildi,
       kdvli: row.kdvli,
+      gvkli: row.gvkli,
       sira: row.sira,
     }));
 
@@ -1893,12 +1916,18 @@ export default function Page() {
               />
               <select
                 className="soft-input"
-                value={kdvli ? "kdvli" : "kdvsiz"}
-                onChange={(e) => setKdvli(e.target.value === "kdvli")}
+                value={taxModeFromFlags(kdvli, gvkli)}
+                onChange={(e) => {
+                  const next = taxFlagsFromMode(e.target.value);
+                  setKdvli(next.kdvli);
+                  setGvkli(next.gvkli);
+                }}
                 style={styles.input}
               >
-                <option value="kdvsiz">KDV’siz</option>
-                <option value="kdvli">+ %20 KDV</option>
+                <option value="none">Vergisiz</option>
+                <option value="kdv">+ %20 KDV</option>
+                <option value="gvk">- %15 GVK</option>
+                <option value="kdv_gvk">+ %20 KDV / - %15 GVK</option>
               </select>
               <button className="hover-button" onClick={kaydet} style={styles.secondaryBtn}>
                 Kaydet
@@ -1911,6 +1940,7 @@ export default function Page() {
             <div>
               <div className="money-value">{row.tutar ? tl(Number(row.tutar)) : "—"}</div>
               {row.kdvli ? <div style={styles.metaText}>+ %20 KDV</div> : null}
+              {row.gvkli ? <div style={styles.metaText}>- %15 GVK</div> : null}
             </div>
           )}
         </td>
@@ -2217,6 +2247,7 @@ export default function Page() {
     setNewProjectAmount("");
     setNewProjectDate("");
     setNewProjectKdvli(false);
+    setNewProjectGvkli(false);
     setNewProjectInvoice(false);
     setNewProjectPaid(false);
     setNewProjectColor(
@@ -2267,6 +2298,7 @@ export default function Page() {
         fatura_tarihi: newProjectDate || null,
         fatura_kesildi: newProjectPaid ? true : newProjectInvoice,
         kdvli: newProjectKdvli,
+        gvkli: newProjectGvkli,
         sira: nextSira,
       };
 
@@ -2288,6 +2320,7 @@ export default function Page() {
           fatura_tarihi: null,
           fatura_kesildi: false,
           kdvli: false,
+          gvkli: false,
           sira: null,
         },
       ]);
@@ -2600,12 +2633,18 @@ export default function Page() {
                   />
                   <select
                     className="soft-input"
-                    value={newProjectKdvli ? "kdvli" : "kdvsiz"}
-                    onChange={(e) => setNewProjectKdvli(e.target.value === "kdvli")}
+                    value={taxModeFromFlags(newProjectKdvli, newProjectGvkli)}
+                    onChange={(e) => {
+                      const next = taxFlagsFromMode(e.target.value);
+                      setNewProjectKdvli(next.kdvli);
+                      setNewProjectGvkli(next.gvkli);
+                    }}
                     style={styles.input}
                   >
-                    <option value="kdvsiz">KDV&apos;siz</option>
-                    <option value="kdvli">+ %20 KDV</option>
+                    <option value="none">Vergisiz</option>
+                    <option value="kdv">+ %20 KDV</option>
+                    <option value="gvk">- %15 GVK</option>
+                    <option value="kdv_gvk">+ %20 KDV / - %15 GVK</option>
                   </select>
                 </div>
 
@@ -3158,16 +3197,19 @@ export default function Page() {
 
                       <select
                         className="soft-input"
-                        value={kdvli ? "kdvli" : "kdvsiz"}
+                        value={taxModeFromFlags(kdvli, gvkli)}
                         onChange={(e) => {
-                          const value = e.target.value === "kdvli";
-                          setKdvli(value);
-                          updateDraftField({ kdvli: value });
+                          const next = taxFlagsFromMode(e.target.value);
+                          setKdvli(next.kdvli);
+                          setGvkli(next.gvkli);
+                          updateDraftField(next);
                         }}
                         style={styles.input}
                       >
-                        <option value="kdvsiz">KDV’siz</option>
-                        <option value="kdvli">+ %20 KDV</option>
+                        <option value="none">Vergisiz</option>
+                        <option value="kdv">+ %20 KDV</option>
+                        <option value="gvk">- %15 GVK</option>
+                        <option value="kdv_gvk">+ %20 KDV / - %15 GVK</option>
                       </select>
 
                       <input

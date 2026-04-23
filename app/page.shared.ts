@@ -8,6 +8,7 @@ export type Odeme = {
   fatura_tarihi: string | null;
   fatura_kesildi: boolean | null;
   kdvli: boolean | null;
+  gvkli: boolean | null;
   sira: number | null;
 };
 
@@ -30,6 +31,7 @@ export type DraftState = {
   tutar: string;
   tarih: string;
   kdvli: boolean;
+  gvkli: boolean;
   faturaKesildi: boolean;
   odemeAlindi: boolean;
 };

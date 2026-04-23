@@ -2,6 +2,13 @@ alter table public.odemeler
 add column if not exists user_id uuid references auth.users(id);
 
 alter table public.odemeler
+add column if not exists gvkli boolean default false;
+
+update public.odemeler
+set gvkli = false
+where gvkli is null;
+
+alter table public.odemeler
 alter column user_id set default auth.uid();
 
 update public.odemeler
