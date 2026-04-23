@@ -2585,12 +2585,28 @@ export default function Page() {
           background:conic-gradient(from 160deg, rgba(56,189,248,.18), rgba(37,99,235,.08), rgba(20,184,166,.16), rgba(56,189,248,.18));
           animation:loginAurora 12s linear infinite;
         }
+        .login-showcase::after{
+          content:"";
+          position:absolute;
+          inset:0;
+          background-image:radial-gradient(circle, rgba(147,197,253,0.34) 1.7px, transparent 2px);
+          background-size:54px 54px;
+          opacity:.56;
+          animation:loginDotsDrift 9s ease-in-out infinite alternate;
+          pointer-events:none;
+        }
+        .login-showcase > *{position:relative;z-index:1}
         .login-card{animation:loginCardIn .5s cubic-bezier(.22,1,.36,1) both}
         .login-brand,.login-headline{animation:loginTextRise .55s cubic-bezier(.22,1,.36,1) both}
         .login-headline{animation-delay:.08s}
         @keyframes loginAurora{
           from{transform:rotate(0deg) scale(1)}
           to{transform:rotate(360deg) scale(1)}
+        }
+        @keyframes loginDotsDrift{
+          0%{transform:translate3d(0,0,0);opacity:.42}
+          45%{transform:translate3d(7px,-5px,0);opacity:.62}
+          100%{transform:translate3d(-5px,6px,0);opacity:.48}
         }
         @keyframes loginCardIn{
           from{opacity:0;transform:translateY(18px) scale(.985)}
@@ -5613,8 +5629,8 @@ const styles: Record<string, CSSProperties> = {
     overflow: "hidden",
     padding: "36px 34px",
     background:
-      "radial-gradient(circle, rgba(147,197,253,0.22) 1.6px, transparent 1.8px), linear-gradient(90deg, rgba(147,197,253,0.14) 1px, transparent 1px), linear-gradient(180deg, rgba(147,197,253,0.14) 1px, transparent 1px), #0B1F45",
-    backgroundSize: "54px 54px, 33.333% 33.333%, 33.333% 33.333%, auto",
+      "linear-gradient(90deg, rgba(147,197,253,0.14) 1px, transparent 1px), linear-gradient(180deg, rgba(147,197,253,0.14) 1px, transparent 1px), #0B1F45",
+    backgroundSize: "33.333% 33.333%, 33.333% 33.333%, auto",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
@@ -5875,52 +5891,112 @@ const styles: Record<string, CSSProperties> = {
   loginGraphTile: {
     gridColumn: "3 / 4",
     gridRow: "3 / 4",
-    background: "rgba(199,242,155,0.92)",
-    border: "1.5px solid rgba(255,255,255,0.86)",
+    background: "linear-gradient(145deg, rgba(147,197,253,0.22), rgba(39,193,141,0.20))",
+    border: "1.5px solid rgba(255,255,255,0.24)",
+    borderRadius: 24,
     alignSelf: "end",
-    height: 150,
+    height: 158,
   },
-  loginGraphHillOne: {
+  loginCardStackBack: {
     position: "absolute",
-    left: -16,
-    right: -16,
-    bottom: 28,
-    height: 76,
-    borderRadius: "50% 50% 0 0",
-    background: "#BDF4D3",
-    borderTop: "1.5px solid rgba(8,31,69,0.72)",
+    left: 22,
+    right: 24,
+    top: 42,
+    height: 74,
+    borderRadius: 18,
+    border: "1.5px solid rgba(255,255,255,0.60)",
+    background: "linear-gradient(135deg, #93E0B4, #BFDBFE)",
+    transform: "rotate(-7deg)",
+    boxShadow: "0 18px 34px rgba(0,0,0,0.18)",
   },
-  loginGraphHillTwo: {
+  loginCardStackFront: {
     position: "absolute",
-    left: -20,
-    right: -20,
-    bottom: 58,
-    height: 84,
-    borderRadius: "50% 50% 0 0",
-    background: "#BFDBFE",
-    borderTop: "1.5px solid rgba(8,31,69,0.72)",
-    opacity: 0.95,
+    left: 30,
+    right: 18,
+    top: 56,
+    height: 82,
+    borderRadius: 20,
+    border: "1.5px solid rgba(255,255,255,0.76)",
+    background: "linear-gradient(135deg, #2563EB, #081F45)",
+    transform: "rotate(5deg)",
+    padding: 16,
+    display: "grid",
+    alignContent: "space-between",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.24)",
+  },
+  loginCardChip: {
+    width: 30,
+    height: 22,
+    borderRadius: 7,
+    background: "#C7F29B",
+    display: "block",
+  },
+  loginCardNumberLine: {
+    width: "78%",
+    height: 3,
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.72)",
+    display: "block",
+  },
+  loginCardNumberShort: {
+    width: "48%",
+    height: 3,
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.46)",
+    display: "block",
+  },
+  loginReceiptMini: {
+    position: "absolute",
+    right: 18,
+    top: 14,
+    width: 62,
+    height: 72,
+    borderRadius: 14,
+    background: "#F8FAFC",
+    border: "1.5px solid rgba(255,255,255,0.82)",
+    padding: 10,
+    display: "grid",
+    gap: 6,
+    boxShadow: "0 16px 30px rgba(0,0,0,0.20)",
+  },
+  loginReceiptLine: {
+    height: 2,
+    borderRadius: 999,
+    background: "rgba(8,31,69,0.34)",
+    display: "block",
+  },
+  loginReceiptTotal: {
+    width: 26,
+    height: 26,
+    borderRadius: 999,
+    background: "#27C18D",
+    color: "#081F45",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 900,
+    marginTop: 2,
   },
   loginGraphCard: {
     position: "absolute",
-    right: 16,
-    top: 14,
+    left: 18,
+    bottom: 16,
     borderRadius: 14,
-    border: "1px solid rgba(8,31,69,0.14)",
-    background: "rgba(255,255,255,0.76)",
+    border: "1px solid rgba(255,255,255,0.22)",
+    background: "rgba(8,31,69,0.82)",
     padding: "10px 12px",
     display: "grid",
     gap: 4,
     boxShadow: "0 14px 28px rgba(8,31,69,0.14)",
   },
   loginGraphCardLabel: {
-    color: "#475569",
+    color: "rgba(226,232,240,0.72)",
     fontSize: 10,
     fontWeight: 900,
     letterSpacing: 0.6,
   },
   loginGraphCardValue: {
-    color: "#081F45",
+    color: "#F8FAFC",
     fontSize: 22,
     lineHeight: 1,
     fontWeight: 900,

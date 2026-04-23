@@ -414,8 +414,17 @@ export function AuthScreen({
               </div>
 
               <div style={{ ...styles.loginIllustrationTile, ...styles.loginGraphTile }}>
-                <div style={styles.loginGraphHillOne} />
-                <div style={styles.loginGraphHillTwo} />
+                <div style={styles.loginCardStackBack} />
+                <div style={styles.loginCardStackFront}>
+                  <span style={styles.loginCardChip} />
+                  <span style={styles.loginCardNumberLine} />
+                  <span style={styles.loginCardNumberShort} />
+                </div>
+                <div style={styles.loginReceiptMini}>
+                  <span style={styles.loginReceiptLine} />
+                  <span style={styles.loginReceiptLine} />
+                  <span style={styles.loginReceiptTotal}>₺</span>
+                </div>
                 <div style={styles.loginGraphCard}>
                   <span style={styles.loginGraphCardLabel}>TAHSİLAT</span>
                   <strong style={styles.loginGraphCardValue}>%84</strong>
