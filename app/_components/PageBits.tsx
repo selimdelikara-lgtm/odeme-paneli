@@ -281,38 +281,33 @@ export function AuthScreen({
   return (
     <div style={{ ...styles.loginWrap, ...themeVars }} className="login-wrap">
       <div style={styles.loginShell} className="login-shell">
-        {!isMobileViewport ? (
-          <div style={styles.loginShowcase} className="login-showcase">
-            <div style={styles.loginOrbOne} />
-            <div style={styles.loginOrbTwo} />
-            <div style={styles.loginOrbThree} />
-
-            <div style={styles.loginBrand} className="login-brand">
-              ÖDEDİ Mİ
-            </div>
-            <h1 style={styles.loginHeadline} className="login-headline">
-              Freelance işler, faturalar ve tahsilatlar tek düzende.
-            </h1>
-            <p style={styles.loginCopy}>
-              Hangi projenin ödendiğini, hangisinin faturada beklediğini ve toplam tahsilatını
-              düzenli takip etmek için sade bir panel.
-            </p>
-            <div style={styles.loginStatRow}>
-              <div style={styles.loginStatCard}>
-                <div style={styles.loginStatLabel}>Takip</div>
-                <div style={styles.loginStatValue}>Proje + ödeme</div>
-              </div>
-              <div style={styles.loginStatCard}>
-                <div style={styles.loginStatLabel}>Kontrol</div>
-                <div style={styles.loginStatValue}>Fatura + tahsilat</div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
         <div style={styles.loginCard} className="login-card">
+          <div style={styles.loginLogoWrap}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/odedimi-logo.svg" alt="Ödedi mi" style={styles.loginLogo} />
+          </div>
           <div style={styles.loginCardTitle} className="login-card-title">
             {authTitle}
+          </div>
+
+          <button
+            type="button"
+            className="hover-button"
+            onClick={() => void authLoginWithGoogle()}
+            style={styles.loginGoogleWideButton}
+          >
+            <span style={styles.btnInner}>
+              <span style={styles.googleMark}>
+                <span style={{ color: "#4285F4" }}>G</span>
+              </span>
+              Google ile devam et
+            </span>
+          </button>
+
+          <div style={styles.loginDividerText}>
+            <span style={styles.loginDividerTextLine} />
+            <span>veya</span>
+            <span style={styles.loginDividerTextLine} />
           </div>
 
           <div style={styles.loginSection} className="login-section">
@@ -358,7 +353,7 @@ export function AuthScreen({
             </div>
             <button
               className="hover-button"
-              onClick={() => void (isMobileViewport ? authLogin() : signupMode ? authSignUp() : authLogin())}
+              onClick={() => void (signupMode ? authSignUp() : authLogin())}
               style={styles.loginPrimaryAction}
               type="button"
             >
@@ -369,45 +364,61 @@ export function AuthScreen({
             </button>
           </div>
 
-          <div style={styles.loginDividerText} className="login-signup-block">
-            <span style={styles.loginDividerTextLine} />
-            <span>Veya hesap oluştur</span>
-            <span style={styles.loginDividerTextLine} />
-          </div>
-
-          <div style={styles.loginSocialRow} className="login-signup-block">
-            <button
-              className="hover-button"
-              onClick={() => void authLoginWithGoogle()}
-              style={styles.googleIconBtn}
-            >
-              <span style={styles.googleMark}>
-                <span style={{ color: "#4285F4" }}>G</span>
-              </span>
-            </button>
-            <button
-              className="hover-button"
-              onClick={() => setSignupMode(true)}
-              style={styles.mailIconBtn}
-              title="Normal e-posta ile hesap oluştur"
-            >
-              <Mail size={18} />
-            </button>
-          </div>
-
-          {signupMode ? (
+          <div style={styles.loginSignupLine}>
+            <span>{signupMode ? "Zaten hesabın var mı?" : "Hesabın yok mu?"}</span>
             <button
               type="button"
               className="hover-button"
-              onClick={() => setSignupMode(false)}
+              onClick={() => setSignupMode((prev) => !prev)}
               style={styles.switchAuthLink}
             >
-              Giriş ekranına dön
+              {signupMode ? "Giriş Yap" : "Hesap Oluştur"}
             </button>
-          ) : null}
+          </div>
 
           {msg ? <div style={{ ...styles.msg, marginTop: 14 }}>{msg}</div> : null}
         </div>
+
+        {!isMobileViewport ? (
+          <div style={styles.loginShowcase} className="login-showcase">
+            <div style={styles.loginIllustrationGrid}>
+              <div style={{ ...styles.loginIllustrationTile, ...styles.loginChartTile }}>
+                <span style={{ ...styles.loginBar, height: 112, background: "#93E0B4" }} />
+                <span style={{ ...styles.loginBar, height: 82, background: "#BFDBFE" }} />
+                <span style={{ ...styles.loginBar, height: 58, background: "#C7F29B" }} />
+              </div>
+
+              <div style={{ ...styles.loginIllustrationTile, ...styles.loginInvoiceTile }}>
+                <div style={styles.loginFolderShape} />
+                <div style={styles.loginPaperShape}>
+                  <span style={styles.loginPaperLine} />
+                  <span style={styles.loginPaperLine} />
+                  <span style={styles.loginPaperLineShort} />
+                </div>
+                <div style={styles.loginCursorShape} />
+              </div>
+
+              <div style={{ ...styles.loginIllustrationTile, ...styles.loginCoinTile }}>
+                <div style={styles.loginCoinShadow} />
+                <div style={styles.loginCoinMain} />
+                <div style={styles.loginCoinSmall} />
+              </div>
+
+              <div style={{ ...styles.loginIllustrationTile, ...styles.loginWalletTile }}>
+                <div style={styles.loginWalletShape}>
+                  <span style={styles.loginWalletSlot} />
+                  <span style={styles.loginWalletLine} />
+                  <span style={styles.loginWalletLineShort} />
+                </div>
+              </div>
+
+              <div style={{ ...styles.loginIllustrationTile, ...styles.loginGraphTile }}>
+                <div style={styles.loginGraphHillOne} />
+                <div style={styles.loginGraphHillTwo} />
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
