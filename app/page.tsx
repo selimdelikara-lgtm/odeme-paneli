@@ -2411,8 +2411,8 @@ export default function Page() {
         .hover-button:hover{filter:brightness(.97);transform:translateY(-1px)}
         .soft-input{transition:border-color .18s ease,box-shadow .18s ease}
         .soft-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}
-        .money-value{display:inline-block;transition:filter .18s ease, opacity .18s ease}
-        .privacy-mode .money-value{filter:blur(7px);opacity:.72;user-select:none;pointer-events:none}
+        .money-value{display:inline-block;transition:filter .28s ease, opacity .28s ease, text-shadow .28s ease}
+        .privacy-mode .money-value{filter:blur(10px);opacity:.64;text-shadow:0 0 14px currentColor;user-select:none;pointer-events:none}
         .sidebar-item{transition:transform .18s ease, background-color .18s ease, box-shadow .18s ease}
         .sidebar-item:hover{background:rgba(255,255,255,.06);transform:translateX(2px)}
         .panel-row{transition:transform .18s ease, box-shadow .18s ease, background-color .22s ease}
@@ -2813,7 +2813,7 @@ export default function Page() {
                   {privacyMode ? <Eye size={16} /> : <EyeOff size={16} />}
                   {isMobileViewport ? null : (
                     <span className="btn-label">
-                      {privacyMode ? "Rakamları Göster" : "Rakamları Gizle"}
+                      Gizle
                     </span>
                   )}
                 </span>
