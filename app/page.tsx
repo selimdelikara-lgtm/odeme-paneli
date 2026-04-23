@@ -240,6 +240,7 @@ export default function Page() {
   const [activityLog, setActivityLog] = useState<ActivityItem[]>([]);
 
   const exportRef = useRef<HTMLElement | null>(null);
+  const projectPdfRef = useRef<HTMLDivElement | null>(null);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
   const invoiceInputRef = useRef<HTMLInputElement | null>(null);
   const profileInputRef = useRef<HTMLInputElement | null>(null);
@@ -1060,7 +1061,7 @@ export default function Page() {
         "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"
       );
 
-      const target = exportRef.current;
+      const target = viewMode === "project" ? projectPdfRef.current : exportRef.current;
       if (!target) {
         setMsg("PDF alanı bulunamadı.");
         return;
@@ -1078,28 +1079,31 @@ export default function Page() {
       const canvas = await html2canvas(target, {
         scale: 2,
         useCORS: true,
-        backgroundColor: null,
+        width: target.scrollWidth,
+        height: target.scrollHeight,
+        windowWidth: target.scrollWidth,
+        backgroundColor: "#ffffff",
+        onclone: (documentClone: Document) => {
+          documentClone.querySelectorAll<HTMLElement>(".no-print").forEach((item) => {
+            item.style.display = "none";
+          });
+          documentClone.querySelectorAll<HTMLElement>(".money-value").forEach((item) => {
+            item.style.filter = "none";
+            item.style.opacity = "1";
+            item.style.textShadow = "none";
+          });
+        },
       });
 
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
       const pageWidth = 210;
-      const pageHeight = 297;
       const margin = 10;
       const imgWidth = pageWidth - margin * 2;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = margin;
+      const pageHeight = Math.max(297, imgHeight + margin * 2);
+      const pdf = new jsPDF("p", "mm", [pageWidth, pageHeight]);
 
-      pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight - margin * 2;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + margin;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight - margin * 2;
-      }
+      pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
 
       pdf.save(
         viewMode === "home"
@@ -3359,7 +3363,7 @@ export default function Page() {
                 </div>
               ) : null}
 
-              <div style={styles.card} className="content-card">
+              <div style={styles.card} className="content-card" ref={projectPdfRef}>
                 <div
                   style={
                     isMobileViewport

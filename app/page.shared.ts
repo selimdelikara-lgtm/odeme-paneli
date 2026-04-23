@@ -85,14 +85,18 @@ export type PdfWindow = Window &
       options?: {
         scale?: number;
         useCORS?: boolean;
+        width?: number;
+        height?: number;
+        windowWidth?: number;
         backgroundColor?: string | null;
+        onclone?: (documentClone: Document) => void;
       }
     ) => Promise<HTMLCanvasElement>;
     jspdf?: {
       jsPDF: new (
         orientation: string,
         unit: string,
-        format: string
+        format: string | [number, number]
       ) => {
         addImage: (
           imageData: string,
