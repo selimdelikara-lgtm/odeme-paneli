@@ -2543,6 +2543,28 @@ export default function Page() {
         .hover-button:hover{filter:brightness(.97);transform:translateY(-1px)}
         .soft-input{transition:border-color .18s ease,box-shadow .18s ease}
         .soft-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}
+        .login-showcase::before{
+          content:"";
+          position:absolute;
+          inset:-35%;
+          background:conic-gradient(from 160deg, rgba(56,189,248,.18), rgba(37,99,235,.08), rgba(20,184,166,.16), rgba(56,189,248,.18));
+          animation:loginAurora 12s linear infinite;
+        }
+        .login-card{animation:loginCardIn .5s cubic-bezier(.22,1,.36,1) both}
+        .login-brand,.login-headline{animation:loginTextRise .55s cubic-bezier(.22,1,.36,1) both}
+        .login-headline{animation-delay:.08s}
+        @keyframes loginAurora{
+          from{transform:rotate(0deg) scale(1)}
+          to{transform:rotate(360deg) scale(1)}
+        }
+        @keyframes loginCardIn{
+          from{opacity:0;transform:translateY(18px) scale(.985)}
+          to{opacity:1;transform:translateY(0) scale(1)}
+        }
+        @keyframes loginTextRise{
+          from{opacity:0;transform:translateY(18px)}
+          to{opacity:1;transform:translateY(0)}
+        }
         .money-value{display:inline-block;transition:filter .28s ease, opacity .28s ease, text-shadow .28s ease}
         .privacy-mode .money-value{filter:blur(10px);opacity:.64;text-shadow:0 0 14px currentColor;user-select:none;pointer-events:none}
         .sidebar-item{transition:transform .18s ease, background-color .18s ease, box-shadow .18s ease}
@@ -5469,7 +5491,8 @@ const styles: Record<string, CSSProperties> = {
   },
   loginWrap: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #a4b0ff 0%, #c8cfff 100%)",
+    background:
+      "radial-gradient(circle at 18% 18%, rgba(37,99,235,0.24), transparent 28%), radial-gradient(circle at 82% 12%, rgba(20,184,166,0.18), transparent 26%), linear-gradient(135deg, #EAF0FF 0%, #F8FAFC 48%, #DCE7FF 100%)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -5484,26 +5507,28 @@ const styles: Record<string, CSSProperties> = {
     display: "grid",
     gridTemplateColumns: "1.1fr .9fr",
     overflow: "hidden",
-    borderRadius: 28,
-    background: "#0B1546",
-    boxShadow: "0 32px 90px rgba(15, 23, 66, 0.34)",
+    borderRadius: 32,
+    background: "rgba(11,21,70,0.96)",
+    border: "1px solid rgba(255,255,255,0.18)",
+    boxShadow: "0 34px 100px rgba(15, 23, 66, 0.30)",
   },
   loginShowcase: {
     position: "relative",
     overflow: "hidden",
-    padding: "48px 44px",
-    background: "linear-gradient(180deg, #0C1C5A 0%, #09143D 100%)",
+    padding: "56px 48px",
+    background:
+      "linear-gradient(145deg, rgba(5,18,58,0.98) 0%, rgba(8,30,87,0.96) 48%, rgba(8,57,87,0.94) 100%)",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
-    gap: 10,
+    gap: 16,
   },
   loginOrbOne: {
     position: "absolute",
     width: 420,
     height: 420,
     borderRadius: 999,
-    border: "58px solid rgba(128, 104, 255, 0.18)",
+    border: "58px solid rgba(96,165,250,0.16)",
     top: -150,
     left: -170,
   },
@@ -5512,7 +5537,7 @@ const styles: Record<string, CSSProperties> = {
     width: 480,
     height: 480,
     borderRadius: 999,
-    border: "52px solid rgba(118, 82, 255, 0.14)",
+    border: "52px solid rgba(20,184,166,0.12)",
     bottom: -250,
     right: -120,
   },
@@ -5521,36 +5546,38 @@ const styles: Record<string, CSSProperties> = {
     width: 260,
     height: 260,
     borderRadius: 999,
-    background: "radial-gradient(circle, rgba(104,195,255,.32) 0%, rgba(104,195,255,0) 72%)",
+    background: "radial-gradient(circle, rgba(56,189,248,.34) 0%, rgba(56,189,248,0) 72%)",
     bottom: -20,
     left: 40,
   },
   loginBrand: {
     position: "relative",
     color: "var(--white)",
-    fontSize: 72,
+    fontSize: 70,
     fontWeight: 900,
     letterSpacing: "-2px",
     lineHeight: 0.98,
     fontFamily: '"Arial Black", "Segoe UI Black", "Segoe UI", sans-serif',
-    textShadow: "4px 4px 0 rgba(111, 141, 255, 0.35)",
+    textShadow: "0 18px 44px rgba(37,99,235,0.28)",
   },
   loginHeadline: {
     position: "relative",
     margin: 0,
-    color: "rgba(255,255,255,0.88)",
-    fontSize: 28,
-    lineHeight: 1.1,
-    maxWidth: 420,
+    color: "rgba(255,255,255,0.94)",
+    fontSize: 34,
+    lineHeight: 1.08,
+    maxWidth: 520,
     letterSpacing: "-0.6px",
-    fontWeight: 700,
+    fontWeight: 900,
   },
   loginCopy: {
     position: "relative",
     margin: 0,
-    color: "rgba(255,255,255,0.74)",
-    fontSize: 18,
-    fontWeight: 500,
+    maxWidth: 520,
+    color: "rgba(226,232,240,0.78)",
+    fontSize: 17,
+    lineHeight: 1.55,
+    fontWeight: 600,
   },
   loginStatRow: {
     position: "relative",
@@ -5562,9 +5589,10 @@ const styles: Record<string, CSSProperties> = {
   loginStatCard: {
     borderRadius: 18,
     padding: "16px 18px",
-    background: "rgba(255,255,255,0.08)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    backdropFilter: "blur(12px)",
+    background: "rgba(255,255,255,0.10)",
+    border: "1px solid rgba(255,255,255,0.14)",
+    backdropFilter: "blur(16px)",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10)",
   },
   loginStatLabel: {
     color: "rgba(255,255,255,0.6)",
@@ -5583,14 +5611,16 @@ const styles: Record<string, CSSProperties> = {
     width: "100%",
     maxWidth: 420,
     margin: "0 auto",
-    background: "linear-gradient(180deg, #4152C9 0%, #3648B8 100%)",
-    border: "1px solid rgba(12, 25, 87, 0.55)",
-    borderRadius: 18,
+    background:
+      "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.08) 100%)",
+    border: "1px solid rgba(255,255,255,0.22)",
+    borderRadius: 24,
     padding: "34px 28px",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
-    boxShadow: "0 18px 42px rgba(13, 23, 77, 0.32)",
+    boxShadow: "0 24px 60px rgba(3, 7, 18, 0.28)",
+    backdropFilter: "blur(22px)",
   },
   loginCardTitle: {
     color: "#FFFFFF",
@@ -5621,7 +5651,7 @@ const styles: Record<string, CSSProperties> = {
     padding: "7px 0",
     borderRadius: 0,
     border: "none",
-    borderBottom: "2px solid rgba(10, 20, 72, 0.72)",
+    borderBottom: "2px solid rgba(226,232,240,0.32)",
     background: "transparent",
     color: "#FFFFFF",
     fontSize: 14,
@@ -5655,14 +5685,15 @@ const styles: Record<string, CSSProperties> = {
   },
   loginPrimaryAction: {
     padding: "11px 14px",
-    borderRadius: 8,
-    border: "1px solid rgba(6, 12, 48, 0.9)",
-    background: "#091C68",
+    borderRadius: 14,
+    border: "1px solid rgba(96,165,250,0.42)",
+    background: "linear-gradient(135deg, #2563EB 0%, #0F766E 100%)",
     color: "#FFFFFF",
     fontWeight: 800,
     fontSize: 14,
     cursor: "pointer",
     marginTop: 12,
+    boxShadow: "0 14px 26px rgba(37,99,235,0.24)",
   },
   loginDividerText: {
     display: "flex",
@@ -5742,7 +5773,7 @@ const styles: Record<string, CSSProperties> = {
     textAlign: "center",
     padding: "44px 28px 32px",
     background:
-      "radial-gradient(circle at 50% 18%, rgba(37,99,235,0.08) 0%, rgba(37,99,235,0) 24%), linear-gradient(180deg, #F6F7FC 0%, #EEF2FF 100%)",
+      "radial-gradient(circle at 50% 18%, rgba(20,184,166,0.12) 0%, rgba(20,184,166,0) 24%), radial-gradient(circle at 80% 8%, rgba(37,99,235,0.13), transparent 26%), linear-gradient(180deg, #F6F7FC 0%, #EEF2FF 100%)",
     color: "#171923",
   },
   mobileIntroMarkWrap: {
@@ -5769,16 +5800,20 @@ const styles: Record<string, CSSProperties> = {
     width: 108,
     height: 108,
     borderRadius: 999,
-    objectFit: "cover",
-    objectPosition: "center 22%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "linear-gradient(135deg, #2563EB, #0F766E)",
+    color: "#FFFFFF",
+    fontSize: 54,
+    fontWeight: 900,
     boxShadow: "0 14px 28px rgba(37,99,235,0.12)",
   },
   mobileIntroCopy: {
     marginTop: 18,
-    fontSize: 22,
-    lineHeight: 1.24,
+    fontSize: 24,
+    lineHeight: 1.18,
     fontWeight: 800,
-    fontStyle: "italic",
     letterSpacing: "-0.4px",
     color: "#1A1E2B",
     maxWidth: 280,

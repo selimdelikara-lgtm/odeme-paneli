@@ -164,15 +164,12 @@ export function AuthScreen({
       <div style={{ ...styles.loginWrap, ...themeVars }} className="login-wrap mobile-auth-wrap">
         <div style={styles.mobileIntroShell} className="mobile-auth-intro">
           <div style={styles.mobileIntroMarkWrap}>
-            <div style={styles.mobileIntroMarkQuestion}>?</div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/cat-question-source.jpg"
-              alt="Soru işaretli kedi"
-              style={styles.mobileIntroMarkImage}
-            />
+            <div style={styles.mobileIntroMarkQuestion}>₺</div>
+            <div style={styles.mobileIntroMarkImage}>
+              <span>?</span>
+            </div>
           </div>
-          <div style={styles.mobileIntroCopy}>Paracıklar Geldi Mi Acep...</div>
+          <div style={styles.mobileIntroCopy}>Freelance ödemelerini tek panelde takip et.</div>
           <button
             type="button"
             className="hover-button mobile-auth-cta"
@@ -287,8 +284,22 @@ export function AuthScreen({
               ÖDEDİ Mİ
             </div>
             <h1 style={styles.loginHeadline} className="login-headline">
-              Paracıklar Geldi Mi Acep...
+              Freelance işler, faturalar ve tahsilatlar tek düzende.
             </h1>
+            <p style={styles.loginCopy}>
+              Hangi projenin ödendiğini, hangisinin faturada beklediğini ve toplam tahsilatını
+              düzenli takip etmek için sade bir panel.
+            </p>
+            <div style={styles.loginStatRow}>
+              <div style={styles.loginStatCard}>
+                <div style={styles.loginStatLabel}>Takip</div>
+                <div style={styles.loginStatValue}>Proje + ödeme</div>
+              </div>
+              <div style={styles.loginStatCard}>
+                <div style={styles.loginStatLabel}>Kontrol</div>
+                <div style={styles.loginStatValue}>Fatura + tahsilat</div>
+              </div>
+            </div>
           </div>
         ) : null}
 
