@@ -1076,31 +1076,93 @@ export default function Page() {
         return;
       }
 
-      const canvas = await html2canvas(target, {
-        scale: 2,
-        useCORS: true,
-        width: target.scrollWidth,
-        height: target.scrollHeight,
-        windowWidth: target.scrollWidth,
-        backgroundColor: "#ffffff",
-        onclone: (documentClone: Document) => {
-          documentClone.querySelectorAll<HTMLElement>(".no-print").forEach((item) => {
-            item.style.display = "none";
+      const tableWidth = target.querySelector("table")?.scrollWidth ?? 0;
+      const exportWidth = Math.max(target.scrollWidth, tableWidth);
+      const exportHeight = target.scrollHeight;
+      const pdfTargetSelector = '[data-pdf-export-target="true"]';
+
+      target.setAttribute("data-pdf-export-target", "true");
+      const canvas = await (async () => {
+        try {
+          return await html2canvas(target, {
+            scale: 2,
+            useCORS: true,
+            width: exportWidth,
+            height: exportHeight,
+            windowWidth: exportWidth,
+            backgroundColor: "#ffffff",
+            onclone: (documentClone: Document) => {
+              documentClone.querySelectorAll<HTMLElement>(".no-print").forEach((item) => {
+                item.style.display = "none";
+              });
+
+              const clonedTarget =
+                documentClone.querySelector<HTMLElement>(pdfTargetSelector);
+              if (clonedTarget) {
+                clonedTarget.style.width = `${exportWidth}px`;
+                clonedTarget.style.maxWidth = "none";
+                clonedTarget.style.boxShadow = "none";
+                clonedTarget.style.borderRadius = "12px";
+                clonedTarget.style.padding = "14px";
+                clonedTarget.style.background = "#ffffff";
+              }
+
+              documentClone
+                .querySelectorAll<HTMLElement>(`${pdfTargetSelector} .content-card`)
+                .forEach((item) => {
+                  item.style.boxShadow = "none";
+                });
+
+              documentClone
+                .querySelectorAll<HTMLElement>(`${pdfTargetSelector} table`)
+                .forEach((item) => {
+                  item.style.width = "100%";
+                  item.style.minWidth = "0";
+                  item.style.borderCollapse = "collapse";
+                  item.style.borderSpacing = "0";
+                });
+
+              documentClone
+                .querySelectorAll<HTMLElement>(`${pdfTargetSelector} th`)
+                .forEach((item) => {
+                  item.style.padding = "10px 12px";
+                  item.style.fontSize = "12px";
+                  item.style.lineHeight = "1.25";
+                });
+
+              documentClone
+                .querySelectorAll<HTMLElement>(`${pdfTargetSelector} td`)
+                .forEach((item) => {
+                  item.style.padding = "12px";
+                  item.style.fontSize = "12px";
+                  item.style.lineHeight = "1.35";
+                });
+
+              documentClone
+                .querySelectorAll<HTMLElement>(`${pdfTargetSelector} [style*="overflow"]`)
+                .forEach((item) => {
+                  item.style.overflow = "visible";
+                });
+
+              documentClone.querySelectorAll<HTMLElement>(".money-value").forEach((item) => {
+                item.style.filter = "none";
+                item.style.opacity = "1";
+                item.style.textShadow = "none";
+              });
+            },
           });
-          documentClone.querySelectorAll<HTMLElement>(".money-value").forEach((item) => {
-            item.style.filter = "none";
-            item.style.opacity = "1";
-            item.style.textShadow = "none";
-          });
-        },
-      });
+        } finally {
+          target.removeAttribute("data-pdf-export-target");
+        }
+      })();
 
       const imgData = canvas.toDataURL("image/png");
-      const pageWidth = 210;
-      const margin = 10;
+      const pageWidth = viewMode === "project" ? 297 : 210;
+      const margin = 5;
       const imgWidth = pageWidth - margin * 2;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const pageHeight = Math.max(297, imgHeight + margin * 2);
+      const minimumPageHeight = viewMode === "project" ? 210 : 297;
+      const pageHeight = Math.max(minimumPageHeight, imgHeight + margin * 2);
       const pdf = new jsPDF("p", "mm", [pageWidth, pageHeight]);
 
       pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
