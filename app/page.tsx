@@ -2620,25 +2620,29 @@ export default function Page() {
           white-space:nowrap;
           color:var(--text);
           text-shadow:none;
-          animation:privacyCountdown .58s steps(1,end) both, privacySoftSettle .58s ease;
+          animation:privacyCountdown .42s steps(1,end) both, privacyBounceSettle .42s cubic-bezier(.2,1.45,.35,1);
         }
         .privacy-mode .hero-card .money-value[data-private-value="true"]::after{color:#fff}
         .privacy-mode .money-value[data-private-value="true"][data-mask="₺0"]::after{min-width:1.5em}
         @keyframes privacyCountdown{
           0%{content:"₺10.000"}
-          12%{content:"₺8.750"}
-          24%{content:"₺7.100"}
-          36%{content:"₺5.500"}
-          48%{content:"₺3.200"}
-          60%{content:"₺1.600"}
-          76%{content:"₺450"}
-          88%{content:"₺90"}
+          8%{content:"₺9.250"}
+          16%{content:"₺8.100"}
+          24%{content:"₺6.850"}
+          32%{content:"₺5.400"}
+          40%{content:"₺4.200"}
+          48%{content:"₺2.950"}
+          56%{content:"₺1.900"}
+          66%{content:"₺980"}
+          76%{content:"₺420"}
+          88%{content:"₺80"}
           100%{content:attr(data-mask)}
         }
-        @keyframes privacySoftSettle{
-          0%{opacity:.5;letter-spacing:.04em;transform:translateY(-1px)}
-          70%{opacity:.92;letter-spacing:.01em}
-          100%{opacity:1;letter-spacing:0;transform:translateY(0)}
+        @keyframes privacyBounceSettle{
+          0%{opacity:.5;letter-spacing:.045em;transform:translateY(-2px) scale(1.08)}
+          28%{opacity:1;letter-spacing:.025em;transform:translateY(1px) scale(.96)}
+          58%{letter-spacing:.01em;transform:translateY(0) scale(1.015)}
+          100%{opacity:1;letter-spacing:0;transform:translateY(0) scale(1)}
         }
         .sidebar-item{transition:transform .18s ease, background-color .18s ease, box-shadow .18s ease}
         .sidebar-item:hover{background:rgba(255,255,255,.06);transform:translateX(2px)}
