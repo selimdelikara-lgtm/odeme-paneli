@@ -2612,17 +2612,24 @@ export default function Page() {
           white-space:nowrap;
           color:var(--text);
           text-shadow:none;
-          animation:privacyTypeIn .34s steps(3,end), privacySoftSettle .42s ease;
+          animation:privacyCountdown .58s steps(1,end) both, privacySoftSettle .58s ease;
         }
         .privacy-mode .hero-card .money-value[data-private-value="true"]::after{color:#fff}
         .privacy-mode .money-value[data-private-value="true"][data-mask="₺0"]::after{min-width:1.5em}
-        @keyframes privacyTypeIn{
-          from{clip-path:inset(0 100% 0 0)}
-          to{clip-path:inset(0 0 0 0)}
+        @keyframes privacyCountdown{
+          0%{content:"₺10.000"}
+          12%{content:"₺8.750"}
+          24%{content:"₺7.100"}
+          36%{content:"₺5.500"}
+          48%{content:"₺3.200"}
+          60%{content:"₺1.600"}
+          76%{content:"₺450"}
+          88%{content:"₺90"}
+          100%{content:attr(data-mask)}
         }
         @keyframes privacySoftSettle{
-          0%{opacity:.45;letter-spacing:.08em;transform:translateY(-1px)}
-          55%{opacity:.9;letter-spacing:.02em}
+          0%{opacity:.5;letter-spacing:.04em;transform:translateY(-1px)}
+          70%{opacity:.92;letter-spacing:.01em}
           100%{opacity:1;letter-spacing:0;transform:translateY(0)}
         }
         .sidebar-item{transition:transform .18s ease, background-color .18s ease, box-shadow .18s ease}
