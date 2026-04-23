@@ -5,6 +5,8 @@ import {
   CheckCircle2,
   CheckSquare,
   Copy,
+  Eye,
+  EyeOff,
   LogOut,
   Moon,
   Palette,
@@ -126,6 +128,10 @@ export default function Page() {
   const [signupMode, setSignupMode] = useState(false);
 
   const [theme, setTheme] = useState<ThemeMode>(readStoredTheme);
+  const [privacyMode, setPrivacyMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("odeme-privacy-blur-v1") === "true";
+  });
 
   const [proje, setProje] = useState("");
   const [tutar, setTutar] = useState("");
@@ -353,6 +359,10 @@ export default function Page() {
   useEffect(() => {
     localStorage.setItem("odeme-theme-v1", theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem("odeme-privacy-blur-v1", String(privacyMode));
+  }, [privacyMode]);
 
   useEffect(() => {
     localStorage.setItem("odeme-drafts-v1", JSON.stringify(drafts));
@@ -1899,7 +1909,7 @@ export default function Page() {
             </div>
           ) : (
             <div>
-              <div>{row.tutar ? tl(Number(row.tutar)) : "—"}</div>
+              <div className="money-value">{row.tutar ? tl(Number(row.tutar)) : "—"}</div>
               {row.kdvli ? <div style={styles.metaText}>+ %20 KDV</div> : null}
             </div>
           )}
@@ -2366,7 +2376,10 @@ export default function Page() {
 
 
   return (
-    <div style={{ ...styles.page, ...themeVars }}>
+    <div
+      style={{ ...styles.page, ...themeVars }}
+      className={privacyMode ? "privacy-mode" : undefined}
+    >
       <style>{`
         @keyframes panelFadeSlide{
           from{opacity:0;transform:translateY(10px)}
@@ -2398,6 +2411,8 @@ export default function Page() {
         .hover-button:hover{filter:brightness(.97);transform:translateY(-1px)}
         .soft-input{transition:border-color .18s ease,box-shadow .18s ease}
         .soft-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}
+        .money-value{display:inline-block;transition:filter .18s ease, opacity .18s ease}
+        .privacy-mode .money-value{filter:blur(7px);opacity:.72;user-select:none;pointer-events:none}
         .sidebar-item{transition:transform .18s ease, background-color .18s ease, box-shadow .18s ease}
         .sidebar-item:hover{background:rgba(255,255,255,.06);transform:translateX(2px)}
         .panel-row{transition:transform .18s ease, box-shadow .18s ease, background-color .22s ease}
@@ -2488,6 +2503,7 @@ export default function Page() {
           .login-meta-row{flex-wrap:wrap !important}
         }
         @media print{
+          .privacy-mode .money-value{filter:none !important;opacity:1 !important}
           *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important}
           html,body{background:white !important}
           .no-print{display:none !important}
@@ -2788,6 +2804,23 @@ export default function Page() {
 
               <button
                 className="hover-button top-action-btn"
+                onClick={() => setPrivacyMode((prev) => !prev)}
+                style={isMobileViewport ? styles.mobileTopIconBtn : styles.secondaryBtn}
+                title={privacyMode ? "Rakamları göster" : "Rakamları gizle"}
+                aria-label={privacyMode ? "Rakamları göster" : "Rakamları gizle"}
+              >
+                <span style={styles.btnInner}>
+                  {privacyMode ? <Eye size={16} /> : <EyeOff size={16} />}
+                  {isMobileViewport ? null : (
+                    <span className="btn-label">
+                      {privacyMode ? "Rakamları Göster" : "Rakamları Gizle"}
+                    </span>
+                  )}
+                </span>
+              </button>
+
+              <button
+                className="hover-button top-action-btn"
                 onClick={() => void cikisYap()}
                 style={isMobileViewport ? styles.mobileTopIconBtn : styles.secondaryBtn}
               >
@@ -2843,8 +2876,10 @@ export default function Page() {
                 setExportMenuOpen(false);
               }}
               onToggleSearch={() => setShowMobileSearch((prev) => !prev)}
+              onTogglePrivacy={() => setPrivacyMode((prev) => !prev)}
               onToggleTheme={() => setTheme((p) => (p === "light" ? "dark" : "light"))}
               onSignOut={() => void cikisYap()}
+              privacyMode={privacyMode}
             />
 
                 <input
@@ -2944,7 +2979,9 @@ export default function Page() {
                     >
                       <div style={styles.mobileHomeSummaryHead}>
                         <strong style={styles.mobileHomeSummaryTitle}>{item.tab}</strong>
-                        <span style={styles.mobileHomeSummaryAmount}>{tl(item.toplam)}</span>
+                        <span style={styles.mobileHomeSummaryAmount} className="money-value">
+                          {tl(item.toplam)}
+                        </span>
                       </div>
                       <div style={styles.mobileHomeSummaryMeta}>
                         <span>{item.kayit} kayıt</span>
@@ -3068,7 +3105,7 @@ export default function Page() {
 
                             return (
                               <td key={column} style={{ ...styles.td, fontWeight: 700 }}>
-                                {tl(item.toplam)}
+                                <span className="money-value">{tl(item.toplam)}</span>
                               </td>
                             );
                           })}

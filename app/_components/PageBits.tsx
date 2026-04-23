@@ -60,6 +60,7 @@ export function AnimatedMoney({
 
   return (
     <div
+      className="money-value"
       style={{
         fontSize: strong ? 22 : 16,
         fontWeight: strong ? 900 : 700,
@@ -88,12 +89,14 @@ export function Stat({
   icon,
   styles,
   iconWrapStyle,
+  privateValue = false,
 }: {
   title: string;
   value: string;
   icon: ReactNode;
   styles: Record<string, CSSProperties>;
   iconWrapStyle?: CSSProperties;
+  privateValue?: boolean;
 }) {
   return (
     <div style={styles.stat} className="motion-card">
@@ -101,7 +104,9 @@ export function Stat({
         <div style={{ ...styles.statIcon, ...iconWrapStyle }}>{icon}</div>
         <div style={styles.statCopy}>
           <div style={styles.statLabel}>{title}</div>
-          <div style={styles.statValue}>{value}</div>
+          <div style={styles.statValue} className={privateValue ? "money-value" : undefined}>
+            {value}
+          </div>
         </div>
       </div>
     </div>
@@ -704,7 +709,7 @@ export function MobileProjectCards({
               <div style={styles.mobileProjectHeadMain}>
                 <div style={styles.mobileProjectTitle}>{row.proje || "?"}</div>
                 <div style={styles.mobileProjectMetaRow}>
-                  <div style={styles.mobileProjectMeta}>
+                  <div style={styles.mobileProjectMeta} className="money-value">
                     {row.tutar ? tl(Number(row.tutar)) : "—"}
                   </div>
                   <div style={styles.mobileProjectMetaMuted}>

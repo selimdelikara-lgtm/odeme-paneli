@@ -5,6 +5,8 @@ import {
   ChevronDown,
   Clock3,
   Download,
+  Eye,
+  EyeOff,
   FileText,
   FolderKanban,
   LogOut,
@@ -35,8 +37,10 @@ type DashboardHeroProps = {
   onExportExcel: () => void;
   onExportPdf: () => void;
   onToggleSearch: () => void;
+  onTogglePrivacy: () => void;
   onToggleTheme: () => void;
   onSignOut: () => void;
+  privacyMode: boolean;
 };
 
 export function DashboardHero({
@@ -54,15 +58,17 @@ export function DashboardHero({
   onExportExcel,
   onExportPdf,
   onToggleSearch,
+  onTogglePrivacy,
   onToggleTheme,
   onSignOut,
+  privacyMode,
 }: DashboardHeroProps) {
   return (
     <div style={styles.heroCard} className="hero-card">
       <div style={styles.heroTopRow} className="hero-top-row">
         <div>
           <div style={styles.heroLabel}>{viewMode === "home" ? "TOPLAM" : "GENEL TOPLAM"}</div>
-          <div style={styles.heroValue} className="hero-value">
+          <div style={styles.heroValue} className="hero-value money-value">
             {tl(toplam)}
           </div>
         </div>
@@ -77,6 +83,17 @@ export function DashboardHero({
               title="Ara"
             >
               <Search size={15} />
+            </button>
+
+            <button
+              type="button"
+              className="hover-button"
+              style={styles.heroMobileIconBtn}
+              onClick={onTogglePrivacy}
+              aria-label={privacyMode ? "Rakamları göster" : "Rakamları gizle"}
+              title={privacyMode ? "Rakamları göster" : "Rakamları gizle"}
+            >
+              {privacyMode ? <Eye size={15} /> : <EyeOff size={15} />}
             </button>
 
             <button
@@ -165,14 +182,14 @@ export function DashboardHero({
       <div style={styles.heroSubRow}>
         <div>
           <div style={styles.heroSubTitle}>ÖDENEN</div>
-          <div style={styles.heroSubValue}>{tl(odenen)}</div>
+          <div style={styles.heroSubValue} className="money-value">{tl(odenen)}</div>
         </div>
 
         <div style={styles.heroDivider} />
 
         <div>
           <div style={styles.heroSubTitle}>KALAN</div>
-          <div style={styles.heroSubValue}>{tl(kalan)}</div>
+          <div style={styles.heroSubValue} className="money-value">{tl(kalan)}</div>
         </div>
       </div>
     </div>
@@ -218,6 +235,7 @@ export function SummaryStatsGrid({
     value: string;
     icon: ReactNode;
     iconWrapStyle?: CSSProperties;
+    privateValue?: boolean;
   }> =
     viewMode === "home"
       ? [
@@ -244,6 +262,7 @@ export function SummaryStatsGrid({
             value: tl(homeSummary.toplam),
             icon: <Wallet size={16} color={palette.blue} />,
             iconWrapStyle: styles.statIconBlue,
+            privateValue: true,
           },
         ]
       : [
@@ -270,6 +289,7 @@ export function SummaryStatsGrid({
             value: tl(projectSummary.kalan),
             icon: <Clock3 size={16} color={palette.red} />,
             iconWrapStyle: styles.statIconRed,
+            privateValue: true,
           },
         ];
 
@@ -283,6 +303,7 @@ export function SummaryStatsGrid({
           value={item.value}
           icon={item.icon}
           iconWrapStyle={item.iconWrapStyle}
+          privateValue={item.privateValue}
         />
       ))}
     </div>
@@ -340,7 +361,7 @@ export function SummaryQuickPanels({
           <div style={styles.quickTitle} className="quick-title">
             Tahsilat Özeti
           </div>
-          <div style={styles.projectSummaryAmount} className="quick-amount">
+          <div style={styles.projectSummaryAmount} className="quick-amount money-value">
             {tl(tumOdenenTutar)}
           </div>
           <div style={styles.quickMuted} className="quick-muted">
@@ -363,7 +384,7 @@ export function SummaryQuickPanels({
 
           <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
             <span>Kalan Tutar</span>
-            <strong>{tl(tumKalanTutar)}</strong>
+            <strong className="money-value">{tl(tumKalanTutar)}</strong>
           </div>
         </div>
 
@@ -400,7 +421,7 @@ export function SummaryQuickPanels({
         <div style={styles.quickTitle} className="quick-title">
           Sekme Özeti
         </div>
-        <div style={styles.projectSummaryAmount} className="quick-amount">
+        <div style={styles.projectSummaryAmount} className="quick-amount money-value">
           {tl(toplam)}
         </div>
         <div style={styles.quickMuted} className="quick-muted">
@@ -424,12 +445,12 @@ export function SummaryQuickPanels({
 
         <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
           <span>Ödenen</span>
-          <strong>{tl(odenen)}</strong>
+          <strong className="money-value">{tl(odenen)}</strong>
         </div>
 
         <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
           <span>Kalan</span>
-          <strong>{tl(kalan)}</strong>
+          <strong className="money-value">{tl(kalan)}</strong>
         </div>
       </div>
 
