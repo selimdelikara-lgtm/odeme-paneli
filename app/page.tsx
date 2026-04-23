@@ -1076,8 +1076,7 @@ export default function Page() {
         return;
       }
 
-      const tableWidth = target.querySelector("table")?.scrollWidth ?? 0;
-      const exportWidth = Math.max(target.scrollWidth, tableWidth);
+      const exportWidth = target.scrollWidth;
       const exportHeight = target.scrollHeight;
       const pdfTargetSelector = '[data-pdf-export-target="true"]';
 
@@ -1099,11 +1098,11 @@ export default function Page() {
               const clonedTarget =
                 documentClone.querySelector<HTMLElement>(pdfTargetSelector);
               if (clonedTarget) {
-                clonedTarget.style.width = `${exportWidth}px`;
-                clonedTarget.style.maxWidth = "none";
+                clonedTarget.style.width = "100%";
+                clonedTarget.style.maxWidth = "100%";
                 clonedTarget.style.boxShadow = "none";
                 clonedTarget.style.borderRadius = "12px";
-                clonedTarget.style.padding = "14px";
+                clonedTarget.style.padding = "12px";
                 clonedTarget.style.background = "#ffffff";
               }
 
@@ -1117,7 +1116,7 @@ export default function Page() {
                 .querySelectorAll<HTMLElement>(`${pdfTargetSelector} table`)
                 .forEach((item) => {
                   item.style.width = "100%";
-                  item.style.minWidth = "0";
+                  item.style.minWidth = "760px";
                   item.style.borderCollapse = "collapse";
                   item.style.borderSpacing = "0";
                 });
@@ -1157,13 +1156,18 @@ export default function Page() {
       })();
 
       const imgData = canvas.toDataURL("image/png");
-      const pageWidth = viewMode === "project" ? 297 : 210;
-      const margin = 5;
-      const imgWidth = pageWidth - margin * 2;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const minimumPageHeight = viewMode === "project" ? 210 : 297;
-      const pageHeight = Math.max(minimumPageHeight, imgHeight + margin * 2);
-      const pdf = new jsPDF("p", "mm", [pageWidth, pageHeight]);
+      const isProjectPdf = viewMode === "project";
+      const pageWidth = isProjectPdf ? 297 : 210;
+      const minimumPageHeight = isProjectPdf ? 210 : 297;
+      const margin = isProjectPdf ? 7 : 10;
+      const maxImgWidth = pageWidth - margin * 2;
+      const naturalImgHeight = (canvas.height * maxImgWidth) / canvas.width;
+      const pageHeight = Math.max(minimumPageHeight, naturalImgHeight + margin * 2);
+      const maxImgHeight = pageHeight - margin * 2;
+      const scale = Math.min(maxImgWidth / canvas.width, maxImgHeight / canvas.height);
+      const imgWidth = canvas.width * scale;
+      const imgHeight = canvas.height * scale;
+      const pdf = new jsPDF(isProjectPdf ? "l" : "p", "mm", [pageWidth, pageHeight]);
 
       pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
 
