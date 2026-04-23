@@ -2588,11 +2588,11 @@ export default function Page() {
         .login-showcase::after{
           content:"";
           position:absolute;
-          inset:0;
-          background-image:radial-gradient(circle, rgba(147,197,253,0.34) 1.7px, transparent 2px);
-          background-size:54px 54px;
-          opacity:.56;
-          animation:loginDotsDrift 9s ease-in-out infinite alternate;
+          inset:-24px;
+          background-image:radial-gradient(circle, rgba(147,197,253,0.52) 2px, transparent 2.4px);
+          background-size:62px 62px;
+          opacity:.72;
+          animation:loginDotsDrift 7.5s ease-in-out infinite alternate;
           pointer-events:none;
         }
         .login-showcase > *{position:relative;z-index:1}
@@ -2604,9 +2604,9 @@ export default function Page() {
           to{transform:rotate(360deg) scale(1)}
         }
         @keyframes loginDotsDrift{
-          0%{transform:translate3d(0,0,0);opacity:.42}
-          45%{transform:translate3d(7px,-5px,0);opacity:.62}
-          100%{transform:translate3d(-5px,6px,0);opacity:.48}
+          0%{transform:translate3d(-4px,2px,0);opacity:.48}
+          45%{transform:translate3d(10px,-7px,0);opacity:.76}
+          100%{transform:translate3d(-7px,8px,0);opacity:.54}
         }
         @keyframes loginCardIn{
           from{opacity:0;transform:translateY(18px) scale(.985)}

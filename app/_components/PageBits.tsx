@@ -425,10 +425,6 @@ export function AuthScreen({
                   <span style={styles.loginReceiptLine} />
                   <span style={styles.loginReceiptTotal}>₺</span>
                 </div>
-                <div style={styles.loginGraphCard}>
-                  <span style={styles.loginGraphCardLabel}>TAHSİLAT</span>
-                  <strong style={styles.loginGraphCardValue}>%84</strong>
-                </div>
               </div>
             </div>
           </div>
