@@ -386,6 +386,7 @@ export function AuthScreen({
                 <span style={{ ...styles.loginBar, height: 112, background: "#93E0B4" }} />
                 <span style={{ ...styles.loginBar, height: 82, background: "#BFDBFE" }} />
                 <span style={{ ...styles.loginBar, height: 58, background: "#C7F29B" }} />
+                <div style={styles.loginTrendLine} />
               </div>
 
               <div style={{ ...styles.loginIllustrationTile, ...styles.loginInvoiceTile }}>
@@ -400,8 +401,8 @@ export function AuthScreen({
 
               <div style={{ ...styles.loginIllustrationTile, ...styles.loginCoinTile }}>
                 <div style={styles.loginCoinShadow} />
-                <div style={styles.loginCoinMain} />
-                <div style={styles.loginCoinSmall} />
+                <div style={styles.loginCoinMain}>₺</div>
+                <div style={styles.loginCoinSmall}>₺</div>
               </div>
 
               <div style={{ ...styles.loginIllustrationTile, ...styles.loginWalletTile }}>
@@ -415,6 +416,10 @@ export function AuthScreen({
               <div style={{ ...styles.loginIllustrationTile, ...styles.loginGraphTile }}>
                 <div style={styles.loginGraphHillOne} />
                 <div style={styles.loginGraphHillTwo} />
+                <div style={styles.loginGraphCard}>
+                  <span style={styles.loginGraphCardLabel}>TAHSİLAT</span>
+                  <strong style={styles.loginGraphCardValue}>%84</strong>
+                </div>
               </div>
             </div>
           </div>
