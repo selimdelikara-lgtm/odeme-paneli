@@ -747,6 +747,7 @@ export function MobileProjectCards({
               </div>
               <button
                 className="status-button"
+                data-status={row.odendi ? "paid" : row.fatura_kesildi ? "invoiced" : "waiting"}
                 type="button"
                 onClick={() => void durumIlerle(row)}
                 style={{

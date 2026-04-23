@@ -1143,6 +1143,14 @@ export default function Page() {
               documentClone
                 .querySelectorAll<HTMLElement>(`${pdfTargetSelector} .status-button`)
                 .forEach((item) => {
+                  const status = item.dataset.status;
+                  const palette =
+                    status === "paid"
+                      ? { bg: "#EAF8F0", color: "#2A8B62", border: "#A9DEC2" }
+                      : status === "invoiced"
+                        ? { bg: "#FFF4E7", color: "#B86A15", border: "#F2C98F" }
+                        : { bg: "#FDEEF3", color: "#B8336A", border: "#F0B5CB" };
+
                   item.style.display = "inline-grid";
                   item.style.gridTemplateColumns = "8px auto";
                   item.style.alignItems = "center";
@@ -1151,6 +1159,10 @@ export default function Page() {
                   item.style.minHeight = "24px";
                   item.style.padding = "4px 12px";
                   item.style.lineHeight = "1";
+                  item.style.opacity = "1";
+                  item.style.background = palette.bg;
+                  item.style.color = palette.color;
+                  item.style.border = `1px solid ${palette.border}`;
                   item.style.verticalAlign = "middle";
                   item.style.transform = "none";
                   item.style.boxShadow = "none";
@@ -1159,6 +1171,11 @@ export default function Page() {
               documentClone
                 .querySelectorAll<HTMLElement>(`${pdfTargetSelector} .status-button span:first-child`)
                 .forEach((item) => {
+                  const button = item.closest<HTMLElement>(".status-button");
+                  const status = button?.dataset.status;
+                  item.style.background =
+                    status === "paid" ? "#2A8B62" : status === "invoiced" ? "#D88724" : "#C25A84";
+                  item.style.opacity = "1";
                   item.style.width = "7px";
                   item.style.height = "7px";
                   item.style.margin = "0";
@@ -1170,6 +1187,12 @@ export default function Page() {
               documentClone
                 .querySelectorAll<HTMLElement>(`${pdfTargetSelector} .status-label`)
                 .forEach((item) => {
+                  const button = item.closest<HTMLElement>(".status-button");
+                  const status = button?.dataset.status;
+                  item.style.color =
+                    status === "paid" ? "#2A8B62" : status === "invoiced" ? "#B86A15" : "#B8336A";
+                  item.style.opacity = "1";
+                  item.style.fontWeight = "800";
                   item.style.display = "block";
                   item.style.lineHeight = "1";
                   item.style.transform = "none";
@@ -1962,6 +1985,7 @@ export default function Page() {
           ) : (
             <button
               className="status-button"
+              data-status={row.odendi ? "paid" : row.fatura_kesildi ? "invoiced" : "waiting"}
               type="button"
               onClick={async () => await durumIlerle(row)}
               style={{
