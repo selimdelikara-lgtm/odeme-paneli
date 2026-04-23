@@ -68,7 +68,12 @@ export function DashboardHero({
       <div style={styles.heroTopRow} className="hero-top-row">
         <div>
           <div style={styles.heroLabel}>{viewMode === "home" ? "TOPLAM" : "GENEL TOPLAM"}</div>
-          <div style={styles.heroValue} className="hero-value money-value">
+          <div
+            style={styles.heroValue}
+            className="hero-value money-value"
+            data-private-value="true"
+            data-mask="₺0"
+          >
             {tl(toplam)}
           </div>
         </div>
@@ -182,14 +187,28 @@ export function DashboardHero({
       <div style={styles.heroSubRow}>
         <div>
           <div style={styles.heroSubTitle}>ÖDENEN</div>
-          <div style={styles.heroSubValue} className="money-value">{tl(odenen)}</div>
+          <div
+            style={styles.heroSubValue}
+            className="money-value"
+            data-private-value="true"
+            data-mask="₺0"
+          >
+            {tl(odenen)}
+          </div>
         </div>
 
         <div style={styles.heroDivider} />
 
         <div>
           <div style={styles.heroSubTitle}>KALAN</div>
-          <div style={styles.heroSubValue} className="money-value">{tl(kalan)}</div>
+          <div
+            style={styles.heroSubValue}
+            className="money-value"
+            data-private-value="true"
+            data-mask="₺0"
+          >
+            {tl(kalan)}
+          </div>
         </div>
       </div>
     </div>
@@ -361,7 +380,12 @@ export function SummaryQuickPanels({
           <div style={styles.quickTitle} className="quick-title">
             Tahsilat Özeti
           </div>
-          <div style={styles.projectSummaryAmount} className="quick-amount money-value">
+          <div
+            style={styles.projectSummaryAmount}
+            className="quick-amount money-value"
+            data-private-value="true"
+            data-mask="₺0"
+          >
             {tl(tumOdenenTutar)}
           </div>
           <div style={styles.quickMuted} className="quick-muted">
@@ -384,7 +408,9 @@ export function SummaryQuickPanels({
 
           <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
             <span>Kalan Tutar</span>
-            <strong className="money-value">{tl(tumKalanTutar)}</strong>
+            <strong className="money-value" data-private-value="true" data-mask="₺0">
+              {tl(tumKalanTutar)}
+            </strong>
           </div>
         </div>
 
@@ -421,7 +447,12 @@ export function SummaryQuickPanels({
         <div style={styles.quickTitle} className="quick-title">
           Sekme Özeti
         </div>
-        <div style={styles.projectSummaryAmount} className="quick-amount money-value">
+        <div
+          style={styles.projectSummaryAmount}
+          className="quick-amount money-value"
+          data-private-value="true"
+          data-mask="₺0"
+        >
           {tl(toplam)}
         </div>
         <div style={styles.quickMuted} className="quick-muted">
@@ -445,12 +476,16 @@ export function SummaryQuickPanels({
 
         <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
           <span>Ödenen</span>
-          <strong className="money-value">{tl(odenen)}</strong>
+          <strong className="money-value" data-private-value="true" data-mask="₺0">
+            {tl(odenen)}
+          </strong>
         </div>
 
         <div style={{ ...styles.quickFooterRow, ...styles.projectSummaryRow }}>
           <span>Kalan</span>
-          <strong className="money-value">{tl(kalan)}</strong>
+          <strong className="money-value" data-private-value="true" data-mask="₺0">
+            {tl(kalan)}
+          </strong>
         </div>
       </div>
 

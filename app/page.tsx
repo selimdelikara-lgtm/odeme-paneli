@@ -1177,6 +1177,11 @@ export default function Page() {
                 item.style.filter = "none";
                 item.style.opacity = "1";
                 item.style.textShadow = "none";
+                item.style.color = "";
+                item.style.userSelect = "";
+                item.style.pointerEvents = "";
+                item.removeAttribute("data-private-value");
+                item.removeAttribute("data-mask");
               });
             },
           });
@@ -2048,7 +2053,9 @@ export default function Page() {
             </div>
           ) : (
             <div>
-              <div className="money-value">{row.tutar ? tl(Number(row.tutar)) : "—"}</div>
+              <div className="money-value" data-private-value="true" data-mask="₺0">
+                {row.tutar ? tl(Number(row.tutar)) : "—"}
+              </div>
               {row.kdvli ? <div style={styles.metaText}>+ %20 KDV</div> : null}
               {row.gvkli ? <div style={styles.metaText}>- %15 GVK</div> : null}
             </div>
@@ -2592,8 +2599,32 @@ export default function Page() {
           from{opacity:0;transform:translateY(18px)}
           to{opacity:1;transform:translateY(0)}
         }
-        .money-value{display:inline-block;transition:filter .28s ease, opacity .28s ease, text-shadow .28s ease}
-        .privacy-mode .money-value{filter:blur(10px);opacity:.64;text-shadow:0 0 14px currentColor;user-select:none;pointer-events:none}
+        .money-value{display:inline-block;transition:opacity .24s ease, letter-spacing .24s ease, text-shadow .24s ease}
+        .money-value[data-private-value="true"]{position:relative;font-variant-numeric:tabular-nums}
+        .privacy-mode .money-value[data-private-value="true"]{color:transparent !important;text-shadow:none !important;filter:none !important;user-select:none;pointer-events:none}
+        .privacy-mode .money-value[data-private-value="true"]::after{
+          content:attr(data-mask);
+          position:absolute;
+          left:0;
+          top:0;
+          max-width:100%;
+          overflow:hidden;
+          white-space:nowrap;
+          color:var(--text);
+          text-shadow:none;
+          animation:privacyTypeIn .34s steps(3,end), privacySoftSettle .42s ease;
+        }
+        .privacy-mode .hero-card .money-value[data-private-value="true"]::after{color:#fff}
+        .privacy-mode .money-value[data-private-value="true"][data-mask="₺0"]::after{min-width:1.5em}
+        @keyframes privacyTypeIn{
+          from{clip-path:inset(0 100% 0 0)}
+          to{clip-path:inset(0 0 0 0)}
+        }
+        @keyframes privacySoftSettle{
+          0%{opacity:.45;letter-spacing:.08em;transform:translateY(-1px)}
+          55%{opacity:.9;letter-spacing:.02em}
+          100%{opacity:1;letter-spacing:0;transform:translateY(0)}
+        }
         .sidebar-item{transition:transform .18s ease, background-color .18s ease, box-shadow .18s ease}
         .sidebar-item:hover{background:rgba(255,255,255,.06);transform:translateX(2px)}
         .panel-row{transition:transform .18s ease, box-shadow .18s ease, background-color .22s ease}
@@ -2691,6 +2722,8 @@ export default function Page() {
         }
         @media print{
           .privacy-mode .money-value{filter:none !important;opacity:1 !important}
+          .privacy-mode .money-value[data-private-value="true"]{color:inherit !important}
+          .privacy-mode .money-value[data-private-value="true"]::after{content:none !important}
           *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important}
           html,body{background:white !important}
           .no-print{display:none !important}
@@ -3172,7 +3205,12 @@ export default function Page() {
                     >
                       <div style={styles.mobileHomeSummaryHead}>
                         <strong style={styles.mobileHomeSummaryTitle}>{item.tab}</strong>
-                        <span style={styles.mobileHomeSummaryAmount} className="money-value">
+                        <span
+                          style={styles.mobileHomeSummaryAmount}
+                          className="money-value"
+                          data-private-value="true"
+                          data-mask="₺0"
+                        >
                           {tl(item.toplam)}
                         </span>
                       </div>
@@ -3298,7 +3336,13 @@ export default function Page() {
 
                             return (
                               <td key={column} style={{ ...styles.td, fontWeight: 700 }}>
-                                <span className="money-value">{tl(item.toplam)}</span>
+                                <span
+                                  className="money-value"
+                                  data-private-value="true"
+                                  data-mask="₺0"
+                                >
+                                  {tl(item.toplam)}
+                                </span>
                               </td>
                             );
                           })}

@@ -61,6 +61,8 @@ export function AnimatedMoney({
   return (
     <div
       className="money-value"
+      data-private-value="true"
+      data-mask="₺0"
       style={{
         fontSize: strong ? 22 : 16,
         fontWeight: strong ? 900 : 700,
@@ -104,7 +106,12 @@ export function Stat({
         <div style={{ ...styles.statIcon, ...iconWrapStyle }}>{icon}</div>
         <div style={styles.statCopy}>
           <div style={styles.statLabel}>{title}</div>
-          <div style={styles.statValue} className={privateValue ? "money-value" : undefined}>
+          <div
+            style={styles.statValue}
+            className={privateValue ? "money-value" : undefined}
+            data-private-value={privateValue ? "true" : undefined}
+            data-mask={privateValue ? "₺0" : undefined}
+          >
             {value}
           </div>
         </div>
@@ -720,7 +727,12 @@ export function MobileProjectCards({
               <div style={styles.mobileProjectHeadMain}>
                 <div style={styles.mobileProjectTitle}>{row.proje || "?"}</div>
                 <div style={styles.mobileProjectMetaRow}>
-                  <div style={styles.mobileProjectMeta} className="money-value">
+                  <div
+                    style={styles.mobileProjectMeta}
+                    className="money-value"
+                    data-private-value="true"
+                    data-mask="₺0"
+                  >
                     {row.tutar ? tl(Number(row.tutar)) : "—"}
                   </div>
                   <div style={styles.mobileProjectMetaMuted}>
