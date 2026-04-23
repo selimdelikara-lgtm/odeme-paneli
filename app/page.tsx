@@ -155,6 +155,7 @@ export default function Page() {
   const [faturaKesildi, setFaturaKesildi] = useState(false);
   const [odemeAlindi, setOdemeAlindi] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const [inlineFocusColumn, setInlineFocusColumn] = useState<ProjectColumnKey | null>(null);
 
   const [tabMenu, setTabMenu] = useState<TabMenu>({
     visible: false,
@@ -247,6 +248,7 @@ export default function Page() {
   const initialLoadRef = useRef(false);
   const draggedColumnRef = useRef<ProjectColumnKey | null>(null);
   const draggedHomeColumnRef = useRef<HomeProjectColumnKey | null>(null);
+  const inlineSaveInProgressRef = useRef(false);
 
   const palette = theme === "dark" ? DARK : LIGHT;
 
@@ -736,6 +738,7 @@ export default function Page() {
     setFaturaKesildi(false);
     setOdemeAlindi(false);
     setEditId(null);
+    setInlineFocusColumn(null);
     if (aktifSekme) {
       setDrafts((prev) => {
         const next = { ...prev };
@@ -1182,9 +1185,10 @@ export default function Page() {
     }
   };
 
-  const editAc = (row: Odeme) => {
+  const editAc = (row: Odeme, focusColumn: ProjectColumnKey = "proje") => {
     setMsg("");
     setEditId(row.id);
+    setInlineFocusColumn(focusColumn);
     setProje(row.proje || "");
     setTutar(row.tutar ? String(row.tutar) : "");
     setTarih(row.fatura_tarihi || "");
@@ -1833,7 +1837,7 @@ export default function Page() {
       return (
         <td
           key={column}
-          onDoubleClick={() => editAc(row)}
+          onDoubleClick={() => editAc(row, "proje")}
           title="Düzenlemek için çift tıkla"
           style={{
             ...styles.td,
@@ -1845,6 +1849,7 @@ export default function Page() {
           {editing ? (
             <input
               className="soft-input"
+              autoFocus={inlineFocusColumn === "proje"}
               value={proje}
               onChange={(e) => setProje(e.target.value)}
               style={styles.input}
@@ -1890,10 +1895,16 @@ export default function Page() {
 
     if (column === "durum") {
       return (
-        <td key={column} style={{ ...styles.td, width: 150 }}>
+        <td
+          key={column}
+          onDoubleClick={() => editAc(row, "durum")}
+          title="Düzenlemek için çift tıkla"
+          style={{ ...styles.td, width: 150, cursor: "pointer" }}
+        >
           {editing ? (
             <select
               className="soft-input"
+              autoFocus={inlineFocusColumn === "durum"}
               value={
                 odemeAlindi ? "odeme" : faturaKesildi ? "fatura" : "bekliyor"
               }
@@ -1937,13 +1948,14 @@ export default function Page() {
       return (
         <td
           key={column}
-          onDoubleClick={() => editAc(row)}
+          onDoubleClick={() => editAc(row, "fatura_tarihi")}
           title="Düzenlemek için çift tıkla"
           style={{ ...styles.td, width: 100, cursor: "pointer" }}
         >
           {editing ? (
             <input
               className="soft-input"
+              autoFocus={inlineFocusColumn === "fatura_tarihi"}
               type="date"
               value={tarih}
               onChange={(e) => setTarih(e.target.value)}
@@ -1960,7 +1972,7 @@ export default function Page() {
       return (
         <td
           key={column}
-          onDoubleClick={() => editAc(row)}
+          onDoubleClick={() => editAc(row, "tutar")}
           title="Düzenlemek için çift tıkla"
           style={{
             ...styles.td,
@@ -1980,6 +1992,7 @@ export default function Page() {
             >
               <input
                 className="soft-input"
+                autoFocus={inlineFocusColumn === "tutar"}
                 value={tutar}
                 onChange={(e) => setTutar(e.target.value)}
                 style={styles.input}
@@ -2403,6 +2416,16 @@ export default function Page() {
     await yukle();
   }
 
+  const autoSaveInlineEdit = async () => {
+    if (editId === null || inlineSaveInProgressRef.current) return;
+    inlineSaveInProgressRef.current = true;
+    try {
+      await kaydet();
+    } finally {
+      inlineSaveInProgressRef.current = false;
+    }
+  };
+
   function sekmeGorunumDuzenle(tabName: string) {
     setTabMenu((prev) => ({ ...prev, visible: true, mode: "colors", tabName }));
   }
@@ -2482,6 +2505,12 @@ export default function Page() {
     <div
       style={{ ...styles.page, ...themeVars }}
       className={privacyMode ? "privacy-mode" : undefined}
+      onPointerDownCapture={(e) => {
+        if (editId === null) return;
+        const target = e.target instanceof HTMLElement ? e.target : null;
+        if (target?.closest('[data-inline-edit-row="true"]')) return;
+        void autoSaveInlineEdit();
+      }}
     >
       <style>{`
         @keyframes panelFadeSlide{
@@ -2520,11 +2549,17 @@ export default function Page() {
         .sidebar-item:hover{background:rgba(255,255,255,.06);transform:translateX(2px)}
         .panel-row{transition:transform .18s ease, box-shadow .18s ease, background-color .22s ease}
         .panel-row:hover{transform:translateY(-2px) scale(1.003);box-shadow:0 8px 18px rgba(15,23,42,.08)}
+        .panel-row-editing{transition:transform .12s ease, box-shadow .12s ease, background-color .12s ease}
+        .panel-row-editing .soft-input{animation:editFieldPop .12s ease both}
         .panel-row .row-actions-fade{opacity:0;pointer-events:none;transition:opacity .18s ease}
         .panel-row:hover .row-actions-fade{opacity:1;pointer-events:auto}
         .status-button{transition:transform .18s ease, box-shadow .18s ease, background-color .22s ease, border-color .22s ease, color .22s ease}
         .status-button:hover{transform:scale(1.015);box-shadow:0 10px 24px rgba(15,23,42,.10)}
         .status-button:active{transform:scale(.985)}
+        @keyframes editFieldPop{
+          from{opacity:.75;transform:scale(.985)}
+          to{opacity:1;transform:scale(1)}
+        }
         @media (max-width: 980px){
           .app-shell{grid-template-columns:1fr !important}
           .app-sidebar{position:static !important;height:auto !important;min-height:auto !important;padding-bottom:12px !important}
@@ -3229,7 +3264,11 @@ export default function Page() {
             </div>
           ) : (
             <>
-              <div style={styles.card} className="content-card">
+              <div
+                style={styles.card}
+                className="content-card"
+                data-inline-edit-row={editId !== null ? "true" : undefined}
+              >
                 <div style={styles.sectionHead}>
                   <h2 style={styles.h2}>Kayıt Ekle / Güncelle</h2>
                   <div style={{ color: "var(--muted)", fontSize: 12 }}>
@@ -3607,7 +3646,8 @@ export default function Page() {
                         return (
                           <tr
                             key={row.id}
-                            className="panel-row"
+                            className={`panel-row${editing ? " panel-row-editing" : ""}`}
+                            data-inline-edit-row={editing ? "true" : undefined}
                             onDragOver={(e) => handleRowDragOver(e, row.id)}
                             onDragLeave={() => {
                               if (dragOverId === row.id) {
@@ -3636,7 +3676,9 @@ export default function Page() {
                                   : "none",
                               boxShadow: isDropTarget
                                 ? "0 0 0 3px rgba(37,99,235,.35), 0 24px 48px rgba(37,99,235,.22)"
-                                : undefined,
+                                : editing
+                                  ? "0 0 0 2px rgba(37,99,235,.18), 0 14px 34px rgba(37,99,235,.12)"
+                                  : undefined,
                               position: "relative",
                               zIndex: isDropTarget || isDragSource ? 2 : 1,
                               borderTop:
