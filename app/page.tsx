@@ -2644,7 +2644,7 @@ export default function Page() {
           white-space:nowrap;
           color:var(--text);
           text-shadow:none;
-          animation:privacyCountdown .42s steps(1,end) both, privacyBounceSettle .42s cubic-bezier(.2,1.45,.35,1);
+          animation:privacyCountdown .42s steps(1,end) both, privacyBounceSettle .42s cubic-bezier(.2,1.45,.35,1), privacyMotionBlur .42s ease-out;
         }
         .privacy-mode .hero-card .money-value[data-private-value="true"]::after{color:#fff}
         .privacy-mode .money-value[data-private-value="true"][data-mask="₺0"]::after{min-width:1.5em}
@@ -2667,6 +2667,13 @@ export default function Page() {
           28%{opacity:1;letter-spacing:.025em;transform:translateY(1px) scale(.96)}
           58%{letter-spacing:.01em;transform:translateY(0) scale(1.015)}
           100%{opacity:1;letter-spacing:0;transform:translateY(0) scale(1)}
+        }
+        @keyframes privacyMotionBlur{
+          0%{filter:blur(.2px)}
+          18%{filter:blur(1.7px)}
+          46%{filter:blur(1.1px)}
+          72%{filter:blur(.45px)}
+          100%{filter:blur(0)}
         }
         .sidebar-item{transition:transform .18s ease, background-color .18s ease, box-shadow .18s ease}
         .sidebar-item:hover{background:rgba(255,255,255,.06);transform:translateX(2px)}
