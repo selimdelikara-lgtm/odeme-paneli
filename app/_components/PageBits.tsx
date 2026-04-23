@@ -757,7 +757,7 @@ export function MobileProjectCards({
                 }}
               >
                 <span style={{ ...styles.dot, background: durum.color }} />
-                {durum.text}
+                <span className="status-label">{durum.text}</span>
               </button>
             </div>
 

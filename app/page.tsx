@@ -1168,6 +1168,14 @@ export default function Page() {
                 });
 
               documentClone
+                .querySelectorAll<HTMLElement>(`${pdfTargetSelector} .status-label`)
+                .forEach((item) => {
+                  item.style.display = "block";
+                  item.style.lineHeight = "1";
+                  item.style.transform = "none";
+                });
+
+              documentClone
                 .querySelectorAll<HTMLElement>(`${pdfTargetSelector} [style*="overflow"]`)
                 .forEach((item) => {
                   item.style.overflow = "visible";
@@ -1969,7 +1977,7 @@ export default function Page() {
                   background: durum.color,
                 }}
               />
-              {durum.text}
+              <span className="status-label">{durum.text}</span>
             </button>
           )}
         </td>
@@ -2641,6 +2649,8 @@ export default function Page() {
         .panel-row .row-actions-fade{opacity:0;pointer-events:none;transition:opacity .18s ease}
         .panel-row:hover .row-actions-fade{opacity:1;pointer-events:auto}
         .status-button{transition:transform .18s ease, box-shadow .18s ease, background-color .22s ease, border-color .22s ease, color .22s ease}
+        .status-button .status-label{display:block;line-height:1;transform:translateY(.2px)}
+        .status-button span:first-child{flex:0 0 auto}
         .status-button:hover{transform:scale(1.015);box-shadow:0 10px 24px rgba(15,23,42,.10)}
         .status-button:active{transform:scale(.985)}
         @keyframes editFieldPop{
@@ -5475,13 +5485,17 @@ const styles: Record<string, CSSProperties> = {
     cursor: "pointer",
   },
   status: {
-    display: "inline-flex",
+    display: "inline-grid",
+    gridTemplateColumns: "8px auto",
     alignItems: "center",
+    justifyContent: "center",
     gap: 6,
     borderRadius: 999,
-    padding: "5px 9px",
+    padding: "6px 10px",
+    minHeight: 26,
     fontWeight: 700,
     fontSize: 11,
+    lineHeight: 1,
     cursor: "pointer",
     appearance: "none",
     WebkitAppearance: "none",
