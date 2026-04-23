@@ -1141,6 +1141,33 @@ export default function Page() {
                 });
 
               documentClone
+                .querySelectorAll<HTMLElement>(`${pdfTargetSelector} .status-button`)
+                .forEach((item) => {
+                  item.style.display = "inline-grid";
+                  item.style.gridTemplateColumns = "8px auto";
+                  item.style.alignItems = "center";
+                  item.style.justifyContent = "center";
+                  item.style.columnGap = "7px";
+                  item.style.minHeight = "24px";
+                  item.style.padding = "4px 12px";
+                  item.style.lineHeight = "1";
+                  item.style.verticalAlign = "middle";
+                  item.style.transform = "none";
+                  item.style.boxShadow = "none";
+                });
+
+              documentClone
+                .querySelectorAll<HTMLElement>(`${pdfTargetSelector} .status-button span:first-child`)
+                .forEach((item) => {
+                  item.style.width = "7px";
+                  item.style.height = "7px";
+                  item.style.margin = "0";
+                  item.style.alignSelf = "center";
+                  item.style.justifySelf = "center";
+                  item.style.transform = "none";
+                });
+
+              documentClone
                 .querySelectorAll<HTMLElement>(`${pdfTargetSelector} [style*="overflow"]`)
                 .forEach((item) => {
                   item.style.overflow = "visible";
