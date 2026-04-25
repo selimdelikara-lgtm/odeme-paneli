@@ -754,10 +754,10 @@ export default function Page() {
       sekme: row.grup || "",
       proje: row.proje || "",
       durum: row.odendi
-        ? "Ödeme alındı"
+        ? "Ödeme Alındı"
         : row.fatura_kesildi
-          ? "Fatura kesildi"
-          : "Bekliyor",
+          ? "Fatura Kesildi"
+          : "Ödenmedi",
       faturaTarihi: row.fatura_tarihi || "",
       tutar: Number(row.tutar || 0),
     }));
@@ -1317,9 +1317,9 @@ export default function Page() {
   async function durumIlerle(row: Odeme) {
     let next = { fatura_kesildi: false, odendi: false };
 
-    if (!row.fatura_kesildi && !row.odendi) {
+    if (!row.odendi && !row.fatura_kesildi) {
       next = { fatura_kesildi: true, odendi: false };
-    } else if (row.fatura_kesildi && !row.odendi) {
+    } else if (!row.odendi && row.fatura_kesildi) {
       next = { fatura_kesildi: true, odendi: true };
     }
 
@@ -1641,7 +1641,7 @@ export default function Page() {
   const durumGorunum = (row: Odeme) => {
     if (row.odendi) {
       return {
-        text: "Ödeme alındı",
+        text: "ÖDEME ALINDI",
         bg: theme === "dark" ? "rgba(60, 193, 139, 0.18)" : "#EAF8F0",
         color: theme === "dark" ? "#9BE4BF" : "#2A8B62",
         rowBg: theme === "dark" ? "#0C1813" : "#FBFEFC",
@@ -1650,7 +1650,7 @@ export default function Page() {
 
     if (row.fatura_kesildi) {
       return {
-        text: "Fatura kesildi",
+        text: "FATURA KESİLDİ",
         bg: theme === "dark" ? "rgba(255, 186, 104, 0.18)" : "#FFF4E7",
         color: theme === "dark" ? "#FFD08F" : "#D88724",
         rowBg: theme === "dark" ? "#17120B" : "#FFFDF8",
@@ -1658,7 +1658,7 @@ export default function Page() {
     }
 
     return {
-      text: "Henüz kesilmedi",
+      text: "ÖDENMEDİ",
       bg: theme === "dark" ? "rgba(244, 114, 182, 0.14)" : "#FDEEF3",
       color: theme === "dark" ? "#F4A4C7" : "#C25A84",
       rowBg: theme === "dark" ? "#181017" : "#FFF9FB",
@@ -1947,9 +1947,9 @@ export default function Page() {
               }}
               style={styles.input}
             >
-              <option value="bekliyor">Henüz kesilmedi</option>
-              <option value="fatura">Fatura kesildi</option>
-              <option value="odeme">Ödeme alındı</option>
+              <option value="odeme">ÖDEME ALINDI</option>
+              <option value="bekliyor">ÖDENMEDİ</option>
+              <option value="fatura">FATURA KESİLDİ</option>
             </select>
           ) : (
             <button

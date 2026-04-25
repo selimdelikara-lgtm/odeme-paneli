@@ -370,8 +370,8 @@ export function SummaryQuickPanels({
   selectedVisibleIdsLength,
   aktifTabMeta,
 }: SummaryQuickPanelsProps) {
-  const bekleyenHome = Math.max(filteredHomeRowsLength - tumOdeme, 0);
-  const bekleyenProject = Math.max(filteredActiveRowsLength - odemesiAlinanAdet, 0);
+  const odenmeyenHome = Math.max(filteredHomeRowsLength - tumOdeme, 0);
+  const odenmeyenProject = Math.max(filteredActiveRowsLength - odemesiAlinanAdet, 0);
 
   if (viewMode === "home") {
     return (
@@ -432,8 +432,8 @@ export function SummaryQuickPanels({
               <strong>{tumFatura}</strong>
             </div>
             <div style={styles.projectInfoRow}>
-              <span>Bekleyen</span>
-              <strong>{bekleyenHome}</strong>
+              <span>Ödenmedi</span>
+              <strong>{odenmeyenHome}</strong>
             </div>
           </div>
         </div>
@@ -503,8 +503,8 @@ export function SummaryQuickPanels({
             <strong>{faturasiKesilenAdet}</strong>
           </div>
           <div style={styles.projectInfoRow}>
-            <span>Bekleyen</span>
-            <strong>{bekleyenProject}</strong>
+            <span>Ödenmedi</span>
+            <strong>{odenmeyenProject}</strong>
           </div>
           <div style={styles.projectInfoRow}>
             <span>Seçili Kayıt</span>
