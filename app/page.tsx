@@ -725,9 +725,14 @@ export default function Page() {
     () => buildHomeProjectStats(gorunenSekmeler, filteredHomeRows),
     [gorunenSekmeler, filteredHomeRows]
   );
-  const selectedVisibleIds = filteredActiveKayitlar
-    .filter((row) => selectedIds.includes(row.id))
-    .map((row) => row.id);
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const selectedVisibleIds = useMemo(
+    () =>
+      filteredActiveKayitlar
+        .filter((row) => selectedIdSet.has(row.id))
+        .map((row) => row.id),
+    [filteredActiveKayitlar, selectedIdSet]
+  );
 
   const temizle = () => {
     setProje("");
@@ -1262,7 +1267,9 @@ export default function Page() {
   };
 
   const getSelectionTargets = (sourceId: number) =>
-    selectedVisibleIds.includes(sourceId) ? selectedVisibleIds : [sourceId];
+    selectedIdSet.has(sourceId) && selectedVisibleIds.includes(sourceId)
+      ? selectedVisibleIds
+      : [sourceId];
 
   const changedFieldsForSelectedRows = (
     original: Odeme | null,
@@ -1335,17 +1342,37 @@ export default function Page() {
     const peerIds = targetIds.filter((id) => id !== editId);
     const sharedFields = changedFieldsForSelectedRows(originalRow, payload);
 
-    const res = editId
-      ? await odemelerTable().update(payload satisfies OdemeUpdate).eq("id", editId)
-      : await odemelerTable().insert([payload]);
-
-    if (res.error) {
-      setMsg("Kayıt kaydedilemedi: " + res.error.message);
-      return;
-    }
-
     if (editId) {
+      const { error } = await odemelerTable()
+        .update(payload satisfies OdemeUpdate)
+        .eq("id", editId);
+
+      if (error) {
+        setMsg("Kayıt kaydedilemedi: " + error.message);
+        return;
+      }
+
       markRowsUpdated([editId], now);
+
+      setData((prev) =>
+        prev.map((row) => (row.id === editId ? { ...row, ...payload } : row))
+      );
+    } else {
+      const { data: insertedRow, error } = await odemelerTable()
+        .insert([payload])
+        .select("*")
+        .single();
+
+      if (error) {
+        setMsg("Kayıt kaydedilemedi: " + error.message);
+        return;
+      }
+
+      if (insertedRow) {
+        const row = insertedRow as Odeme;
+        setData((prev) => [...prev, row]);
+        markRowsUpdated([row.id], now);
+      }
     }
 
     if (editId && peerIds.length && Object.keys(sharedFields).length > 0) {
@@ -1357,11 +1384,14 @@ export default function Page() {
 
       if (bulkResult.error) {
         setMsg("Kayıt güncellendi, seçili kayıtlara uygulanamadı: " + bulkResult.error);
-        await yukle();
         return;
       }
 
       markRowsUpdated(peerIds, now);
+      const peerIdSet = new Set(peerIds);
+      setData((prev) =>
+        prev.map((row) => (peerIdSet.has(row.id) ? { ...row, ...sharedFields } : row))
+      );
     }
 
     temizle();
@@ -1382,7 +1412,6 @@ export default function Page() {
         ? `${targetIds.length} kayıt · ${payload.proje || "Kayıt"}`
         : `${aktifSekme} · ${payload.proje || "Yeni kayıt"}`
     );
-    await yukle();
   }
 
   async function kaydiKopyala(row: Odeme) {
@@ -1443,7 +1472,8 @@ export default function Page() {
 
     const now = new Date().toISOString();
     markRowsUpdated(targetIds, now);
-    setData((prev) => prev.map((x) => (targetIds.includes(x.id) ? { ...x, ...next } : x)));
+    const targetIdSet = new Set(targetIds);
+    setData((prev) => prev.map((x) => (targetIdSet.has(x.id) ? { ...x, ...next } : x)));
     setMsg(targetIds.length > 1 ? `${targetIds.length} seçili kaydın durumu güncellendi.` : "");
     pushActivity(
       targetIds.length > 1 ? "Seçili durumlar güncellendi" : "Durum güncellendi",
