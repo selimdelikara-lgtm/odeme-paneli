@@ -10,7 +10,18 @@ import {
   jsonOk,
 } from "../../_lib/server";
 
-type BulkAction = "invoice" | "paid" | "delete";
+type BulkAction = "invoice" | "paid" | "delete" | "update";
+
+type BulkUpdateFields = {
+  proje?: string;
+  tutar?: number | null;
+  grup?: string;
+  fatura_tarihi?: string | null;
+  kdvli?: boolean;
+  gvkli?: boolean;
+  fatura_kesildi?: boolean;
+  odendi?: boolean;
+};
 
 export async function POST(request: Request) {
   const env = getServerSupabaseEnv();
@@ -42,7 +53,7 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json().catch(() => null)) as
-    | { ids?: number[]; action?: BulkAction }
+    | { ids?: number[]; action?: BulkAction; fields?: BulkUpdateFields }
     | null;
 
   const ids = Array.isArray(body?.ids) ? body.ids.filter((item) => Number.isInteger(item)) : [];
@@ -119,6 +130,82 @@ export async function POST(request: Request) {
       userId: user.id,
       title: "Toplu kayıt silme",
       detail: `${ids.length} kayıt silindi.`,
+      source: "bulk_api",
+      request,
+    });
+
+    return jsonOk({ ok: true });
+  }
+
+  if (action === "update") {
+    const incoming = body?.fields && typeof body.fields === "object" ? body.fields : null;
+    if (!incoming) {
+      return jsonError("Toplu güncelleme alanları eksik.", 400);
+    }
+
+    const values: BulkUpdateFields = {};
+
+    if (Object.prototype.hasOwnProperty.call(incoming, "proje")) {
+      const value = typeof incoming.proje === "string" ? incoming.proje.trim() : "";
+      if (!value || value.length > 160) {
+        return jsonError("Proje adı geçersiz.", 400);
+      }
+      values.proje = value;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(incoming, "grup")) {
+      const value = typeof incoming.grup === "string" ? incoming.grup.trim() : "";
+      if (!value || value.length > 80) {
+        return jsonError("Sekme adı geçersiz.", 400);
+      }
+      values.grup = value;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(incoming, "tutar")) {
+      if (incoming.tutar !== null && typeof incoming.tutar !== "number") {
+        return jsonError("Tutar geçersiz.", 400);
+      }
+      if (typeof incoming.tutar === "number" && (!Number.isFinite(incoming.tutar) || incoming.tutar < 0)) {
+        return jsonError("Tutar geçersiz.", 400);
+      }
+      values.tutar = incoming.tutar;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(incoming, "fatura_tarihi")) {
+      if (incoming.fatura_tarihi !== null && typeof incoming.fatura_tarihi !== "string") {
+        return jsonError("Fatura tarihi geçersiz.", 400);
+      }
+      values.fatura_tarihi = incoming.fatura_tarihi || null;
+    }
+
+    for (const key of ["kdvli", "gvkli", "fatura_kesildi", "odendi"] as const) {
+      if (Object.prototype.hasOwnProperty.call(incoming, key)) {
+        if (typeof incoming[key] !== "boolean") {
+          return jsonError("Toplu güncelleme alanı geçersiz.", 400);
+        }
+        values[key] = incoming[key];
+      }
+    }
+
+    if (Object.keys(values).length === 0) {
+      return jsonError("Güncellenecek alan seçilmedi.", 400);
+    }
+
+    const { error: updateError } = await adminClient
+      .from("odemeler")
+      .update(values)
+      .eq("user_id", user.id)
+      .in("id", ids);
+
+    if (updateError) {
+      return jsonError("Toplu güncelleme uygulanamadı.", 500);
+    }
+
+    await writeAuditLog({
+      adminClient,
+      userId: user.id,
+      title: "Toplu kayıt güncellemesi",
+      detail: `${ids.length} kayıt güncellendi.`,
       source: "bulk_api",
       request,
     });
