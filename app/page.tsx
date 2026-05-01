@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import {
   useCallback,
+  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -178,6 +179,7 @@ export default function Page() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const [searchTerm, setSearchTerm] = useState("");
+  const deferredSearchTerm = useDeferredValue(searchTerm);
   const [statusFilter] = useState<StatusFilter>("all");
   const [dateFrom] = useState("");
   const [dateTo] = useState("");
@@ -386,11 +388,19 @@ export default function Page() {
   }, [privacyMode]);
 
   useEffect(() => {
-    localStorage.setItem("odeme-drafts-v1", JSON.stringify(drafts));
+    const timer = window.setTimeout(() => {
+      localStorage.setItem("odeme-drafts-v1", JSON.stringify(drafts));
+    }, 250);
+
+    return () => window.clearTimeout(timer);
   }, [drafts]);
 
   useEffect(() => {
-    localStorage.setItem("odeme-row-meta-v1", JSON.stringify(rowMeta));
+    const timer = window.setTimeout(() => {
+      localStorage.setItem("odeme-row-meta-v1", JSON.stringify(rowMeta));
+    }, 250);
+
+    return () => window.clearTimeout(timer);
   }, [rowMeta]);
 
   useEffect(() => {
@@ -432,6 +442,8 @@ export default function Page() {
   }, [authUserId]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadAuditLog = async () => {
       if (!authUserId) {
         setActivityLog([]);
@@ -462,10 +474,18 @@ export default function Page() {
         return;
       }
 
+      if (cancelled) return;
       setActivityLog(payload.items);
     };
 
-    void loadAuditLog();
+    const timer = window.setTimeout(() => {
+      void loadAuditLog();
+    }, 600);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [authUserId]);
 
   useEffect(() => {
@@ -588,8 +608,16 @@ export default function Page() {
     return () => window.clearTimeout(timer);
   }, [authUserId, yukle]);
 
+  const rowIdsKey = useMemo(
+    () => data.map((row) => row.id).filter((id) => id > 0).join(","),
+    [data]
+  );
+  const rowIds = useMemo(
+    () => (rowIdsKey ? rowIdsKey.split(",").map(Number) : []),
+    [rowIdsKey]
+  );
+
   useEffect(() => {
-    const rowIds = data.map((row) => row.id).filter((id) => id > 0);
     let cancelled = false;
 
     const run = async () => {
@@ -632,7 +660,7 @@ export default function Page() {
     return () => {
       cancelled = true;
     };
-  }, [authUserId, data]);
+  }, [authUserId, rowIds]);
 
   useEffect(() => {
     const close = () => setTabMenu((p) => ({ ...p, visible: false }));
@@ -679,23 +707,23 @@ export default function Page() {
   const filteredHomeRows = useMemo(
     () =>
       filterRows(homeBaseRows, {
-        searchTerm,
+        searchTerm: deferredSearchTerm,
         statusFilter,
         dateFrom,
         dateTo,
       }),
-    [homeBaseRows, searchTerm, statusFilter, dateFrom, dateTo]
+    [homeBaseRows, deferredSearchTerm, statusFilter, dateFrom, dateTo]
   );
 
   const filteredActiveKayitlar = useMemo(
     () =>
       filterRows(aktifKayitlar, {
-        searchTerm,
+        searchTerm: deferredSearchTerm,
         statusFilter,
         dateFrom,
         dateTo,
       }),
-    [aktifKayitlar, searchTerm, statusFilter, dateFrom, dateTo]
+    [aktifKayitlar, deferredSearchTerm, statusFilter, dateFrom, dateTo]
   );
 
   const activeSummary = useMemo(
@@ -1422,7 +1450,7 @@ export default function Page() {
         ? Math.max(...aktifKayitlar.map((x) => x.sira ?? 0)) + 1
         : 1;
 
-    const { error } = await odemelerTable().insert([
+    const { data: copiedRow, error } = await odemelerTable().insert([
       {
         user_id: authUserId,
         proje: `${row.proje || "Yeni Kayıt"} Kopya`,
@@ -1435,16 +1463,22 @@ export default function Page() {
         gvkli: row.gvkli,
         sira: nextSira,
       },
-    ] satisfies OdemeInsert[]);
+    ] satisfies OdemeInsert[]).select("*").single();
 
     if (error) {
       setMsg("Kopyalama başarısız: " + error.message);
       return;
     }
 
+    if (copiedRow) {
+      const now = new Date().toISOString();
+      const nextRow = copiedRow as Odeme;
+      setData((prev) => [...prev, nextRow]);
+      markRowsUpdated([nextRow.id], now);
+    }
+
     setMsg("Kayıt çoğaltıldı.");
     pushActivity("Kayıt çoğaltıldı", `${row.grup || "Proje"} · ${row.proje || "Yeni Kayıt"}`);
-    await yukle();
   }
 
   async function durumIlerle(row: Odeme) {
@@ -1523,9 +1557,16 @@ export default function Page() {
 
     if (row) setLastDeleted([row]);
     if (editId === id) temizle();
+    setData((prev) => prev.filter((item) => item.id !== id));
+    setSelectedIds((prev) => prev.filter((item) => item !== id));
+    setInvoiceMap((prev) => {
+      if (!prev[id]) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
     setMsg("Kayıt silindi.");
     pushActivity("Kayıt silindi", `${row?.grup || "Proje"} · ${row?.proje || id}`);
-    await yukle();
   }
 
   async function sekmeSil(tabName: string) {
@@ -1961,7 +2002,7 @@ export default function Page() {
             style={styles.checkboxBtn}
             title="Kaydı seç"
           >
-            {selectedIds.includes(row.id) ? (
+            {selectedIdSet.has(row.id) ? (
               <CheckSquare size={18} color={palette.blue} />
             ) : (
               <Square size={18} color={palette.muted} />
