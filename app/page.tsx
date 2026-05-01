@@ -113,8 +113,6 @@ const PROJECT_MODAL_COLORS = [
 ];
 
 type TaxMode = "none" | "kdv" | "gvk" | "kdv_gvk";
-type BulkStatusMode = "skip" | "unpaid" | "invoice" | "paid";
-type BulkFieldKey = "proje" | "grup" | "tutar" | "tarih" | "taxMode" | "status";
 
 const taxModeFromFlags = (hasKdv: boolean, hasGvk: boolean): TaxMode => {
   if (hasKdv && hasGvk) return "kdv_gvk";
@@ -184,21 +182,6 @@ export default function Page() {
   const [dateFrom] = useState("");
   const [dateTo] = useState("");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [bulkEnabledFields, setBulkEnabledFields] = useState<Record<BulkFieldKey, boolean>>({
-    proje: false,
-    grup: false,
-    tutar: false,
-    tarih: false,
-    taxMode: false,
-    status: false,
-  });
-  const [bulkProje, setBulkProje] = useState("");
-  const [bulkGrup, setBulkGrup] = useState("");
-  const [bulkTutar, setBulkTutar] = useState("");
-  const [bulkTarih, setBulkTarih] = useState("");
-  const [bulkTaxMode, setBulkTaxMode] = useState<TaxMode>("none");
-  const [bulkStatus, setBulkStatus] = useState<BulkStatusMode>("skip");
-  const [bulkBusy, setBulkBusy] = useState(false);
   const [lastDeleted, setLastDeleted] = useState<Odeme[] | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
@@ -1278,6 +1261,53 @@ export default function Page() {
     setOdemeAlindi(Boolean(row.odendi));
   };
 
+  const getSelectionTargets = (sourceId: number) =>
+    selectedVisibleIds.includes(sourceId) ? selectedVisibleIds : [sourceId];
+
+  const changedFieldsForSelectedRows = (
+    original: Odeme | null,
+    next: OdemeInsert
+  ): Partial<OdemeUpdate> => {
+    if (!original) return {};
+
+    const fields: Partial<OdemeUpdate> = {};
+    const comparisons: Array<[
+      keyof OdemeUpdate,
+      Odeme[keyof Odeme],
+      OdemeInsert[keyof OdemeInsert],
+    ]> = [
+      ["proje", original.proje, next.proje],
+      ["tutar", original.tutar, next.tutar],
+      ["fatura_tarihi", original.fatura_tarihi, next.fatura_tarihi],
+      ["fatura_kesildi", original.fatura_kesildi, next.fatura_kesildi],
+      ["odendi", original.odendi, next.odendi],
+      ["grup", original.grup, next.grup],
+      ["kdvli", original.kdvli, next.kdvli],
+      ["gvkli", original.gvkli, next.gvkli],
+    ];
+
+    comparisons.forEach(([key, before, after]) => {
+      if (before !== after) {
+        fields[key] = after as never;
+      }
+    });
+
+    return fields;
+  };
+
+  const markRowsUpdated = (ids: number[], now = new Date().toISOString()) => {
+    setRowMeta((prev) => {
+      const next = { ...prev };
+      ids.forEach((id) => {
+        next[id] = {
+          createdAt: prev[id]?.createdAt || now,
+          updatedAt: now,
+        };
+      });
+      return next;
+    });
+  };
+
   async function kaydet() {
     if (!aktifSekme || !proje.trim() || !authUserId) return;
 
@@ -1300,6 +1330,10 @@ export default function Page() {
     };
 
     const now = new Date().toISOString();
+    const originalRow = editId ? data.find((row) => row.id === editId) ?? null : null;
+    const targetIds = editId ? getSelectionTargets(editId) : [];
+    const peerIds = targetIds.filter((id) => id !== editId);
+    const sharedFields = changedFieldsForSelectedRows(originalRow, payload);
 
     const res = editId
       ? await odemelerTable().update(payload satisfies OdemeUpdate).eq("id", editId)
@@ -1311,20 +1345,42 @@ export default function Page() {
     }
 
     if (editId) {
-      setRowMeta((prev) => ({
-        ...prev,
-        [editId]: {
-          createdAt: prev[editId]?.createdAt || now,
-          updatedAt: now,
-        },
-      }));
+      markRowsUpdated([editId], now);
+    }
+
+    if (editId && peerIds.length && Object.keys(sharedFields).length > 0) {
+      const bulkResult = await runBulkRequest({
+        action: "update",
+        ids: peerIds,
+        fields: sharedFields,
+      });
+
+      if (bulkResult.error) {
+        setMsg("Kayıt güncellendi, seçili kayıtlara uygulanamadı: " + bulkResult.error);
+        await yukle();
+        return;
+      }
+
+      markRowsUpdated(peerIds, now);
     }
 
     temizle();
-    setMsg(editId ? "Kayıt güncellendi." : "Kayıt eklendi.");
+    setMsg(
+      editId && peerIds.length && Object.keys(sharedFields).length > 0
+        ? `${targetIds.length} seçili kayıt güncellendi.`
+        : editId
+          ? "Kayıt güncellendi."
+          : "Kayıt eklendi."
+    );
     pushActivity(
-      editId ? "Kayıt güncellendi" : "Kayıt eklendi",
-      `${aktifSekme} · ${payload.proje || "Yeni kayıt"}`
+      editId && peerIds.length && Object.keys(sharedFields).length > 0
+        ? "Seçili kayıtlar güncellendi"
+        : editId
+          ? "Kayıt güncellendi"
+          : "Kayıt eklendi",
+      editId && peerIds.length && Object.keys(sharedFields).length > 0
+        ? `${targetIds.length} kayıt · ${payload.proje || "Kayıt"}`
+        : `${aktifSekme} · ${payload.proje || "Yeni kayıt"}`
     );
     await yukle();
   }
@@ -1372,27 +1428,29 @@ export default function Page() {
     }
 
     const nextUpdate: OdemeUpdate = next;
-    const { error } = await odemelerTable()
-      .update(nextUpdate)
-      .eq("id", row.id);
+    const targetIds = getSelectionTargets(row.id);
+    const result =
+      targetIds.length > 1
+        ? await runBulkRequest({ action: "update", ids: targetIds, fields: nextUpdate })
+        : await odemelerTable().update(nextUpdate).eq("id", row.id).then(({ error }) => ({
+            error: error?.message || null,
+          }));
 
-    if (error) {
-      setMsg("Durum güncellenemedi: " + error.message);
+    if (result.error) {
+      setMsg("Durum güncellenemedi: " + result.error);
       return;
     }
 
     const now = new Date().toISOString();
-
-    setRowMeta((prev) => ({
-      ...prev,
-      [row.id]: {
-        createdAt: prev[row.id]?.createdAt || now,
-        updatedAt: now,
-      },
-    }));
-
-    setData((prev) => prev.map((x) => (x.id === row.id ? { ...x, ...next } : x)));
-    pushActivity("Durum güncellendi", `${row.grup || "Proje"} · ${row.proje || "Kayıt"}`);
+    markRowsUpdated(targetIds, now);
+    setData((prev) => prev.map((x) => (targetIds.includes(x.id) ? { ...x, ...next } : x)));
+    setMsg(targetIds.length > 1 ? `${targetIds.length} seçili kaydın durumu güncellendi.` : "");
+    pushActivity(
+      targetIds.length > 1 ? "Seçili durumlar güncellendi" : "Durum güncellendi",
+      targetIds.length > 1
+        ? `${targetIds.length} kayıt`
+        : `${row.grup || "Proje"} · ${row.proje || "Kayıt"}`
+    );
   }
 
   async function undoDelete() {
@@ -1579,157 +1637,6 @@ export default function Page() {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
-  };
-
-  const toggleBulkField = (field: BulkFieldKey) => {
-    setBulkEnabledFields((prev) => ({ ...prev, [field]: !prev[field] }));
-  };
-
-  const resetBulkForm = () => {
-    setBulkEnabledFields({
-      proje: false,
-      grup: false,
-      tutar: false,
-      tarih: false,
-      taxMode: false,
-      status: false,
-    });
-    setBulkProje("");
-    setBulkGrup("");
-    setBulkTutar("");
-    setBulkTarih("");
-    setBulkTaxMode("none");
-    setBulkStatus("skip");
-  };
-
-  const bulkTumunuSec = () => {
-    setSelectedIds(selectedVisibleIds);
-  };
-
-  const topluGuncelle = async () => {
-    if (!selectedVisibleIds.length) {
-      setMsg("Toplu işlem için kayıt seç.");
-      return;
-    }
-
-    const fields: Partial<OdemeUpdate> = {};
-
-    if (bulkEnabledFields.proje) {
-      const value = bulkProje.trim();
-      if (!value) {
-        setMsg("Toplu proje adı boş olamaz.");
-        return;
-      }
-      fields.proje = value;
-    }
-
-    if (bulkEnabledFields.grup) {
-      const value = bulkGrup.trim();
-      if (!value) {
-        setMsg("Toplu sekme adı boş olamaz.");
-        return;
-      }
-      fields.grup = value;
-    }
-
-    if (bulkEnabledFields.tutar) {
-      const value = Number(bulkTutar.replace(",", "."));
-      if (!Number.isFinite(value) || value < 0) {
-        setMsg("Toplu tutar geçerli bir sayı olmalı.");
-        return;
-      }
-      fields.tutar = value;
-    }
-
-    if (bulkEnabledFields.tarih) {
-      fields.fatura_tarihi = bulkTarih || null;
-    }
-
-    if (bulkEnabledFields.taxMode) {
-      const taxFlags = taxFlagsFromMode(bulkTaxMode);
-      fields.kdvli = taxFlags.kdvli;
-      fields.gvkli = taxFlags.gvkli;
-    }
-
-    if (bulkEnabledFields.status) {
-      if (bulkStatus === "skip") {
-        setMsg("Toplu durum seç.");
-        return;
-      }
-
-      if (bulkStatus === "paid") {
-        fields.fatura_kesildi = true;
-        fields.odendi = true;
-      } else if (bulkStatus === "invoice") {
-        fields.fatura_kesildi = true;
-        fields.odendi = false;
-      } else {
-        fields.fatura_kesildi = false;
-        fields.odendi = false;
-      }
-    }
-
-    if (Object.keys(fields).length === 0) {
-      setMsg("Toplu güncelleme için en az bir alan seç.");
-      return;
-    }
-
-    setBulkBusy(true);
-    const result = await runBulkRequest({
-      action: "update",
-      ids: selectedVisibleIds,
-      fields,
-    });
-    setBulkBusy(false);
-
-    if (result.error) {
-      setMsg(result.error);
-      return;
-    }
-
-    const now = new Date().toISOString();
-    setRowMeta((prev) => {
-      const next = { ...prev };
-      selectedVisibleIds.forEach((id) => {
-        next[id] = {
-          createdAt: prev[id]?.createdAt || now,
-          updatedAt: now,
-        };
-      });
-      return next;
-    });
-    setSelectedIds([]);
-    resetBulkForm();
-    setMsg(`${selectedVisibleIds.length} kayıt toplu güncellendi.`);
-    pushActivity("Toplu kayıt güncellendi", `${selectedVisibleIds.length} kayıt güncellendi.`);
-    await yukle();
-  };
-
-  const topluSil = async () => {
-    if (!selectedVisibleIds.length) {
-      setMsg("Silmek için kayıt seç.");
-      return;
-    }
-
-    const rows = data.filter((row) => selectedVisibleIds.includes(row.id));
-    const onay = window.confirm(`${selectedVisibleIds.length} kayıt silinecek. Emin misin?`);
-    if (!onay) return;
-
-    setBulkBusy(true);
-    const result = await runBulkRequest({ action: "delete", ids: selectedVisibleIds });
-    setBulkBusy(false);
-
-    if (result.error) {
-      setMsg(result.error);
-      return;
-    }
-
-    setLastDeleted(rows);
-    setSelectedIds([]);
-    resetBulkForm();
-    setMsg(`${rows.length} kayıt silindi.`);
-    pushActivity("Toplu kayıt silindi", `${rows.length} kayıt silindi.`);
-    await yukle();
   };
 
   const sortToggle = (key: SortKey) => {
@@ -2936,8 +2843,6 @@ export default function Page() {
           .quick-grid > div .quick-title{font-size:14px !important}
           .quick-grid > div .quick-amount{font-size:24px !important}
           .quick-grid > div .quick-muted{font-size:11px !important}
-          .bulkEditGrid{grid-template-columns:1fr !important}
-          .bulkHead{align-items:flex-start !important;flex-direction:column !important}
           .mobile-bottom-nav{display:grid !important}
           .mobile-projects-sheet{display:block !important}
           .login-wrap{padding:0 !important}
@@ -3848,187 +3753,6 @@ export default function Page() {
                     {sortKey === "manual"
                       ? "SIRA alanından sürükle bırak yap"
                       : "Başlığa tıklayarak sıralama değişir"}
-                  </div>
-                </div>
-
-                <div style={styles.bulkPanel} className="no-print">
-                  <div style={styles.bulkHead} className="bulkHead">
-                    <div>
-                      <div style={styles.bulkTitle}>Toplu İşlem</div>
-                      <div style={styles.bulkHint}>
-                        {selectedVisibleIds.length
-                          ? `${selectedVisibleIds.length} kayıt seçili`
-                          : "İşlem yapmak için kayıt seç"}
-                      </div>
-                    </div>
-                    <div style={styles.bulkActions}>
-                      <button
-                        type="button"
-                        className="hover-button"
-                        onClick={bulkTumunuSec}
-                        style={styles.secondaryBtn}
-                        disabled={!filteredActiveKayitlar.length || bulkBusy}
-                      >
-                        Tümünü Seç
-                      </button>
-                      <button
-                        type="button"
-                        className="hover-button"
-                        onClick={() => {
-                          setSelectedIds([]);
-                          resetBulkForm();
-                        }}
-                        style={styles.secondaryBtn}
-                        disabled={!selectedVisibleIds.length || bulkBusy}
-                      >
-                        Seçimi Temizle
-                      </button>
-                    </div>
-                  </div>
-
-                  <div style={styles.bulkEditGrid} className="bulkEditGrid">
-                    <label style={styles.bulkField}>
-                      <span style={styles.bulkCheckLine}>
-                        <input
-                          type="checkbox"
-                          checked={bulkEnabledFields.proje}
-                          onChange={() => toggleBulkField("proje")}
-                        />
-                        Proje adı
-                      </span>
-                      <input
-                        className="soft-input"
-                        value={bulkProje}
-                        onChange={(e) => setBulkProje(e.target.value)}
-                        placeholder="Yeni proje adı"
-                        style={styles.input}
-                        disabled={!bulkEnabledFields.proje || bulkBusy}
-                      />
-                    </label>
-
-                    <label style={styles.bulkField}>
-                      <span style={styles.bulkCheckLine}>
-                        <input
-                          type="checkbox"
-                          checked={bulkEnabledFields.grup}
-                          onChange={() => toggleBulkField("grup")}
-                        />
-                        Sekme
-                      </span>
-                      <input
-                        className="soft-input"
-                        value={bulkGrup}
-                        onChange={(e) => setBulkGrup(e.target.value)}
-                        placeholder="Yeni sekme adı"
-                        style={styles.input}
-                        disabled={!bulkEnabledFields.grup || bulkBusy}
-                      />
-                    </label>
-
-                    <label style={styles.bulkField}>
-                      <span style={styles.bulkCheckLine}>
-                        <input
-                          type="checkbox"
-                          checked={bulkEnabledFields.tutar}
-                          onChange={() => toggleBulkField("tutar")}
-                        />
-                        Tutar
-                      </span>
-                      <input
-                        className="soft-input"
-                        value={bulkTutar}
-                        onChange={(e) => setBulkTutar(e.target.value)}
-                        placeholder="Yeni tutar"
-                        style={styles.input}
-                        disabled={!bulkEnabledFields.tutar || bulkBusy}
-                      />
-                    </label>
-
-                    <label style={styles.bulkField}>
-                      <span style={styles.bulkCheckLine}>
-                        <input
-                          type="checkbox"
-                          checked={bulkEnabledFields.tarih}
-                          onChange={() => toggleBulkField("tarih")}
-                        />
-                        Fatura tarihi
-                      </span>
-                      <input
-                        className="soft-input"
-                        type="date"
-                        value={bulkTarih}
-                        onChange={(e) => setBulkTarih(e.target.value)}
-                        style={styles.input}
-                        disabled={!bulkEnabledFields.tarih || bulkBusy}
-                      />
-                    </label>
-
-                    <label style={styles.bulkField}>
-                      <span style={styles.bulkCheckLine}>
-                        <input
-                          type="checkbox"
-                          checked={bulkEnabledFields.taxMode}
-                          onChange={() => toggleBulkField("taxMode")}
-                        />
-                        Vergi
-                      </span>
-                      <select
-                        className="soft-input"
-                        value={bulkTaxMode}
-                        onChange={(e) => setBulkTaxMode(e.target.value as TaxMode)}
-                        style={styles.input}
-                        disabled={!bulkEnabledFields.taxMode || bulkBusy}
-                      >
-                        <option value="none">Vergisiz</option>
-                        <option value="kdv">+ %20 KDV</option>
-                        <option value="gvk">- %15 GVK</option>
-                        <option value="kdv_gvk">+ %20 KDV / - %15 GVK</option>
-                      </select>
-                    </label>
-
-                    <label style={styles.bulkField}>
-                      <span style={styles.bulkCheckLine}>
-                        <input
-                          type="checkbox"
-                          checked={bulkEnabledFields.status}
-                          onChange={() => toggleBulkField("status")}
-                        />
-                        Durum
-                      </span>
-                      <select
-                        className="soft-input"
-                        value={bulkStatus}
-                        onChange={(e) => setBulkStatus(e.target.value as BulkStatusMode)}
-                        style={styles.input}
-                        disabled={!bulkEnabledFields.status || bulkBusy}
-                      >
-                        <option value="skip">Durum seç</option>
-                        <option value="paid">ÖDEME ALINDI</option>
-                        <option value="unpaid">ÖDENMEDİ</option>
-                        <option value="invoice">FATURA KESİLDİ</option>
-                      </select>
-                    </label>
-                  </div>
-
-                  <div style={styles.bulkFooter}>
-                    <button
-                      type="button"
-                      className="hover-button"
-                      onClick={() => void topluGuncelle()}
-                      style={styles.primaryBtn}
-                      disabled={!selectedVisibleIds.length || bulkBusy}
-                    >
-                      {bulkBusy ? "Uygulanıyor..." : "Seçililere Uygula"}
-                    </button>
-                    <button
-                      type="button"
-                      className="hover-button"
-                      onClick={() => void topluSil()}
-                      style={styles.deleteBtn}
-                      disabled={!selectedVisibleIds.length || bulkBusy}
-                    >
-                      Seçilileri Sil
-                    </button>
                   </div>
                 </div>
 
@@ -5688,62 +5412,6 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 700,
     fontSize: 13,
     cursor: "pointer",
-  },
-  bulkHead: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    marginBottom: 10,
-  },
-  bulkPanel: {
-    border: "1px solid var(--border)",
-    background: "linear-gradient(180deg, rgba(248,250,252,0.86), var(--card))",
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 14,
-    boxShadow: "0 14px 32px rgba(15,23,42,0.05)",
-  },
-  bulkTitle: {
-    fontSize: 14,
-    fontWeight: 800,
-    color: "var(--text)",
-  },
-  bulkHint: {
-    marginTop: 3,
-    fontSize: 12,
-    fontWeight: 700,
-    color: "var(--muted)",
-  },
-  bulkActions: {
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  bulkEditGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: 10,
-  },
-  bulkField: {
-    display: "grid",
-    gap: 6,
-    minWidth: 0,
-  },
-  bulkCheckLine: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 7,
-    fontSize: 12,
-    fontWeight: 800,
-    color: "var(--textSoft)",
-  },
-  bulkFooter: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: 10,
-    flexWrap: "wrap",
-    marginTop: 12,
   },
   undoBar: {
     background: "var(--amberSoft)",
