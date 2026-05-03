@@ -409,6 +409,25 @@ export function AuthScreen({
 
         {!isMobileViewport ? (
           <div style={styles.loginShowcase} className="login-showcase">
+            <div style={styles.loginSeoIntro}>
+              <div style={styles.badge}>Freelance ödeme takip paneli</div>
+              <h1 style={styles.loginHeadline}>Projelerinin ödenip ödenmediğini tek ekrandan takip et.</h1>
+              <p style={styles.loginCopy}>
+                Ödedimi; freelance çalışanların proje, fatura ve tahsilat durumlarını düzenli
+                görmesi için tasarlanmış sade ve mobil uyumlu bir ödeme takip panelidir.
+              </p>
+              <div style={styles.loginSeoLinks}>
+                <a href="/freelance-odeme-takibi" style={styles.loginSeoLink}>
+                  Freelance ödeme takibi
+                </a>
+                <a href="/fatura-takip-programi" style={styles.loginSeoLink}>
+                  Fatura takip programı
+                </a>
+                <a href="/tahsilat-takip-paneli" style={styles.loginSeoLink}>
+                  Tahsilat takip paneli
+                </a>
+              </div>
+            </div>
             <div style={styles.loginIllustrationGrid}>
               <div style={{ ...styles.loginIllustrationTile, ...styles.loginChartTile }}>
                 <span style={{ ...styles.loginBar, height: 112, background: "#93E0B4" }} />
