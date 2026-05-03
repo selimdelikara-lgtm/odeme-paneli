@@ -2362,6 +2362,7 @@ export default function Page() {
       provider: "facebook",
       options: {
         redirectTo: getAuthRedirectTo(),
+        scopes: "public_profile",
       },
     });
 
