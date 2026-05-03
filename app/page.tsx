@@ -78,6 +78,7 @@ import {
 } from "./page.selectors";
 import {
   browserSupabase as supabase,
+  getAuthRedirectTo,
   setAuthStoragePreference,
 } from "@/lib/supabase";
 import {
@@ -2308,8 +2309,7 @@ export default function Page() {
       email: email.trim(),
       password: authPassword,
       options: {
-        emailRedirectTo:
-          typeof window === "undefined" ? undefined : window.location.origin,
+        emailRedirectTo: getAuthRedirectTo(),
       },
     });
 
@@ -2330,8 +2330,7 @@ export default function Page() {
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo:
-        typeof window === "undefined" ? undefined : window.location.origin,
+      redirectTo: getAuthRedirectTo(),
     });
 
     if (error) {
@@ -2348,8 +2347,7 @@ export default function Page() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo:
-          typeof window === "undefined" ? undefined : window.location.origin,
+        redirectTo: getAuthRedirectTo(),
       },
     });
 
@@ -2363,8 +2361,8 @@ export default function Page() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "facebook",
       options: {
-        redirectTo:
-          typeof window === "undefined" ? undefined : window.location.origin,
+        redirectTo: getAuthRedirectTo(),
+        scopes: "email,public_profile",
       },
     });
 

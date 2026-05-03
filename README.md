@@ -4,7 +4,7 @@ Bu proje Next.js + Supabase tabanli bir odeme takip panelidir.
 
 ## Calisma Sekli
 
-- Giris yontemi: Google OAuth veya e-posta/sifre
+- Giris yontemi: Google OAuth, Facebook OAuth veya e-posta/sifre
 - Her kullanici sadece kendi verisini gorur
 - Faturalar Supabase Storage icinde kullanici bazli klasorde tutulur
 
@@ -33,7 +33,7 @@ npm run start
 ## Supabase
 
 1. [supabase-setup.sql](/C:/Users/selim/odeme-paneli/supabase-setup.sql) dosyasini SQL Editor'da calistir.
-2. `Authentication > Providers` icinde sadece `Email` ve `Google` acik kalsin.
+2. `Authentication > Providers` icinde `Email`, `Google` ve `Facebook` acik kalsin.
 3. `Storage` icinde `faturalar` bucket'i olsun.
 4. `Authentication > URL Configuration` icine local ve production URL'lerini ekle.
 
@@ -50,6 +50,9 @@ Deploy sonrasi production URL'yi su yerlere ekle:
 - Supabase redirect allow list
 - Google OAuth authorized origins
 - Google OAuth redirect ayarlari
+- Meta/Facebook Login valid OAuth redirect URI:
+  `https://mhoidirxbxqaktkhhavp.supabase.co/auth/v1/callback`
+- Supabase `Authentication > Providers > Facebook` icine Meta `App ID` ve `App Secret`
 
 ## Zorunlu Manuel Adimlar
 
@@ -57,6 +60,7 @@ Asagidaki isler hesap oturumu gerektirdigi icin panelden yapilmalidir:
 
 - Supabase provider ayarlari
 - Google Cloud OAuth client ayarlari
+- Meta Facebook Login app ayarlari
 - Vercel proje olusturma ve env girme
 
 Repo tarafi hazirdir.

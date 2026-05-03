@@ -7,6 +7,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "missing-anon-k
 
 const AUTH_STORAGE_PREFERENCE_KEY = "odeme-auth-storage";
 const SUPABASE_STORAGE_KEY_PREFIX = "sb-";
+const DEFAULT_AUTH_CALLBACK_PATH = "/";
 
 const moveSupabaseSessionKeys = (remember: boolean) => {
   if (typeof window === "undefined") return;
@@ -80,6 +81,13 @@ export const setAuthStoragePreference = (remember: boolean) => {
     remember ? "local" : "session"
   );
   moveSupabaseSessionKeys(remember);
+};
+
+export const getAuthRedirectTo = (path = DEFAULT_AUTH_CALLBACK_PATH) => {
+  if (typeof window === "undefined") return undefined;
+
+  const redirectUrl = new URL(path, window.location.origin);
+  return redirectUrl.toString();
 };
 
 export const browserSupabase =
