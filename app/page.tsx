@@ -2853,6 +2853,21 @@ export default function Page() {
           72%{filter:blur(.45px)}
           100%{filter:blur(0)}
         }
+        @keyframes loginPanelFloat{
+          0%,100%{transform:translateY(0) rotate(-1.4deg)}
+          50%{transform:translateY(-8px) rotate(1deg)}
+        }
+        @keyframes loginPanelCheckFade{
+          0%,100%{opacity:.52;transform:scale(.92)}
+          45%,68%{opacity:1;transform:scale(1)}
+        }
+        @keyframes loginPanelMoneyPulse{
+          0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(96,165,250,.18)}
+          50%{transform:scale(1.08);box-shadow:0 0 0 7px rgba(96,165,250,0)}
+        }
+        .login-panel-card{animation:loginPanelFloat 7s ease-in-out infinite}
+        .login-panel-check{animation:loginPanelCheckFade 4.8s ease-in-out infinite}
+        .login-panel-money{animation:loginPanelMoneyPulse 4.2s ease-in-out infinite}
         .sidebar-item{transition:transform .18s ease, background-color .18s ease, box-shadow .18s ease}
         .sidebar-item:hover{background:rgba(255,255,255,.06);transform:translateX(2px)}
         .panel-row{transition:transform .18s ease, box-shadow .18s ease, background-color .22s ease}
@@ -6140,12 +6155,97 @@ const styles: Record<string, CSSProperties> = {
     transform: "rotate(-20deg)",
     zIndex: 3,
   },
-  loginCoinTile: {
+  loginPanelTile: {
     gridColumn: "2 / 3",
     gridRow: "1 / 3",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+  },
+  loginPanelCard: {
+    position: "relative",
+    width: 260,
+    minHeight: 196,
+    display: "grid",
+    gap: 12,
+    padding: 18,
+    borderRadius: 28,
+    background:
+      "linear-gradient(145deg, rgba(255,255,255,0.17), rgba(255,255,255,0.07))",
+    border: "1px solid rgba(255,255,255,0.22)",
+    boxShadow:
+      "0 24px 60px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.18)",
+    backdropFilter: "blur(18px)",
+    overflow: "hidden",
+  },
+  loginPanelGlow: {
+    position: "absolute",
+    inset: "-40% -20% auto auto",
+    width: 160,
+    height: 160,
+    borderRadius: 999,
+    background: "radial-gradient(circle, rgba(52,211,153,0.28), rgba(52,211,153,0))",
+    pointerEvents: "none",
+  },
+  loginPanelRow: {
+    position: "relative",
+    display: "grid",
+    gridTemplateColumns: "12px 1fr 34px",
+    alignItems: "center",
+    gap: 10,
+    minHeight: 46,
+    padding: "8px 8px",
+    borderRadius: 16,
+    background: "rgba(8,19,38,0.30)",
+    border: "1px solid rgba(255,255,255,0.08)",
+  },
+  loginPanelDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    display: "inline-block",
+  },
+  loginPanelLines: {
+    display: "grid",
+    gap: 6,
+  },
+  loginPanelLine: {
+    height: 7,
+    borderRadius: 999,
+    background: "rgba(226,232,240,0.82)",
+    display: "block",
+  },
+  loginPanelLineSoft: {
+    height: 5,
+    borderRadius: 999,
+    background: "rgba(191,211,255,0.32)",
+    display: "block",
+  },
+  loginPanelStatus: {
+    width: 30,
+    height: 30,
+    borderRadius: 999,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 15,
+    fontWeight: 950,
+  },
+  loginPanelStatusCheck: {
+    background: "rgba(52,211,153,0.18)",
+    color: "#B7F7D3",
+    border: "1px solid rgba(52,211,153,0.32)",
+  },
+  loginPanelStatusMoney: {
+    background: "rgba(96,165,250,0.18)",
+    color: "#DCEBFF",
+    border: "1px solid rgba(96,165,250,0.34)",
+  },
+  loginPanelStatusWait: {
+    background: "rgba(245,158,11,0.14)",
+    color: "#FDE7B3",
+    border: "1px solid rgba(245,158,11,0.28)",
+    letterSpacing: 1.5,
   },
   loginCoinShadow: {
     position: "absolute",

@@ -427,10 +427,54 @@ export function AuthScreen({
                 <div style={styles.loginCursorShape} />
               </div>
 
-              <div style={{ ...styles.loginIllustrationTile, ...styles.loginCoinTile }}>
-                <div style={styles.loginCoinShadow} />
-                <div style={styles.loginCoinMain}>₺</div>
-                <div style={styles.loginCoinSmall}>₺</div>
+              <div style={{ ...styles.loginIllustrationTile, ...styles.loginPanelTile }}>
+                <div style={styles.loginPanelCard} className="login-panel-card">
+                  <div style={styles.loginPanelGlow} />
+                  {[0, 1, 2].map((row) => (
+                    <div key={row} style={styles.loginPanelRow}>
+                      <span
+                        style={{
+                          ...styles.loginPanelDot,
+                          background:
+                            row === 0 ? "#34D399" : row === 1 ? "#60A5FA" : "#F59E0B",
+                        }}
+                      />
+                      <span style={styles.loginPanelLines}>
+                        <span
+                          style={{
+                            ...styles.loginPanelLine,
+                            width: row === 0 ? "78%" : row === 1 ? "62%" : "70%",
+                          }}
+                        />
+                        <span
+                          style={{
+                            ...styles.loginPanelLineSoft,
+                            width: row === 0 ? "46%" : row === 1 ? "54%" : "38%",
+                          }}
+                        />
+                      </span>
+                      <span
+                        style={{
+                          ...styles.loginPanelStatus,
+                          ...(row === 0
+                            ? styles.loginPanelStatusCheck
+                            : row === 1
+                              ? styles.loginPanelStatusMoney
+                              : styles.loginPanelStatusWait),
+                        }}
+                        className={
+                          row === 0
+                            ? "login-panel-check"
+                            : row === 1
+                              ? "login-panel-money"
+                              : undefined
+                        }
+                      >
+                        {row === 0 ? "✓" : row === 1 ? "₺" : "•••"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
