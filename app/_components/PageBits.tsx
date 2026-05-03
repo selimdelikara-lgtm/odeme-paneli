@@ -20,6 +20,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { LoginPortalIllustration } from "./LoginPortalIllustration";
 import { tl } from "../page.helpers";
 import type { ActivityItem, InvoiceAttachment, Odeme, RowMeta } from "../page.shared";
 
@@ -409,74 +410,7 @@ export function AuthScreen({
 
         {!isMobileViewport ? (
           <div style={styles.loginShowcase} className="login-showcase">
-            <div style={styles.loginIconStage}>
-              <div style={{ ...styles.loginIllustrationTile, ...styles.loginChartTile }}>
-                <span style={{ ...styles.loginBar, height: 112, background: "#93E0B4" }} />
-                <span style={{ ...styles.loginBar, height: 82, background: "#BFDBFE" }} />
-                <span style={{ ...styles.loginBar, height: 58, background: "#C7F29B" }} />
-                <div style={styles.loginTrendLine} />
-              </div>
-
-              <div style={{ ...styles.loginIllustrationTile, ...styles.loginInvoiceTile }}>
-                <div style={styles.loginFolderShape} />
-                <div style={styles.loginPaperShape}>
-                  <span style={styles.loginPaperLine} />
-                  <span style={styles.loginPaperLine} />
-                  <span style={styles.loginPaperLineShort} />
-                </div>
-                <div style={styles.loginCursorShape} />
-              </div>
-
-              <div style={{ ...styles.loginIllustrationTile, ...styles.loginPanelTile }}>
-                <div style={styles.loginPanelCard} className="login-panel-card">
-                  <div style={styles.loginPanelGlow} />
-                  {[0, 1, 2].map((row) => (
-                    <div key={row} style={styles.loginPanelRow}>
-                      <span
-                        style={{
-                          ...styles.loginPanelDot,
-                          background:
-                            row === 0 ? "#34D399" : row === 1 ? "#60A5FA" : "#F59E0B",
-                        }}
-                      />
-                      <span style={styles.loginPanelLines}>
-                        <span
-                          style={{
-                            ...styles.loginPanelLine,
-                            width: row === 0 ? "78%" : row === 1 ? "62%" : "70%",
-                          }}
-                        />
-                        <span
-                          style={{
-                            ...styles.loginPanelLineSoft,
-                            width: row === 0 ? "46%" : row === 1 ? "54%" : "38%",
-                          }}
-                        />
-                      </span>
-                      <span
-                        style={{
-                          ...styles.loginPanelStatus,
-                          ...(row === 0
-                            ? styles.loginPanelStatusCheck
-                            : row === 1
-                              ? styles.loginPanelStatusMoney
-                              : styles.loginPanelStatusWait),
-                        }}
-                        className={
-                          row === 0
-                            ? "login-panel-check"
-                            : row === 1
-                              ? "login-panel-money"
-                              : undefined
-                        }
-                      >
-                        {row === 0 ? "✓" : row === 1 ? "₺" : "•••"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <LoginPortalIllustration />
 
             <div style={styles.loginSeoStrip}>
               <p style={styles.loginCopy}>
