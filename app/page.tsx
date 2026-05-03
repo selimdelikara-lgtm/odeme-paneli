@@ -5814,13 +5814,13 @@ const styles: Record<string, CSSProperties> = {
   loginShowcase: {
     position: "relative",
     overflow: "hidden",
-    padding: "24px",
+    padding: "24px 26px",
     background:
       "radial-gradient(circle at 12% 12%, rgba(20,184,166,0.18), transparent 32%), radial-gradient(circle at 88% 18%, rgba(37,99,235,0.22), transparent 34%), linear-gradient(145deg, #071326 0%, #0B1F45 100%)",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    gap: 12,
+    gap: 14,
   },
   loginOrbOne: {
     position: "absolute",
@@ -5914,6 +5914,15 @@ const styles: Record<string, CSSProperties> = {
     gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
     gridTemplateRows: "1fr",
     gap: 10,
+  },
+  loginIconStage: {
+    position: "relative",
+    minHeight: 430,
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gridTemplateRows: "repeat(2, minmax(0, 1fr))",
+    gap: 14,
+    alignItems: "center",
   },
   loginSeoIntro: {
     position: "relative",
@@ -6058,16 +6067,16 @@ const styles: Record<string, CSSProperties> = {
   loginIllustrationTile: {
     position: "relative",
     overflow: "hidden",
-    minHeight: 118,
+    minHeight: 160,
   },
   loginChartTile: {
     display: "flex",
     alignItems: "flex-end",
     gap: 12,
-    padding: "16px 6px 18px 0",
+    padding: "22px 10px 24px 0",
   },
   loginBar: {
-    width: 34,
+    width: 54,
     border: "1.5px solid rgba(255,255,255,0.86)",
     boxShadow: "8px -8px 0 rgba(255,255,255,0.10)",
   },
@@ -6133,7 +6142,7 @@ const styles: Record<string, CSSProperties> = {
   },
   loginCoinTile: {
     gridColumn: "2 / 3",
-    gridRow: "2 / 3",
+    gridRow: "1 / 3",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",

@@ -409,61 +409,28 @@ export function AuthScreen({
 
         {!isMobileViewport ? (
           <div style={styles.loginShowcase} className="login-showcase">
-            <div style={styles.loginCommandPanel}>
-              <div style={styles.loginIllustrationGrid}>
-                <div style={{ ...styles.loginIllustrationTile, ...styles.loginChartTile }}>
-                  <span style={{ ...styles.loginBar, height: 88, background: "#93E0B4" }} />
-                  <span style={{ ...styles.loginBar, height: 66, background: "#BFDBFE" }} />
-                  <span style={{ ...styles.loginBar, height: 48, background: "#C7F29B" }} />
-                  <div style={styles.loginTrendLine} />
-                </div>
-
-                <div style={{ ...styles.loginIllustrationTile, ...styles.loginInvoiceTile }}>
-                  <div style={styles.loginFolderShape} />
-                  <div style={styles.loginPaperShape}>
-                    <span style={styles.loginPaperLine} />
-                    <span style={styles.loginPaperLine} />
-                    <span style={styles.loginPaperLineShort} />
-                  </div>
-                  <div style={styles.loginCursorShape} />
-                </div>
-
-                <div style={{ ...styles.loginIllustrationTile, ...styles.loginCoinTile }}>
-                  <div style={styles.loginCoinShadow} />
-                  <div style={styles.loginCoinMain}>₺</div>
-                  <div style={styles.loginCoinSmall}>₺</div>
-                </div>
+            <div style={styles.loginIconStage}>
+              <div style={{ ...styles.loginIllustrationTile, ...styles.loginChartTile }}>
+                <span style={{ ...styles.loginBar, height: 112, background: "#93E0B4" }} />
+                <span style={{ ...styles.loginBar, height: 82, background: "#BFDBFE" }} />
+                <span style={{ ...styles.loginBar, height: 58, background: "#C7F29B" }} />
+                <div style={styles.loginTrendLine} />
               </div>
 
-              <div style={styles.loginStatusGrid}>
-                <div style={styles.loginMiniStat}>
-                  <span style={{ ...styles.loginStatusDot, background: "#34D399" }} />
-                  <span>Ödeme Alındı</span>
-                  <strong>₺18.200</strong>
+              <div style={{ ...styles.loginIllustrationTile, ...styles.loginInvoiceTile }}>
+                <div style={styles.loginFolderShape} />
+                <div style={styles.loginPaperShape}>
+                  <span style={styles.loginPaperLine} />
+                  <span style={styles.loginPaperLine} />
+                  <span style={styles.loginPaperLineShort} />
                 </div>
-                <div style={styles.loginMiniStat}>
-                  <span style={{ ...styles.loginStatusDot, background: "#F59E0B" }} />
-                  <span>Fatura Kesildi</span>
-                  <strong>₺6.600</strong>
-                </div>
-                <div style={styles.loginMiniStat}>
-                  <span style={{ ...styles.loginStatusDot, background: "#FB7185" }} />
-                  <span>Ödenmedi</span>
-                  <strong>2 iş</strong>
-                </div>
+                <div style={styles.loginCursorShape} />
               </div>
 
-              <div style={styles.loginTimeline}>
-                <div style={styles.loginTimelineItem}>
-                  <span style={styles.loginTimelineDate}>Bugün</span>
-                  <span>Video teslimi ödeme bekliyor</span>
-                  <strong>₺4.500</strong>
-                </div>
-                <div style={styles.loginTimelineItem}>
-                  <span style={styles.loginTimelineDate}>Dün</span>
-                  <span>Logo revizyon faturası kesildi</span>
-                  <strong>₺2.100</strong>
-                </div>
+              <div style={{ ...styles.loginIllustrationTile, ...styles.loginCoinTile }}>
+                <div style={styles.loginCoinShadow} />
+                <div style={styles.loginCoinMain}>₺</div>
+                <div style={styles.loginCoinSmall}>₺</div>
               </div>
             </div>
 
