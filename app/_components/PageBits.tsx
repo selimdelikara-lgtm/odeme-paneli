@@ -409,9 +409,54 @@ export function AuthScreen({
 
         {!isMobileViewport ? (
           <div style={styles.loginShowcase} className="login-showcase">
-            <div style={styles.loginSeoIntro}>
-              <div style={styles.badge}>Freelance ödeme takip paneli</div>
-              <h1 style={styles.loginHeadline}>Freelance ödemelerini tek panelden takip et.</h1>
+            <div style={styles.loginCommandPanel}>
+              <div style={styles.loginCommandTop}>
+                <div>
+                  <div style={styles.badge}>Canlı tahsilat özeti</div>
+                  <h1 style={styles.loginHeadline}>Freelance ödeme kontrol masası.</h1>
+                </div>
+                <div style={styles.loginPulse}>₺</div>
+              </div>
+
+              <div style={styles.loginTotalCard}>
+                <span style={styles.loginTotalLabel}>Toplam Bekleyen</span>
+                <strong style={styles.loginTotalValue}>₺24.800</strong>
+                <span style={styles.loginTotalHint}>3 proje, 5 kayıt takipte</span>
+              </div>
+
+              <div style={styles.loginStatusGrid}>
+                <div style={styles.loginMiniStat}>
+                  <span style={{ ...styles.loginStatusDot, background: "#34D399" }} />
+                  <span>Ödeme Alındı</span>
+                  <strong>₺18.200</strong>
+                </div>
+                <div style={styles.loginMiniStat}>
+                  <span style={{ ...styles.loginStatusDot, background: "#F59E0B" }} />
+                  <span>Fatura Kesildi</span>
+                  <strong>₺6.600</strong>
+                </div>
+                <div style={styles.loginMiniStat}>
+                  <span style={{ ...styles.loginStatusDot, background: "#FB7185" }} />
+                  <span>Ödenmedi</span>
+                  <strong>2 iş</strong>
+                </div>
+              </div>
+
+              <div style={styles.loginTimeline}>
+                <div style={styles.loginTimelineItem}>
+                  <span style={styles.loginTimelineDate}>Bugün</span>
+                  <span>Video teslimi ödeme bekliyor</span>
+                  <strong>₺4.500</strong>
+                </div>
+                <div style={styles.loginTimelineItem}>
+                  <span style={styles.loginTimelineDate}>Dün</span>
+                  <span>Logo revizyon faturası kesildi</span>
+                  <strong>₺2.100</strong>
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.loginSeoStrip}>
               <p style={styles.loginCopy}>
                 Proje, fatura ve tahsilat durumlarını düzenli gör. Ödenen, bekleyen ve kalan
                 tutarları mobil uyumlu tek panelde yönet.
@@ -426,52 +471,6 @@ export function AuthScreen({
                 <a href="/tahsilat-takip-paneli" style={styles.loginSeoLink}>
                   Tahsilat takip paneli
                 </a>
-              </div>
-            </div>
-            <div style={styles.loginIllustrationGrid}>
-              <div style={{ ...styles.loginIllustrationTile, ...styles.loginChartTile }}>
-                <span style={{ ...styles.loginBar, height: 112, background: "#93E0B4" }} />
-                <span style={{ ...styles.loginBar, height: 82, background: "#BFDBFE" }} />
-                <span style={{ ...styles.loginBar, height: 58, background: "#C7F29B" }} />
-                <div style={styles.loginTrendLine} />
-              </div>
-
-              <div style={{ ...styles.loginIllustrationTile, ...styles.loginInvoiceTile }}>
-                <div style={styles.loginFolderShape} />
-                <div style={styles.loginPaperShape}>
-                  <span style={styles.loginPaperLine} />
-                  <span style={styles.loginPaperLine} />
-                  <span style={styles.loginPaperLineShort} />
-                </div>
-                <div style={styles.loginCursorShape} />
-              </div>
-
-              <div style={{ ...styles.loginIllustrationTile, ...styles.loginCoinTile }}>
-                <div style={styles.loginCoinShadow} />
-                <div style={styles.loginCoinMain}>₺</div>
-                <div style={styles.loginCoinSmall}>₺</div>
-              </div>
-
-              <div style={{ ...styles.loginIllustrationTile, ...styles.loginWalletTile }}>
-                <div style={styles.loginWalletShape}>
-                  <span style={styles.loginWalletSlot} />
-                  <span style={styles.loginWalletLine} />
-                  <span style={styles.loginWalletLineShort} />
-                </div>
-              </div>
-
-              <div style={{ ...styles.loginIllustrationTile, ...styles.loginGraphTile }}>
-                <div style={styles.loginCardStackBack} />
-                <div style={styles.loginCardStackFront}>
-                  <span style={styles.loginCardChip} />
-                  <span style={styles.loginCardNumberLine} />
-                  <span style={styles.loginCardNumberShort} />
-                </div>
-                <div style={styles.loginReceiptMini}>
-                  <span style={styles.loginReceiptLine} />
-                  <span style={styles.loginReceiptLine} />
-                  <span style={styles.loginReceiptTotal}>₺</span>
-                </div>
               </div>
             </div>
           </div>
