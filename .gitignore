@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local disk-cleanup scratch files
+korent-*.csv
+torrent-video-durations.csv
+/tools/
+ffsubsync*.log
+ffsubsync-logs-*/
+izle-*.csv
+stability-logs/
+subliminal*.log

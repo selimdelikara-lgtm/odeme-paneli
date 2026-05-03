@@ -2358,6 +2358,21 @@ export default function Page() {
     }
   }
 
+  async function authLoginWithFacebook() {
+    setAuthStoragePreference(rememberMe);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "facebook",
+      options: {
+        redirectTo:
+          typeof window === "undefined" ? undefined : window.location.origin,
+      },
+    });
+
+    if (error) {
+      setMsg("Facebook girişi başlatılamadı: " + error.message);
+    }
+  }
+
   async function cikisYap() {
     if (authEmail) {
       await supabase.auth.signOut();
@@ -2675,6 +2690,7 @@ export default function Page() {
       authSignUp={authSignUp}
       authLogin={authLogin}
       authLoginWithGoogle={authLoginWithGoogle}
+      authLoginWithFacebook={authLoginWithFacebook}
       msg={msg}
       styles={styles}
     />
@@ -2894,11 +2910,12 @@ export default function Page() {
           .app-sidebar{padding:14px !important}
           .app-sidebar > :first-child{display:none !important}
           .sidebar-bottom{border-top:none !important;padding-top:6px !important}
-          .app-content{padding:10px !important}
-          .app-content{padding-bottom:92px !important}
-          .app-top-bar{flex-direction:row !important;align-items:flex-start !important;justify-content:space-between !important}
+          .app-content{padding:10px !important;padding-bottom:calc(92px + env(safe-area-inset-bottom, 0px)) !important}
+          .app-top-bar{flex-direction:row !important;align-items:center !important;justify-content:flex-end !important;gap:8px !important;margin-bottom:8px !important}
           .top-search{width:40px !important;min-width:40px !important;height:40px !important;padding:0 !important;justify-content:center !important;border-radius:12px !important}
           .top-search input{display:none !important}
+          .mobile-top-actions{display:flex !important;width:100% !important;justify-content:flex-end !important;gap:8px !important}
+          .mobile-top-actions .top-action-btn,.mobile-top-actions .top-search{width:38px !important;height:38px !important;min-width:38px !important;border-radius:14px !important}
           .page-title{font-size:22px !important;line-height:1.05 !important}
           .page-subtitle{font-size:11px !important;margin-top:4px !important;max-width:220px !important}
           .top-action-btn .btn-label{display:none !important}
@@ -2917,18 +2934,18 @@ export default function Page() {
           .mobile-bottom-nav{display:grid !important}
           .mobile-projects-sheet{display:block !important}
           .login-wrap{padding:0 !important}
-          .login-shell{border-radius:0 !important;box-shadow:none !important;min-height:100vh !important;max-width:100% !important;background:transparent !important}
-          .login-card{padding:16px 14px !important;justify-content:flex-start !important;min-height:100vh !important;border-radius:0 !important;box-shadow:none !important}
+          .login-shell{border-radius:0 !important;box-shadow:none !important;min-height:100svh !important;max-width:100% !important;background:transparent !important}
+          .login-card{padding:16px 14px !important;justify-content:flex-start !important;min-height:100svh !important;border-radius:0 !important;box-shadow:none !important}
           .mobile-auth-wrap{background:#F6F7FC !important}
-            .mobile-auth-intro{padding:36px 22px 28px !important}
-            .mobile-auth-cta{margin-top:40px !important}
-            .login-card-title{font-size:24px !important;line-height:1.05 !important}
-            .login-section{gap:7px !important}
-            .login-input,.soft-input{font-size:16px !important}
-            .login-meta-row{align-items:flex-start !important}
-            .remember-me-label{gap:6px !important}
-            .mobile-settings-top-actions{display:flex !important}
-          }
+          .mobile-auth-intro{padding:30px 22px 24px !important}
+          .mobile-auth-cta{margin-top:28px !important}
+          .login-card-title{font-size:24px !important;line-height:1.05 !important}
+          .login-section{gap:7px !important}
+          .login-input,.soft-input{font-size:16px !important}
+          .login-meta-row{align-items:flex-start !important}
+          .remember-me-label{gap:6px !important}
+          .mobile-settings-top-actions{display:flex !important}
+        }
         @media (max-width: 420px){
           .login-card{padding:16px 12px !important}
           .login-card-title{font-size:22px !important}
@@ -3196,7 +3213,7 @@ export default function Page() {
                 </div>
               ) : null}
 
-              <div style={isMobileViewport ? { display: "none" } : styles.topBarActions}>
+              <div style={isMobileViewport ? styles.mobileTopActions : styles.topBarActions}>
                 {viewMode !== "settings" ? (
                   isMobileViewport ? (
                     <button
@@ -4251,33 +4268,33 @@ const styles: Record<string, CSSProperties> = {
     position: "fixed",
     left: 12,
     right: 12,
-    bottom: 12,
-    minHeight: 60,
+    bottom: "max(10px, env(safe-area-inset-bottom, 0px))",
+    minHeight: 58,
     display: "grid",
-    gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+    gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr) 58px minmax(0, 1fr) minmax(0, 1fr)",
     alignItems: "center",
-    padding: "6px 8px",
-    borderRadius: 18,
+    padding: "7px 8px",
+    borderRadius: 22,
     background: "rgba(255,255,255,0.94)",
     border: "1px solid rgba(148,163,184,0.22)",
-    boxShadow: "0 12px 26px rgba(15,23,42,0.10)",
+    boxShadow: "0 16px 34px rgba(15,23,42,0.12)",
     backdropFilter: "blur(16px)",
     zIndex: 40,
     overflow: "visible",
   },
   mobileNavItem: {
-    minHeight: 38,
+    minHeight: 42,
     border: "none",
     background: "transparent",
-    borderRadius: 12,
+    borderRadius: 15,
     color: "var(--muted)",
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    padding: "0 4px",
-    fontSize: 10,
+    gap: 5,
+    padding: "0 3px",
+    fontSize: 10.5,
     fontWeight: 700,
     cursor: "pointer",
     whiteSpace: "nowrap",
@@ -4296,25 +4313,25 @@ const styles: Record<string, CSSProperties> = {
     flexShrink: 0,
   },
   mobileNavItemActive: {
-    minHeight: 38,
+    minHeight: 42,
     border: "none",
     background: "rgba(37,99,235,0.10)",
-    borderRadius: 12,
+    borderRadius: 15,
     color: "var(--blue)",
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    padding: "0 4px",
-    fontSize: 10,
+    gap: 5,
+    padding: "0 3px",
+    fontSize: 10.5,
     fontWeight: 800,
     cursor: "pointer",
     whiteSpace: "nowrap",
   },
   mobileNavPlus: {
-    width: 52,
-    height: 52,
+    width: 56,
+    height: 56,
     border: "none",
     borderRadius: 999,
     background: "linear-gradient(180deg, #2563EB 0%, #194AC6 100%)",
@@ -4325,8 +4342,8 @@ const styles: Record<string, CSSProperties> = {
     cursor: "pointer",
     gridColumn: 3,
     justifySelf: "center",
-    boxShadow: "0 8px 18px rgba(37,99,235,0.18)",
-    marginTop: 0,
+    boxShadow: "0 12px 28px rgba(37,99,235,0.24)",
+    marginTop: -8,
   },
   mobileProjectsBackdrop: {
     display: "none",
@@ -4418,8 +4435,10 @@ const styles: Record<string, CSSProperties> = {
     position: "fixed",
     left: 12,
     right: 12,
-    top: 88,
-    zIndex: 38,
+    top: "calc(env(safe-area-inset-top, 0px) + 58px)",
+    zIndex: 45,
+    maxWidth: 520,
+    margin: "0 auto",
   },
   mobileSearchField: {
     display: "flex",
@@ -4545,6 +4564,14 @@ const styles: Record<string, CSSProperties> = {
     gap: 10,
     flexWrap: "wrap",
     justifyContent: "flex-end",
+  },
+  mobileTopActions: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 8,
+    width: "100%",
+    flexWrap: "nowrap",
   },
   heroMobileActions: {
     display: "flex",
@@ -5038,7 +5065,7 @@ const styles: Record<string, CSSProperties> = {
   projectModalToggle: {
     gap: 10,
     padding: "8px 10px",
-    borderRadius: 14,
+    borderRadius: 18,
     minHeight: 0,
   },
   projectModalToggleLabel: {
@@ -6321,6 +6348,16 @@ const styles: Record<string, CSSProperties> = {
     cursor: "pointer",
     boxShadow: "0 10px 24px rgba(15,23,42,0.06)",
   },
+  loginFacebookWideButton: {
+    borderColor: "rgba(24,119,242,0.36)",
+    background: "rgba(24,119,242,0.14)",
+  },
+  loginSocialGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 10,
+    width: "100%",
+  },
   loginSignupLine: {
     marginTop: 18,
     display: "flex",
@@ -6353,6 +6390,20 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 12,
     fontWeight: 900,
     lineHeight: 1,
+  },
+  facebookMark: {
+    width: 22,
+    height: 22,
+    borderRadius: 999,
+    background: "#1877F2",
+    color: "#FFFFFF",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 16,
+    fontWeight: 900,
+    lineHeight: 1,
+    fontFamily: "Arial, sans-serif",
   },
   mobileIntroShell: {
     minHeight: "100vh",
@@ -6423,23 +6474,25 @@ const styles: Record<string, CSSProperties> = {
     boxShadow: "0 16px 30px rgba(37,99,235,0.22)",
   },
   mobileAuthFormShell: {
-    minHeight: "100vh",
+    minHeight: "100svh",
     width: "100%",
+    maxWidth: 430,
+    margin: "0 auto",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
-    padding: "24px 22px 32px",
+    padding: "max(18px, env(safe-area-inset-top, 0px)) 20px max(22px, env(safe-area-inset-bottom, 0px))",
     background: "linear-gradient(180deg, #F6F7FC 0%, #EEF2FF 100%)",
     color: "#171923",
   },
   mobileAuthTitle: {
     color: "#14213D",
-    fontSize: 34,
+    fontSize: 31,
     fontWeight: 900,
     letterSpacing: "-0.8px",
     textAlign: "center",
     lineHeight: 1.05,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   mobileAuthLabel: {
     fontSize: 12,
@@ -6448,7 +6501,7 @@ const styles: Record<string, CSSProperties> = {
   },
   mobileAuthInput: {
     width: "100%",
-    padding: "10px 0",
+    padding: "9px 0",
     borderRadius: 0,
     border: "none",
     borderBottom: "2px solid rgba(20, 33, 61, 0.55)",
@@ -6462,8 +6515,8 @@ const styles: Record<string, CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
-    marginTop: 6,
+    gap: 10,
+    marginTop: 4,
   },
   mobileAuthRemember: {
     display: "inline-flex",
@@ -6485,7 +6538,7 @@ const styles: Record<string, CSSProperties> = {
   },
   mobileAuthPrimaryButton: {
     width: "100%",
-    padding: "14px 16px",
+    padding: "13px 16px",
     borderRadius: 16,
     border: "none",
     background: "linear-gradient(180deg, #2563EB 0%, #194AC6 100%)",
@@ -6493,7 +6546,7 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 900,
     fontSize: 18,
     cursor: "pointer",
-    marginTop: 12,
+    marginTop: 10,
     boxShadow: "0 16px 30px rgba(37,99,235,0.18)",
   },
   mobileAuthDivider: {
@@ -6523,6 +6576,17 @@ const styles: Record<string, CSSProperties> = {
     cursor: "pointer",
     marginTop: 6,
     boxShadow: "0 10px 24px rgba(15,23,42,0.06)",
+  },
+  mobileFacebookButton: {
+    borderColor: "rgba(24,119,242,0.22)",
+    background: "rgba(24,119,242,0.08)",
+  },
+  mobileSocialGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 10,
+    width: "100%",
+    marginTop: 6,
   },
   badge: {
     display: "inline-block",

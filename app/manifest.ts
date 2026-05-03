@@ -2,9 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "ÖDEDİ Mİ",
-    short_name: "ÖDEDİ Mİ",
-    description: "Projeler ve ödemeler için tahsilat paneli",
+    name: "Ödedimi - Freelance Ödeme Takibi",
+    short_name: "Ödedimi",
+    description:
+      "Freelance projelerde ödeme, fatura ve tahsilat durumunu tek panelden takip et.",
     start_url: "/",
     display: "standalone",
     background_color: "#0B1626",

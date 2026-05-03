@@ -135,6 +135,7 @@ type AuthScreenProps = {
   authSignUp: () => Promise<void>;
   authLogin: () => Promise<void>;
   authLoginWithGoogle: () => Promise<void>;
+  authLoginWithFacebook: () => Promise<void>;
   msg: string;
   styles: Record<string, CSSProperties>;
 };
@@ -154,6 +155,7 @@ export function AuthScreen({
   authSignUp,
   authLogin,
   authLoginWithGoogle,
+  authLoginWithFacebook,
   msg,
   styles,
 }: AuthScreenProps) {
@@ -257,19 +259,32 @@ export function AuthScreen({
               <span style={styles.mobileAuthDividerLine} />
             </div>
 
-            <button
-              type="button"
-              className="hover-button"
-              onClick={() => void authLoginWithGoogle()}
-              style={styles.mobileGoogleButton}
-            >
-              <span style={styles.btnInner}>
-                <span style={styles.googleMark}>
-                  <span style={{ color: "#4285F4" }}>G</span>
+            <div style={styles.mobileSocialGrid}>
+              <button
+                type="button"
+                className="hover-button"
+                onClick={() => void authLoginWithGoogle()}
+                style={styles.mobileGoogleButton}
+              >
+                <span style={styles.btnInner}>
+                  <span style={styles.googleMark}>
+                    <span style={{ color: "#4285F4" }}>G</span>
+                  </span>
+                  Google
                 </span>
-                Google ile devam et
-              </span>
-            </button>
+              </button>
+              <button
+                type="button"
+                className="hover-button"
+                onClick={() => void authLoginWithFacebook()}
+                style={{ ...styles.mobileGoogleButton, ...styles.mobileFacebookButton }}
+              >
+                <span style={styles.btnInner}>
+                  <span style={styles.facebookMark}>f</span>
+                  Facebook
+                </span>
+              </button>
+            </div>
           </div>
 
           {msg ? <div style={{ ...styles.msg, marginTop: 14 }}>{msg}</div> : null}
@@ -290,19 +305,32 @@ export function AuthScreen({
             {authTitle}
           </div>
 
-          <button
-            type="button"
-            className="hover-button"
-            onClick={() => void authLoginWithGoogle()}
-            style={styles.loginGoogleWideButton}
-          >
-            <span style={styles.btnInner}>
-              <span style={styles.googleMark}>
-                <span style={{ color: "#4285F4" }}>G</span>
+          <div style={styles.loginSocialGrid}>
+            <button
+              type="button"
+              className="hover-button"
+              onClick={() => void authLoginWithGoogle()}
+              style={styles.loginGoogleWideButton}
+            >
+              <span style={styles.btnInner}>
+                <span style={styles.googleMark}>
+                  <span style={{ color: "#4285F4" }}>G</span>
+                </span>
+                Google
               </span>
-              Google ile devam et
-            </span>
-          </button>
+            </button>
+            <button
+              type="button"
+              className="hover-button"
+              onClick={() => void authLoginWithFacebook()}
+              style={{ ...styles.loginGoogleWideButton, ...styles.loginFacebookWideButton }}
+            >
+              <span style={styles.btnInner}>
+                <span style={styles.facebookMark}>f</span>
+                Facebook
+              </span>
+            </button>
+          </div>
 
           <div style={styles.loginDividerText}>
             <span style={styles.loginDividerTextLine} />
