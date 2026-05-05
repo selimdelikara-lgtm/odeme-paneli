@@ -203,7 +203,7 @@ const styles = {
 };
 
 export function MarketingPage({ page }: { page: SeoPage }) {
-  const jsonLd = {
+  const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     mainEntity: page.faqs.map((faq) => ({
@@ -214,6 +214,24 @@ export function MarketingPage({ page }: { page: SeoPage }) {
         text: faq.answer,
       },
     })),
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: SITE_NAME,
+        item: `${SITE_ORIGIN}/`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: page.h1,
+        item: `${SITE_ORIGIN}/${page.slug}`,
+      },
+    ],
   };
 
   return (
@@ -238,7 +256,11 @@ export function MarketingPage({ page }: { page: SeoPage }) {
       `}</style>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <div style={styles.shell} className="marketing-shell">
         <nav style={styles.nav} className="marketing-nav" aria-label="Ana navigasyon">

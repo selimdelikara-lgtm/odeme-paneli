@@ -83,6 +83,18 @@ export default function RootLayout({
     operatingSystem: "Web",
     inLanguage: "tr-TR",
     description: siteDescription,
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "TRY",
+    },
+    featureList: [
+      "Freelance ödeme takibi",
+      "Fatura takip paneli",
+      "Tahsilat takibi",
+      "PDF ve Excel dışa aktarım",
+      "Mobil uyumlu PWA",
+    ],
   };
 
   return (

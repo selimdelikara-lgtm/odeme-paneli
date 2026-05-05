@@ -157,10 +157,10 @@ export function LoginPortalIllustration() {
 
       <Image
         className="login-portal-image"
-        src="/login-portal-reference.png"
+        src="/login-portal-reference.webp"
         alt=""
-        width={1536}
-        height={864}
+        width={1200}
+        height={800}
         priority
         sizes="(max-width: 980px) 100vw, 58vw"
       />
