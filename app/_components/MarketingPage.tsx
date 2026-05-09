@@ -190,10 +190,16 @@ const styles = {
     color: "#111827",
   },
   footerLinks: {
-    marginTop: 24,
+    marginTop: 12,
     display: "flex",
     flexWrap: "wrap" as const,
     gap: 10,
+  },
+  relatedTitle: {
+    margin: "24px 0 0",
+    color: "#111827",
+    fontSize: 16,
+    fontWeight: 950,
   },
   footerLink: {
     color: "#1D4ED8",
@@ -203,6 +209,9 @@ const styles = {
 };
 
 export function MarketingPage({ page }: { page: SeoPage }) {
+  const relatedPages = (page.relatedSlugs ?? [])
+    .map((slug) => seoPages.find((item) => item.slug === slug))
+    .filter((item): item is SeoPage => Boolean(item));
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -320,15 +329,18 @@ export function MarketingPage({ page }: { page: SeoPage }) {
               <p style={styles.sectionBody}>{faq.answer}</p>
             </details>
           ))}
-          <div style={styles.footerLinks}>
-            {seoPages
-              .filter((item) => item.slug !== page.slug)
-              .map((item) => (
-                <Link key={item.slug} href={`/${item.slug}`} style={styles.footerLink}>
-                  {item.h1}
-                </Link>
-              ))}
-          </div>
+          {relatedPages.length ? (
+            <>
+              <h3 style={styles.relatedTitle}>Benzer çözümler</h3>
+              <div style={styles.footerLinks}>
+                {relatedPages.map((item) => (
+                  <Link key={item.slug} href={`/${item.slug}`} style={styles.footerLink}>
+                    {item.h1}
+                  </Link>
+                ))}
+              </div>
+            </>
+          ) : null}
         </section>
 
         <p style={{ ...styles.sectionBody, marginTop: 22, color: "#718096" }}>

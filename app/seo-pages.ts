@@ -14,6 +14,7 @@ export type SeoPageSlug =
 
 export type SeoPage = {
   slug: SeoPageSlug;
+  relatedSlugs?: SeoPageSlug[];
   title: string;
   description: string;
   h1: string;
@@ -31,6 +32,12 @@ export type SeoPage = {
 export const seoPages: SeoPage[] = [
   {
     slug: "freelance-odeme-takibi",
+    relatedSlugs: [
+      "freelance-tahsilat-takibi",
+      "freelancerlar-icin-odeme-takibi",
+      "proje-odeme-takibi",
+      "fatura-takip-programi",
+    ],
     title: "Freelance Ödeme Takibi | Ödedimi",
     description:
       "Freelance işlerde ödeme alındı, ödenmedi ve fatura kesildi durumlarını tek panelden takip edin.",
@@ -74,6 +81,11 @@ export const seoPages: SeoPage[] = [
   },
   {
     slug: "fatura-takip-programi",
+    relatedSlugs: [
+      "fatura-odeme-takibi",
+      "tahsilat-takip-paneli",
+      "odeme-takip-tablosu",
+    ],
     title: "Fatura Takip Programı | Ödedimi",
     description:
       "Kesilen ve bekleyen faturaları proje bazında takip edin; ödeme durumlarıyla birlikte düzenli görün.",
@@ -117,6 +129,11 @@ export const seoPages: SeoPage[] = [
   },
   {
     slug: "tahsilat-takip-paneli",
+    relatedSlugs: [
+      "freelance-tahsilat-takibi",
+      "proje-odeme-takibi",
+      "fatura-takip-programi",
+    ],
     title: "Tahsilat Takip Paneli | Ödedimi",
     description:
       "Ödenen, kalan ve bekleyen tutarları proje bazında takip eden mobil uyumlu tahsilat paneli.",
@@ -160,6 +177,11 @@ export const seoPages: SeoPage[] = [
   },
   {
     slug: "freelancerlar-icin-odeme-takibi",
+    relatedSlugs: [
+      "freelancer-odeme-takip-programi",
+      "freelance-odeme-takibi",
+      "freelance-tahsilat-takibi",
+    ],
     title: "Freelancerlar İçin Ödeme Takibi | Ödedimi",
     description:
       "Freelancerlar için proje, fatura ve ödeme durumlarını düzenli takip etmeye yarayan sade ödeme paneli.",
@@ -203,6 +225,11 @@ export const seoPages: SeoPage[] = [
   },
   {
     slug: "freelance-tahsilat-takibi",
+    relatedSlugs: [
+      "tahsilat-takip-paneli",
+      "freelance-odeme-takibi",
+      "proje-odeme-takibi",
+    ],
     title: "Freelance Tahsilat Takibi | Ödedimi",
     description:
       "Freelance işler için tahsilat durumunu, ödenen ve bekleyen tutarları proje bazında takip edin.",
@@ -246,6 +273,11 @@ export const seoPages: SeoPage[] = [
   },
   {
     slug: "proje-odeme-takibi",
+    relatedSlugs: [
+      "freelance-odeme-takibi",
+      "tahsilat-takip-paneli",
+      "odeme-takip-tablosu",
+    ],
     title: "Proje Ödeme Takibi | Ödedimi",
     description:
       "Projeler için ödeme alındı, ödenmedi ve fatura kesildi durumlarını tek panelde takip edin.",
@@ -289,6 +321,11 @@ export const seoPages: SeoPage[] = [
   },
   {
     slug: "fatura-odeme-takibi",
+    relatedSlugs: [
+      "fatura-takip-programi",
+      "tahsilat-takip-paneli",
+      "odeme-takip-tablosu",
+    ],
     title: "Fatura Ödeme Takibi | Ödedimi",
     description:
       "Fatura kesildi mi, ödeme alındı mı ve kalan tutar ne kadar sorularını proje bazında takip edin.",
@@ -332,6 +369,11 @@ export const seoPages: SeoPage[] = [
   },
   {
     slug: "freelancer-odeme-takip-programi",
+    relatedSlugs: [
+      "freelancerlar-icin-odeme-takibi",
+      "freelance-odeme-takibi",
+      "proje-odeme-takibi",
+    ],
     title: "Freelancer Ödeme Takip Programı | Ödedimi",
     description:
       "Freelancerlar için proje, fatura, ödeme ve tahsilat durumlarını düzenli takip eden mobil uyumlu panel.",
@@ -375,6 +417,11 @@ export const seoPages: SeoPage[] = [
   },
   {
     slug: "odeme-takip-tablosu",
+    relatedSlugs: [
+      "proje-odeme-takibi",
+      "fatura-odeme-takibi",
+      "fatura-takip-programi",
+    ],
     title: "Ödeme Takip Tablosu | Ödedimi",
     description:
       "Excel benzeri ödeme takip tablosu yerine proje bazlı, mobil uyumlu ve dışa aktarılabilir ödeme paneli.",
