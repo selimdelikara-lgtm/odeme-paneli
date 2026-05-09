@@ -6,6 +6,7 @@ const supabaseUrl =
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "missing-anon-key";
 
 const AUTH_STORAGE_PREFERENCE_KEY = "odeme-auth-storage";
+const AUTH_DEVICE_ID_KEY = "odeme-auth-device-id-v1";
 const SUPABASE_STORAGE_KEY_PREFIX = "sb-";
 const DEFAULT_AUTH_CALLBACK_PATH = "/";
 
@@ -88,6 +89,21 @@ export const getAuthRedirectTo = (path = DEFAULT_AUTH_CALLBACK_PATH) => {
 
   const redirectUrl = new URL(path, window.location.origin);
   return redirectUrl.toString();
+};
+
+export const getAuthDeviceId = () => {
+  if (typeof window === "undefined") return "";
+
+  const stored = window.localStorage.getItem(AUTH_DEVICE_ID_KEY);
+  if (stored) return stored;
+
+  const id =
+    typeof window.crypto?.randomUUID === "function"
+      ? window.crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  window.localStorage.setItem(AUTH_DEVICE_ID_KEY, id);
+  return id;
 };
 
 export const browserSupabase =
