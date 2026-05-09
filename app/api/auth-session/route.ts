@@ -21,6 +21,22 @@ type SessionBody = {
 const isValidDeviceId = (value: unknown): value is string =>
   typeof value === "string" && value.length >= 16 && value.length <= 120;
 
+const isMissingSessionTableError = (error: { code?: string; message?: string } | null) =>
+  Boolean(
+    error &&
+      (error.code === "42P01" ||
+        error.code === "PGRST205" ||
+        error.message?.toLowerCase().includes("user_sessions") ||
+        error.message?.toLowerCase().includes("schema cache"))
+  );
+
+const sessionTableMigrationWarning = () => {
+  console.warn("[auth-session-migration-missing]", {
+    message: "user_sessions tablosu yok. supabase-user-sessions.sql çalıştırılana kadar cihaz limiti pasif.",
+  });
+  return jsonOk({ ok: true, degraded: true });
+};
+
 export async function POST(request: Request) {
   const env = getServerSupabaseEnv();
   if (!env) return jsonError("Sunucu ortam değişkenleri eksik.", 500);
@@ -47,7 +63,11 @@ export async function POST(request: Request) {
   const nowIso = now.toISOString();
   const expiresAt = new Date(now.getTime() + SESSION_TTL_MS).toISOString();
 
-  await adminClient.from("user_sessions").delete().lt("expires_at", nowIso);
+  const { error: cleanupError } = await adminClient
+    .from("user_sessions")
+    .delete()
+    .lt("expires_at", nowIso);
+  if (isMissingSessionTableError(cleanupError)) return sessionTableMigrationWarning();
 
   const { data: existing, error: existingError } = await adminClient
     .from("user_sessions")
@@ -56,6 +76,7 @@ export async function POST(request: Request) {
     .eq("device_id", body.deviceId)
     .maybeSingle();
 
+  if (isMissingSessionTableError(existingError)) return sessionTableMigrationWarning();
   if (existingError) return jsonError("Oturum kontrolü yapılamadı.", 500);
 
   if (existing) {
@@ -85,6 +106,7 @@ export async function POST(request: Request) {
     .eq("user_id", user.id)
     .gt("expires_at", nowIso);
 
+  if (isMissingSessionTableError(countError)) return sessionTableMigrationWarning();
   if (countError) return jsonError("Aktif oturumlar kontrol edilemedi.", 500);
   if ((count ?? 0) >= MAX_ACTIVE_SESSIONS) {
     return jsonError("Bu hesap aynı anda en fazla 2 cihazda açık kalabilir.", 409);
@@ -98,6 +120,7 @@ export async function POST(request: Request) {
     expires_at: expiresAt,
   });
 
+  if (isMissingSessionTableError(insertError)) return sessionTableMigrationWarning();
   if (insertError) return jsonError("Oturum kaydı oluşturulamadı.", 500);
   return jsonOk({ ok: true, expiresAt });
 }
