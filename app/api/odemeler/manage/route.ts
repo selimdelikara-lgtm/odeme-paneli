@@ -8,6 +8,7 @@ import {
   getServerSupabaseEnv,
   jsonError,
   jsonOk,
+  readJsonBody,
 } from "../../_lib/server";
 
 type ManageAction = "delete_record" | "delete_tab" | "rename_tab";
@@ -102,7 +103,8 @@ export async function POST(request: Request) {
     return jsonError("Çok fazla işlem denemesi yapıldı. Biraz sonra tekrar dene.", 429);
   }
 
-  const body = (await request.json().catch(() => null)) as ManagePayload | null;
+  const { body, error: bodyError } = await readJsonBody<ManagePayload>(request, 16 * 1024);
+  if (bodyError) return bodyError;
   const action = body?.action;
 
   if (!action) {

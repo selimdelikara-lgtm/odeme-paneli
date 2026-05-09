@@ -2355,13 +2355,35 @@ export default function Page() {
     if (!email.trim() || !authPassword.trim()) return;
     setAuthStoragePreference(rememberMe);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: authPassword,
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email.trim(),
+        password: authPassword,
+      }),
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as {
+      accessToken?: string;
+      refreshToken?: string;
+      error?: string;
+    };
+
+    if (!response.ok || !payload.accessToken || !payload.refreshToken) {
+      setMsg(payload.error || "Giriş başarısız.");
+      return;
+    }
+
+    const { error } = await supabase.auth.setSession({
+      access_token: payload.accessToken,
+      refresh_token: payload.refreshToken,
     });
 
     if (error) {
-      setMsg("Supabase giriş başarısız: " + error.message);
+      setMsg("Oturum açılamadı: " + error.message);
       return;
     }
 
@@ -2535,6 +2557,32 @@ export default function Page() {
     }
 
     setSettingsBusy(true);
+
+    if (authProviders.includes("email")) {
+      if (!authEmail || !settingsCurrentPassword.trim()) {
+        setMsg("Şifre değiştirmek için mevcut şifreni gir.");
+        setSettingsBusy(false);
+        return;
+      }
+
+      const verifyResponse = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: authEmail,
+          password: settingsCurrentPassword.trim(),
+        }),
+      });
+
+      if (!verifyResponse.ok) {
+        setMsg("Mevcut şifre doğrulanamadı.");
+        setSettingsBusy(false);
+        return;
+      }
+    }
+
     const { error } = await supabase.auth.updateUser({
       password: settingsPassword.trim(),
     });
@@ -2547,9 +2595,12 @@ export default function Page() {
 
     setSettingsPassword("");
     setSettingsPasswordRepeat("");
+    setSettingsCurrentPassword("");
     pushActivity("Şifre güncellendi", authEmail || "Hesap");
-    setMsg("Şifre güncellendi.");
+    setMsg("Şifre güncellendi. Güvenlik için tekrar giriş yap.");
     setSettingsBusy(false);
+    await removeDeviceSession();
+    await supabase.auth.signOut({ scope: "global" });
   }
 
   async function closeAccountData() {
@@ -2580,12 +2631,18 @@ export default function Page() {
         return;
       }
 
-      const { error: verifyError } = await supabase.auth.signInWithPassword({
-        email: authEmail,
-        password: settingsCurrentPassword.trim(),
+      const verifyResponse = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: authEmail,
+          password: settingsCurrentPassword.trim(),
+        }),
       });
 
-      if (verifyError) {
+      if (!verifyResponse.ok) {
         setMsg("Mevcut şifre doğrulanamadı.");
         setSettingsBusy(false);
         return;

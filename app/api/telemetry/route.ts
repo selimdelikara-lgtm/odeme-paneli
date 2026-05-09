@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { rateLimit } from "../_lib/rate-limit";
+import { readJsonBody } from "../_lib/server";
 
 type TelemetryPayload = {
   type?: string;
@@ -21,7 +22,8 @@ export async function POST(request: Request) {
     return jsonError("Too many telemetry events.", 429);
   }
 
-  const body = (await request.json().catch(() => null)) as TelemetryPayload | null;
+  const { body, error: bodyError } = await readJsonBody<TelemetryPayload>(request, 8 * 1024);
+  if (bodyError) return bodyError;
   if (!body?.message) {
     return jsonError("Invalid telemetry payload.", 400);
   }

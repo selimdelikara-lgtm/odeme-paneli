@@ -8,6 +8,7 @@ import {
   getServerSupabaseEnv,
   jsonError,
   jsonOk,
+  readJsonBody,
 } from "../../_lib/server";
 
 type BulkAction = "invoice" | "paid" | "delete" | "update";
@@ -52,9 +53,12 @@ export async function POST(request: Request) {
     return jsonError("Çok fazla toplu işlem denemesi yapıldı. Biraz sonra tekrar dene.", 429);
   }
 
-  const body = (await request.json().catch(() => null)) as
-    | { ids?: number[]; action?: BulkAction; fields?: BulkUpdateFields }
-    | null;
+  const { body, error: bodyError } = await readJsonBody<{
+    ids?: number[];
+    action?: BulkAction;
+    fields?: BulkUpdateFields;
+  }>(request, 64 * 1024);
+  if (bodyError) return bodyError;
 
   const ids = Array.isArray(body?.ids) ? body.ids.filter((item) => Number.isInteger(item)) : [];
   const action = body?.action;

@@ -8,6 +8,7 @@ import {
   getServerSupabaseEnv,
   jsonError,
   jsonOk,
+  readJsonBody,
 } from "../../_lib/server";
 
 type ReorderPayload = {
@@ -42,7 +43,8 @@ export async function POST(request: Request) {
     return jsonError("Çok fazla sıralama işlemi yapıldı. Biraz sonra tekrar dene.", 429);
   }
 
-  const body = (await request.json().catch(() => null)) as ReorderPayload | null;
+  const { body, error: bodyError } = await readJsonBody<ReorderPayload>(request, 16 * 1024);
+  if (bodyError) return bodyError;
   const ids = Array.isArray(body?.ids) ? body.ids.filter((item) => Number.isInteger(item)) : [];
 
   if (!ids.length || ids.length > 250) {

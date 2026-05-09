@@ -6,6 +6,7 @@ import {
   getServerSupabaseEnv,
   jsonError,
   jsonOk,
+  readJsonBody,
 } from "../_lib/server";
 
 export async function GET(request: Request) {
@@ -80,7 +81,8 @@ export async function POST(request: Request) {
     return jsonError("Kullanıcı doğrulanamadı.", 401);
   }
 
-  const body = (await request.json().catch(() => null)) as PostBody | null;
+  const { body, error: bodyError } = await readJsonBody<PostBody>(request, 4096);
+  if (bodyError) return bodyError;
   const title = body?.title?.trim() || "";
   const detail = body?.detail?.trim() || "";
   const source = body?.source?.trim() || "client";

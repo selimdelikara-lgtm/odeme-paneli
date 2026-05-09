@@ -75,3 +75,19 @@ export const createAdminServerClient = (
       persistSession: false,
     },
   });
+
+export const readJsonBody = async <T>(
+  request: Request,
+  maxBytes = 16 * 1024
+): Promise<{ body: T | null; error?: Response }> => {
+  const contentLength = Number(request.headers.get("content-length") || "0");
+  if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+    return { body: null, error: jsonError("Ä°stek boyutu Ã§ok bÃ¼yÃ¼k.", 413) };
+  }
+
+  try {
+    return { body: (await request.json()) as T };
+  } catch {
+    return { body: null };
+  }
+};

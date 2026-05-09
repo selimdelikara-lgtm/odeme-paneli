@@ -7,6 +7,7 @@ import {
   getUserAgent,
   jsonError,
   jsonOk,
+  readJsonBody,
 } from "../_lib/server";
 
 const MAX_ACTIVE_SESSIONS = 2;
@@ -27,8 +28,9 @@ export async function POST(request: Request) {
   const token = getBearerToken(request);
   if (!token) return jsonError("Yetkilendirme bilgisi eksik.", 401);
 
-  const body = (await request.json().catch(() => ({}))) as SessionBody;
-  if (!isValidDeviceId(body.deviceId)) {
+  const { body, error: bodyError } = await readJsonBody<SessionBody>(request, 4096);
+  if (bodyError) return bodyError;
+  if (!isValidDeviceId(body?.deviceId)) {
     return jsonError("Cihaz oturumu doğrulanamadı.", 400);
   }
 
@@ -107,8 +109,8 @@ export async function DELETE(request: Request) {
   const token = getBearerToken(request);
   if (!token) return jsonOk({ ok: true });
 
-  const body = (await request.json().catch(() => ({}))) as SessionBody;
-  if (!isValidDeviceId(body.deviceId)) return jsonOk({ ok: true });
+  const { body } = await readJsonBody<SessionBody>(request, 4096);
+  if (!isValidDeviceId(body?.deviceId)) return jsonOk({ ok: true });
 
   const authClient = createAuthedServerClient(env, token);
   const {

@@ -9,6 +9,7 @@ import {
   getServerSupabaseEnv,
   jsonError,
   jsonOk,
+  readJsonBody,
 } from "../_lib/server";
 import { writeAuditLog } from "../_lib/audit";
 
@@ -26,8 +27,9 @@ export async function DELETE(request: Request) {
 
   const token = getBearerToken(request);
   const clientIp = getClientIp(request);
-  const body = (await request.json().catch(() => ({}))) as DeleteBody;
-  const currentPassword = body.currentPassword?.trim() || "";
+  const { body, error: bodyError } = await readJsonBody<DeleteBody>(request, 4096);
+  if (bodyError) return bodyError;
+  const currentPassword = body?.currentPassword?.trim() || "";
 
   if (!token) {
     return jsonError("Yetkilendirme bilgisi eksik.", 401);
