@@ -1,12 +1,12 @@
-import { writeAuditLog } from "../_lib/audit";
+import { rateLimit } from "../_lib/rate-limit";
 import {
   createAdminServerClient,
   createAuthedServerClient,
   getBearerToken,
+  getClientIp,
   getServerSupabaseEnv,
   jsonError,
   jsonOk,
-  readJsonBody,
 } from "../_lib/server";
 
 export async function GET(request: Request) {
@@ -28,6 +28,11 @@ export async function GET(request: Request) {
 
   if (userError || !user) {
     return jsonError("Kullanıcı doğrulanamadı.", 401);
+  }
+
+  const limiter = await rateLimit(`audit-read:${getClientIp(request)}:${user.id}`, 30, 60 * 1000);
+  if (!limiter.ok) {
+    return jsonError("Çok fazla işlem geçmişi isteği yapıldı. Biraz sonra tekrar dene.", 429);
   }
 
   const adminClient = createAdminServerClient(env);
@@ -52,59 +57,4 @@ export async function GET(request: Request) {
       })),
     }
   );
-}
-
-type PostBody = {
-  title?: string;
-  detail?: string;
-  source?: string;
-};
-
-export async function POST(request: Request) {
-  const env = getServerSupabaseEnv();
-  if (!env) {
-    return jsonError("Sunucu ortam değişkenleri eksik.", 500);
-  }
-
-  const token = getBearerToken(request);
-  if (!token) {
-    return jsonError("Yetkilendirme bilgisi eksik.", 401);
-  }
-
-  const authClient = createAuthedServerClient(env, token);
-  const {
-    data: { user },
-    error: userError,
-  } = await authClient.auth.getUser();
-
-  if (userError || !user) {
-    return jsonError("Kullanıcı doğrulanamadı.", 401);
-  }
-
-  const { body, error: bodyError } = await readJsonBody<PostBody>(request, 4096);
-  if (bodyError) return bodyError;
-  const title = body?.title?.trim() || "";
-  const detail = body?.detail?.trim() || "";
-  const source = body?.source?.trim() || "client";
-
-  if (!title || !detail) {
-    return jsonError("Eksik audit log verisi.", 400);
-  }
-
-  const adminClient = createAdminServerClient(env);
-
-  const error = await writeAuditLog({
-    adminClient,
-    userId: user.id,
-    title: title.slice(0, 120),
-    detail: detail.slice(0, 400),
-    source: source.slice(0, 32),
-    request,
-  });
-
-  if (error) {
-    return jsonError("İşlem geçmişi yazılamadı.", 500);
-  }
-
-  return jsonOk({ ok: true });
 }

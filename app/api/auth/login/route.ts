@@ -39,9 +39,10 @@ export async function POST(request: Request) {
     return jsonError("Çok fazla giriş denemesi yapıldı. Biraz sonra tekrar dene.", 429);
   }
 
-  const accountLimiter = await rateLimit(`login-account:${email}`, 8, 15 * 60 * 1000);
+  const emailHash = hashValue(email);
+  const accountLimiter = await rateLimit(`login-account:${emailHash}`, 8, 15 * 60 * 1000);
   if (!accountLimiter.ok) {
-    console.warn("[auth-login-rate-limit]", { scope: "account", emailHash: hashValue(email) });
+    console.warn("[auth-login-rate-limit]", { scope: "account", emailHash });
     return jsonError("Bu hesap için geçici giriş kilidi uygulandı. Biraz sonra tekrar dene.", 429);
   }
 
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
   });
 
   if (signInError || !data.session) {
-    console.warn("[auth-login-failed]", { emailHash: hashValue(email), ip: clientIp });
+    console.warn("[auth-login-failed]", { emailHash, ip: clientIp });
     return jsonError("E-posta veya şifre hatalı.", 401);
   }
 

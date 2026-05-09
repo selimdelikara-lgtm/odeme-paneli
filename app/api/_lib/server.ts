@@ -86,7 +86,13 @@ export const readJsonBody = async <T>(
   }
 
   try {
-    return { body: (await request.json()) as T };
+    const raw = await request.text();
+    const byteLength = new TextEncoder().encode(raw).byteLength;
+    if (byteLength > maxBytes) {
+      return { body: null, error: jsonError("İstek boyutu çok büyük.", 413) };
+    }
+
+    return { body: raw ? (JSON.parse(raw) as T) : null };
   } catch {
     return { body: null };
   }

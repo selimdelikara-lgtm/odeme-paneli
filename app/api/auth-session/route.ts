@@ -30,12 +30,10 @@ const isMissingSessionTableError = (error: { code?: string; message?: string } |
         error.message?.toLowerCase().includes("schema cache"))
   );
 
-const sessionTableMigrationWarning = () => {
-  console.warn("[auth-session-migration-missing]", {
-    message: "user_sessions tablosu yok. supabase-user-sessions.sql çalıştırılana kadar cihaz limiti pasif.",
-  });
-  return jsonOk({ ok: true, degraded: true });
-};
+const fallbackSessionKey = (userId: string, deviceId: string) =>
+  `auth-session:${userId}:${deviceId}`;
+
+const fallbackSessionPrefix = (userId: string) => `auth-session:${userId}:%`;
 
 export async function POST(request: Request) {
   const env = getServerSupabaseEnv();
@@ -46,7 +44,9 @@ export async function POST(request: Request) {
 
   const { body, error: bodyError } = await readJsonBody<SessionBody>(request, 4096);
   if (bodyError) return bodyError;
-  if (!isValidDeviceId(body?.deviceId)) {
+  const deviceId = body?.deviceId;
+  const reauthenticated = body?.reauthenticated === true;
+  if (!isValidDeviceId(deviceId)) {
     return jsonError("Cihaz oturumu doğrulanamadı.", 400);
   }
 
@@ -63,25 +63,73 @@ export async function POST(request: Request) {
   const nowIso = now.toISOString();
   const expiresAt = new Date(now.getTime() + SESSION_TTL_MS).toISOString();
 
+  const runRateLimitSessionFallback = async () => {
+    const key = fallbackSessionKey(user.id, deviceId);
+    const prefix = fallbackSessionPrefix(user.id);
+
+    await adminClient.from("security_rate_limits").delete().lt("reset_at", nowIso).like("key", prefix);
+
+    const { data: existingFallback, error: existingFallbackError } = await adminClient
+      .from("security_rate_limits")
+      .select("key, reset_at")
+      .eq("key", key)
+      .maybeSingle();
+
+    if (existingFallbackError) return jsonError("Oturum kontrolü yapılamadı.", 500);
+
+    if (existingFallback) {
+      const expired = new Date(existingFallback.reset_at).getTime() <= now.getTime();
+      if (expired && !reauthenticated) {
+        await adminClient.from("security_rate_limits").delete().eq("key", key);
+        return jsonError("Oturum süresi doldu. Lütfen yeniden giriş yap.", 401);
+      }
+
+      if (expired) {
+        await adminClient.from("security_rate_limits").upsert({ key, count: 1, reset_at: expiresAt });
+        return jsonOk({ ok: true, expiresAt, fallback: true });
+      }
+
+      return jsonOk({ ok: true, expiresAt: existingFallback.reset_at, fallback: true });
+    }
+
+    const { count, error: countFallbackError } = await adminClient
+      .from("security_rate_limits")
+      .select("key", { count: "exact", head: true })
+      .like("key", prefix)
+      .gt("reset_at", nowIso);
+
+    if (countFallbackError) return jsonError("Aktif oturumlar kontrol edilemedi.", 500);
+    if ((count ?? 0) >= MAX_ACTIVE_SESSIONS) {
+      return jsonError("Bu hesap aynı anda en fazla 2 cihazda açık kalabilir.", 409);
+    }
+
+    const { error: insertFallbackError } = await adminClient
+      .from("security_rate_limits")
+      .upsert({ key, count: 1, reset_at: expiresAt });
+
+    if (insertFallbackError) return jsonError("Oturum kaydı oluşturulamadı.", 500);
+    return jsonOk({ ok: true, expiresAt, fallback: true });
+  };
+
   const { error: cleanupError } = await adminClient
     .from("user_sessions")
     .delete()
     .lt("expires_at", nowIso);
-  if (isMissingSessionTableError(cleanupError)) return sessionTableMigrationWarning();
+  if (isMissingSessionTableError(cleanupError)) return runRateLimitSessionFallback();
 
   const { data: existing, error: existingError } = await adminClient
     .from("user_sessions")
     .select("id, expires_at")
     .eq("user_id", user.id)
-    .eq("device_id", body.deviceId)
+    .eq("device_id", deviceId)
     .maybeSingle();
 
-  if (isMissingSessionTableError(existingError)) return sessionTableMigrationWarning();
+  if (isMissingSessionTableError(existingError)) return runRateLimitSessionFallback();
   if (existingError) return jsonError("Oturum kontrolü yapılamadı.", 500);
 
   if (existing) {
     const expired = new Date(existing.expires_at).getTime() <= now.getTime();
-    if (expired && !body.reauthenticated) {
+    if (expired && !reauthenticated) {
       await adminClient.from("user_sessions").delete().eq("id", existing.id);
       return jsonError("Oturum süresi doldu. Lütfen yeniden giriş yap.", 401);
     }
@@ -106,7 +154,7 @@ export async function POST(request: Request) {
     .eq("user_id", user.id)
     .gt("expires_at", nowIso);
 
-  if (isMissingSessionTableError(countError)) return sessionTableMigrationWarning();
+  if (isMissingSessionTableError(countError)) return runRateLimitSessionFallback();
   if (countError) return jsonError("Aktif oturumlar kontrol edilemedi.", 500);
   if ((count ?? 0) >= MAX_ACTIVE_SESSIONS) {
     return jsonError("Bu hesap aynı anda en fazla 2 cihazda açık kalabilir.", 409);
@@ -114,13 +162,13 @@ export async function POST(request: Request) {
 
   const { error: insertError } = await adminClient.from("user_sessions").insert({
     user_id: user.id,
-    device_id: body.deviceId,
+    device_id: deviceId,
     user_agent: getUserAgent(request),
     ip: getClientIp(request),
     expires_at: expiresAt,
   });
 
-  if (isMissingSessionTableError(insertError)) return sessionTableMigrationWarning();
+  if (isMissingSessionTableError(insertError)) return runRateLimitSessionFallback();
   if (insertError) return jsonError("Oturum kaydı oluşturulamadı.", 500);
   return jsonOk({ ok: true, expiresAt });
 }
@@ -133,7 +181,8 @@ export async function DELETE(request: Request) {
   if (!token) return jsonOk({ ok: true });
 
   const { body } = await readJsonBody<SessionBody>(request, 4096);
-  if (!isValidDeviceId(body?.deviceId)) return jsonOk({ ok: true });
+  const deviceId = body?.deviceId;
+  if (!isValidDeviceId(deviceId)) return jsonOk({ ok: true });
 
   const authClient = createAuthedServerClient(env, token);
   const {
@@ -142,11 +191,19 @@ export async function DELETE(request: Request) {
 
   if (!user) return jsonOk({ ok: true });
 
-  await createAdminServerClient(env)
+  const adminClient = createAdminServerClient(env);
+  const { error } = await adminClient
     .from("user_sessions")
     .delete()
     .eq("user_id", user.id)
-    .eq("device_id", body.deviceId);
+    .eq("device_id", deviceId);
+
+  if (isMissingSessionTableError(error)) {
+    await adminClient
+      .from("security_rate_limits")
+      .delete()
+      .eq("key", fallbackSessionKey(user.id, deviceId));
+  }
 
   return jsonOk({ ok: true });
 }

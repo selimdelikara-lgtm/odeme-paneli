@@ -306,28 +306,6 @@ export default function Page() {
     };
 
     setActivityLog((prev) => [item, ...prev].slice(0, 30));
-
-    void (async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      const accessToken = session?.access_token;
-      if (!accessToken) return;
-
-      await fetch("/api/audit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          title,
-          detail,
-          source: "client",
-        }),
-      });
-    })();
   }, []);
 
   async function syncDeviceSession(reauthenticated = false) {
