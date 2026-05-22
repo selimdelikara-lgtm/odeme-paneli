@@ -78,7 +78,6 @@ import {
 } from "./page.selectors";
 import {
   browserSupabase as supabase,
-  getAuthDeviceId,
   getAuthRedirectTo,
   setAuthStoragePreference,
 } from "@/lib/supabase";
@@ -308,58 +307,8 @@ export default function Page() {
     setActivityLog((prev) => [item, ...prev].slice(0, 30));
   }, []);
 
-  async function syncDeviceSession(reauthenticated = false) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    const accessToken = session?.access_token;
-    if (!accessToken) return false;
-
-    const response = await fetch("/api/auth-session", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        deviceId: getAuthDeviceId(),
-        reauthenticated,
-      }),
-    });
-
-    if (response.ok) return true;
-
-    const payload = (await response.json().catch(() => ({}))) as { error?: string };
-    setMsg(payload.error || "Oturum doğrulanamadı. Lütfen tekrar giriş yap.");
-    await supabase.auth.signOut();
-    return false;
-  }
-
-  async function removeDeviceSession() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    const accessToken = session?.access_token;
-    if (!accessToken) return;
-
-    await fetch("/api/auth-session", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({ deviceId: getAuthDeviceId() }),
-    });
-  }
-
-  async function acceptAuthenticatedSession(
-    user: Parameters<typeof syncAuthProfile>[0],
-    reauthenticated = false
-  ) {
-    const ok = await syncDeviceSession(reauthenticated);
-    if (ok) syncAuthProfile(user);
+  function acceptAuthenticatedSession(user: Parameters<typeof syncAuthProfile>[0]) {
+    syncAuthProfile(user);
   }
 
   const openProjectTab = (tabName: string) => {
@@ -475,15 +424,6 @@ export default function Page() {
     initialLoadRef.current = false;
   }, [authUserId]);
 
-  useEffect(() => {
-    if (!authUserId) return;
-
-    const timer = window.setInterval(() => {
-      void syncDeviceSession();
-    }, 5 * 60 * 1000);
-
-    return () => window.clearInterval(timer);
-  }, [authUserId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -539,7 +479,7 @@ export default function Page() {
       } = await supabase.auth.getSession();
 
       if (session?.user) {
-        await acceptAuthenticatedSession(session.user);
+        acceptAuthenticatedSession(session.user);
       }
     };
 
@@ -565,7 +505,7 @@ export default function Page() {
       }
 
       if (session?.user) {
-        void acceptAuthenticatedSession(session.user, event === "SIGNED_IN");
+        acceptAuthenticatedSession(session.user);
       } else {
         setAuthEmail(null);
         setAuthUserId(null);
@@ -2365,8 +2305,7 @@ export default function Page() {
       return;
     }
 
-    const sessionOk = await syncDeviceSession(true);
-    if (sessionOk) setMsg("Supabase ile giriş yapıldı.");
+    setMsg("Supabase ile giriş yapıldı.");
   }
 
   async function authSignUp() {
@@ -2386,7 +2325,6 @@ export default function Page() {
       return;
     }
 
-    await syncDeviceSession(true);
     setSignupMode(false);
     pushActivity("Hesap oluşturuldu", email.trim());
     setMsg("Hesap oluşturuldu. E-posta doğrulaması açıksa kutunu kontrol et.");
@@ -2442,7 +2380,6 @@ export default function Page() {
 
   async function cikisYap() {
     if (authEmail) {
-      await removeDeviceSession();
       await supabase.auth.signOut();
     }
     setAuthEmail(null);
@@ -2577,7 +2514,6 @@ export default function Page() {
     pushActivity("Şifre güncellendi", authEmail || "Hesap");
     setMsg("Şifre güncellendi. Güvenlik için tekrar giriş yap.");
     setSettingsBusy(false);
-    await removeDeviceSession();
     await supabase.auth.signOut({ scope: "global" });
   }
 
