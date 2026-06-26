@@ -23,6 +23,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "yearly",
       priority: 0.35,
     },
+    {
+      url: `${SITE_ORIGIN}/bize-ulasin`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.45,
+    },
     ...seoPages.map((page) => ({
       url: `${SITE_ORIGIN}/${page.slug}`,
       lastModified: now,

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import PwaRegister from "./pwa-register";
+import TrafficRegister from "./traffic-register";
 
 const siteUrl = new URL("https://www.xn--dedimi-vxa.com");
 const siteTitle = "Ödedimi | Freelance Ödeme ve Tahsilat Takip Paneli";
@@ -105,6 +106,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
         <PwaRegister />
+        <TrafficRegister />
         {children}
       </body>
     </html>

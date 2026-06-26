@@ -39,6 +39,17 @@ export function LegalPage({ title, description, children }: LegalPageProps) {
         >
           Odedimi
         </Link>
+        <Link
+          href="/bize-ulasin"
+          style={{
+            marginLeft: 14,
+            color: "#2563EB",
+            fontWeight: 800,
+            textDecoration: "none",
+          }}
+        >
+          Bize Ulaşın
+        </Link>
         <h1
           style={{
             margin: "24px 0 10px",

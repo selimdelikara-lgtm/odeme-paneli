@@ -2,8 +2,10 @@ import { createClient } from "@supabase/supabase-js";
 import { createHash } from "node:crypto";
 import { rateLimit } from "../../_lib/rate-limit";
 import {
+  createAdminServerClient,
   getClientIp,
   getServerSupabaseEnv,
+  getUserActiveStatus,
   jsonError,
   jsonOk,
   readJsonBody,
@@ -61,6 +63,13 @@ export async function POST(request: Request) {
   if (signInError || !data.session) {
     console.warn("[auth-login-failed]", { emailHash, ip: clientIp });
     return jsonError("E-posta veya şifre hatalı.", 401);
+  }
+
+  const adminClient = createAdminServerClient(env);
+  const isActive = await getUserActiveStatus(adminClient, data.session.user.id);
+  if (!isActive) {
+    console.warn("[auth-login-passive-user]", { emailHash, ip: clientIp });
+    return jsonError("Hesabın geçici olarak pasifleştirildi. Destek ile iletişime geç.", 403);
   }
 
   return jsonOk({

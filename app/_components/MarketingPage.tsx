@@ -338,8 +338,18 @@ export function MarketingPage({ page }: { page: SeoPage }) {
                     {item.h1}
                   </Link>
                 ))}
+                <Link href="/bize-ulasin" style={styles.footerLink}>
+                  Bize Ulaşın
+                </Link>
               </div>
             </>
+          ) : null}
+          {!relatedPages.length ? (
+            <div style={styles.footerLinks}>
+              <Link href="/bize-ulasin" style={styles.footerLink}>
+                Bize Ulaşın
+              </Link>
+            </div>
           ) : null}
         </section>
 

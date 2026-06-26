@@ -1,13 +1,18 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 
+const scriptSrc =
+  process.env.NODE_ENV === "production"
+    ? "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net"
+    : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net";
+
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
   "form-action 'self'",
   "object-src 'none'",
-  "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+  scriptSrc,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data: https:",

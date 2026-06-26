@@ -6,6 +6,7 @@ import {
   getBearerToken,
   getClientIp,
   getServerSupabaseEnv,
+  getUserActiveStatus,
   jsonError,
   jsonOk,
   readJsonBody,
@@ -48,6 +49,12 @@ export async function POST(request: Request) {
     return jsonError("Kullanıcı doğrulanamadı.", 401);
   }
 
+  const adminClient = createAdminServerClient(env);
+  const isActive = await getUserActiveStatus(adminClient, user.id);
+  if (!isActive) {
+    return jsonError("Hesabın geçici olarak pasifleştirildi.", 403);
+  }
+
   const limiter = await rateLimit(`bulk:${clientIp}:${user.id}`, 20, 60 * 1000);
   if (!limiter.ok) {
     return jsonError("Çok fazla toplu işlem denemesi yapıldı. Biraz sonra tekrar dene.", 429);
@@ -70,8 +77,6 @@ export async function POST(request: Request) {
   if (ids.length > 250) {
     return jsonError("Tek seferde en fazla 250 kayıt işlenebilir.", 400);
   }
-
-  const adminClient = createAdminServerClient(env);
 
   if (action === "delete") {
     const { data: attachments, error: attachmentsError } = await adminClient

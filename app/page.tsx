@@ -309,6 +309,33 @@ export default function Page() {
 
   function acceptAuthenticatedSession(user: Parameters<typeof syncAuthProfile>[0]) {
     syncAuthProfile(user);
+    void enforceActiveAccount();
+  }
+
+  async function enforceActiveAccount() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const accessToken = session?.access_token;
+    if (!accessToken) return;
+
+    const response = await fetch("/api/account/status", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as {
+      isActive?: boolean;
+      error?: string;
+    };
+
+    if (response.ok && payload.isActive === false) {
+      await supabase.auth.signOut({ scope: "global" });
+      setMsg("Hesabın geçici olarak pasifleştirildi. Destek ile iletişime geç.");
+      setData([]);
+      setAktifSekme("");
+    }
   }
 
   const openProjectTab = (tabName: string) => {
@@ -6370,6 +6397,5 @@ const styles: Record<string, CSSProperties> = {
     letterSpacing: 1,
   },
 };
-
 
 

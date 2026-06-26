@@ -76,6 +76,20 @@ export const createAdminServerClient = (
     },
   });
 
+export const getUserActiveStatus = async (
+  adminClient: SupabaseClient<Database>,
+  userId: string
+) => {
+  const { data, error } = await adminClient
+    .from("admin_user_status")
+    .select("is_active")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) return true;
+  return data?.is_active ?? true;
+};
+
 export const readJsonBody = async <T>(
   request: Request,
   maxBytes = 16 * 1024

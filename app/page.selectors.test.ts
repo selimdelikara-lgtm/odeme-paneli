@@ -12,6 +12,7 @@ const rows: Odeme[] = [
     fatura_kesildi: true,
     fatura_tarihi: "2026-01-10",
     kdvli: false,
+    gvkli: false,
     sira: 2,
   },
   {
@@ -23,6 +24,7 @@ const rows: Odeme[] = [
     fatura_kesildi: true,
     fatura_tarihi: "2026-02-10",
     kdvli: false,
+    gvkli: false,
     sira: 1,
   },
   {
@@ -34,6 +36,7 @@ const rows: Odeme[] = [
     fatura_kesildi: false,
     fatura_tarihi: null,
     kdvli: false,
+    gvkli: false,
     sira: 3,
   },
 ];

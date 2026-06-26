@@ -6,6 +6,7 @@ import {
   getBearerToken,
   getClientIp,
   getServerSupabaseEnv,
+  getUserActiveStatus,
   jsonError,
   jsonOk,
   readJsonBody,
@@ -98,6 +99,12 @@ export async function POST(request: Request) {
     return jsonError("Kullanıcı doğrulanamadı.", 401);
   }
 
+  const adminClient = createAdminServerClient(env);
+  const isActive = await getUserActiveStatus(adminClient, user.id);
+  if (!isActive) {
+    return jsonError("Hesabın geçici olarak pasifleştirildi.", 403);
+  }
+
   const limiter = await rateLimit(`manage:${clientIp}:${user.id}`, 20, 60 * 1000);
   if (!limiter.ok) {
     return jsonError("Çok fazla işlem denemesi yapıldı. Biraz sonra tekrar dene.", 429);
@@ -110,8 +117,6 @@ export async function POST(request: Request) {
   if (!action) {
     return jsonError("Geçersiz işlem isteği.", 400);
   }
-
-  const adminClient = createAdminServerClient(env);
 
   if (action === "delete_record") {
     const id = body?.id;

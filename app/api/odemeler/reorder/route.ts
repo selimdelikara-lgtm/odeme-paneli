@@ -6,6 +6,7 @@ import {
   getBearerToken,
   getClientIp,
   getServerSupabaseEnv,
+  getUserActiveStatus,
   jsonError,
   jsonOk,
   readJsonBody,
@@ -37,6 +38,12 @@ export async function POST(request: Request) {
     return jsonError("Kullanıcı doğrulanamadı.", 401);
   }
 
+  const adminClient = createAdminServerClient(env);
+  const isActive = await getUserActiveStatus(adminClient, user.id);
+  if (!isActive) {
+    return jsonError("Hesabın geçici olarak pasifleştirildi.", 403);
+  }
+
   const clientIp = getClientIp(request);
   const limiter = await rateLimit(`reorder:${clientIp}:${user.id}`, 30, 60 * 1000);
   if (!limiter.ok) {
@@ -50,8 +57,6 @@ export async function POST(request: Request) {
   if (!ids.length || ids.length > 250) {
     return jsonError("Geçersiz sıralama isteği.", 400);
   }
-
-  const adminClient = createAdminServerClient(env);
 
   const updates = ids.map((id, index) =>
     adminClient
