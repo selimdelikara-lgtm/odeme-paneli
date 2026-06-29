@@ -126,6 +126,7 @@ export function MobileNavigation({
         <button
           type="button"
           className="hover-button"
+          data-onboarding-target="reports"
           style={viewMode === "home" ? styles.mobileNavItemActive : styles.mobileNavItem}
           onClick={() => {
             setViewMode("home");
@@ -140,6 +141,7 @@ export function MobileNavigation({
         <button
           type="button"
           className="hover-button"
+          data-onboarding-target="projects"
           style={viewMode === "project" ? styles.mobileNavItemActive : styles.mobileNavItem}
           onClick={() => setShowMobileProjects(true)}
         >
@@ -174,6 +176,7 @@ export function MobileNavigation({
         <button
           type="button"
           className="hover-button"
+          data-onboarding-target="settings"
           style={viewMode === "settings" ? styles.mobileNavItemActive : styles.mobileNavItem}
           onClick={() => {
             setViewMode("settings");

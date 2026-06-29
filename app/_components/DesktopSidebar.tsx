@@ -45,6 +45,7 @@ export function DesktopSidebar({
       <div style={styles.sidebarTabs} className="sidebar-tabs">
         <button
           className="sidebar-item"
+          data-onboarding-target="reports"
           onClick={() => {
             setViewMode("home");
             setSelectedIds([]);
@@ -59,6 +60,7 @@ export function DesktopSidebar({
 
         <button
           className="sidebar-item hover-button"
+          data-onboarding-target="projects"
           onClick={yeniProjeOlustur}
           style={styles.sidebarIconOnlyBtn}
           title="Yeni Proje"
@@ -107,6 +109,7 @@ export function DesktopSidebar({
       <div style={styles.sidebarBottom} data-sidebar-bottom="true" className="sidebar-bottom">
         <button
           className="hover-button"
+          data-onboarding-target="settings"
           onClick={() => setViewMode("settings")}
           style={viewMode === "settings" ? styles.activeTab : styles.tab}
         >

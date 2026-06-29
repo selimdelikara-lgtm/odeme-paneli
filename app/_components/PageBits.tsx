@@ -458,6 +458,7 @@ type SettingsContentProps = {
   setSettingsCurrentPassword: Dispatch<SetStateAction<string>>;
   closeAccountData: () => Promise<void>;
   activityLog: ActivityItem[];
+  onRestartOnboarding: () => void;
 };
 
 export function SettingsContent({
@@ -482,6 +483,7 @@ export function SettingsContent({
   setSettingsCurrentPassword,
   closeAccountData,
   activityLog,
+  onRestartOnboarding,
 }: SettingsContentProps) {
   return (
     <div style={styles.settingsGrid}>
@@ -601,6 +603,29 @@ export function SettingsContent({
               </span>
             </button>
           </div>
+        </div>
+      </div>
+
+      <div style={styles.settingsCard}>
+        <div style={styles.sectionHead}>
+          <h2 style={styles.h2}>Yardim</h2>
+          <Settings2 size={18} color={mutedColor} />
+        </div>
+        <div style={styles.settingsStack}>
+          <div style={styles.settingsDangerText}>
+            Paneldeki temel alanlari yeniden gormek icin kisa yardim turunu baslat.
+          </div>
+          <button
+            type="button"
+            className="hover-button"
+            onClick={onRestartOnboarding}
+            style={styles.secondaryBtn}
+          >
+            <span style={styles.btnInner}>
+              <Settings2 size={15} />
+              Yardim turunu tekrar baslat
+            </span>
+          </button>
         </div>
       </div>
 
@@ -841,6 +866,5 @@ export function MobileProjectCards({
     </div>
   );
 }
-
 
 

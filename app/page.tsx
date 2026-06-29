@@ -95,6 +95,7 @@ import {
   SummaryStatsGrid,
 } from "./_components/DashboardOverview";
 import { MobileNavigation } from "./_components/MobileNavigation";
+import { OnboardingTour } from "./_components/OnboardingTour";
 import type {
   FaturaEkiInsert,
   OdemeInsert,
@@ -242,6 +243,8 @@ export default function Page() {
   const [settingsBusy, setSettingsBusy] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [activityLog, setActivityLog] = useState<ActivityItem[]>([]);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [onboardingRunId, setOnboardingRunId] = useState(0);
 
   const exportRef = useRef<HTMLElement | null>(null);
   const projectPdfRef = useRef<HTMLDivElement | null>(null);
@@ -311,6 +314,38 @@ export default function Page() {
     syncAuthProfile(user);
     void enforceActiveAccount();
   }
+
+  const completeOnboarding = useCallback(async () => {
+    setOnboardingOpen(false);
+
+    if (!authUserId) return;
+
+    const completedAt = new Date().toISOString();
+    const { error } = await supabase.from("user_onboarding").upsert(
+      {
+        user_id: authUserId,
+        onboarding_completed: true,
+        completed_at: completedAt,
+      },
+      { onConflict: "user_id" }
+    );
+
+    if (error) {
+      console.warn("Onboarding completion could not be saved:", error.message);
+    }
+  }, [authUserId]);
+
+  const restartOnboarding = useCallback(() => {
+    setViewMode("home");
+    setSelectedIds([]);
+    setShowMobileProjects(false);
+    setOnboardingOpen(false);
+
+    window.setTimeout(() => {
+      setOnboardingRunId((current) => current + 1);
+      setOnboardingOpen(true);
+    }, 120);
+  }, []);
 
   async function enforceActiveAccount() {
     const {
@@ -449,6 +484,45 @@ export default function Page() {
 
   useEffect(() => {
     initialLoadRef.current = false;
+  }, [authUserId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadOnboardingState = async () => {
+      if (!authUserId) {
+        setOnboardingOpen(false);
+        return;
+      }
+
+      const { data: onboarding, error } = await supabase
+        .from("user_onboarding")
+        .select("onboarding_completed")
+        .eq("user_id", authUserId)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error) {
+        console.warn("Onboarding state could not be loaded:", error.message);
+        return;
+      }
+
+      if (!onboarding?.onboarding_completed) {
+        window.setTimeout(() => {
+          if (!cancelled) {
+            setOnboardingRunId((current) => current + 1);
+            setOnboardingOpen(true);
+          }
+        }, 700);
+      }
+    };
+
+    void loadOnboardingState();
+
+    return () => {
+      cancelled = true;
+    };
   }, [authUserId]);
 
 
@@ -2785,6 +2859,7 @@ export default function Page() {
       setSettingsCurrentPassword={setSettingsCurrentPassword}
       closeAccountData={closeAccountData}
       activityLog={activityLog}
+      onRestartOnboarding={restartOnboarding}
     />
   );
   if (!authUserId) {
@@ -3390,6 +3465,7 @@ export default function Page() {
               </>
             ) : (
               <div className={`view-panel view-panel-${viewMode}`}>
+            <div data-onboarding-target="welcome">
             <DashboardHero
               styles={styles}
               isMobileViewport={isMobileViewport}
@@ -3419,6 +3495,7 @@ export default function Page() {
               onSignOut={() => void cikisYap()}
               privacyMode={privacyMode}
             />
+            </div>
 
                 <input
                   ref={invoiceInputRef}
@@ -3441,6 +3518,8 @@ export default function Page() {
               }}
             />
 
+            <div data-onboarding-target="reports">
+            <div data-onboarding-target="payments">
             <SummaryStatsGrid
               styles={styles}
               viewMode={viewMode}
@@ -3459,7 +3538,10 @@ export default function Page() {
               activeTabMeta={aktifTabMeta}
               palette={palette}
             />
+            </div>
+            </div>
 
+            <div data-onboarding-target="due">
             <SummaryQuickPanels
               styles={styles}
               viewMode={viewMode}
@@ -3480,6 +3562,7 @@ export default function Page() {
               selectedVisibleIdsLength={selectedVisibleIds.length}
               aktifTabMeta={aktifTabMeta}
             />
+            </div>
 
           {viewMode === "home" ? (
             <div style={styles.card} className="content-card">
@@ -3958,6 +4041,7 @@ export default function Page() {
                   />
                 ) : (
                   <div
+                    data-onboarding-target="payments"
                     style={{
                       ...styles.tableWrap,
                       ...(draggedId !== null && sortKey === "manual"
@@ -4160,6 +4244,13 @@ export default function Page() {
           mutedColor={palette.muted}
         />
       ) : null}
+
+      <OnboardingTour
+        key={onboardingRunId}
+        open={onboardingOpen}
+        onSkip={() => void completeOnboarding()}
+        onComplete={() => void completeOnboarding()}
+      />
 
       {tabMenu.visible ? (
         <div
@@ -6397,5 +6488,3 @@ const styles: Record<string, CSSProperties> = {
     letterSpacing: 1,
   },
 };
-
-

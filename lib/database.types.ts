@@ -382,6 +382,30 @@ export type Database = {
           },
         ];
       };
+      user_onboarding: {
+        Row: {
+          user_id: string;
+          onboarding_completed: boolean;
+          completed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          onboarding_completed?: boolean;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          onboarding_completed?: boolean;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       user_sessions: {
         Row: {
           id: string;
@@ -428,3 +452,5 @@ export type OdemeInsert = Database["public"]["Tables"]["odemeler"]["Insert"];
 export type OdemeUpdate = Database["public"]["Tables"]["odemeler"]["Update"];
 export type FaturaEkiRow = Database["public"]["Tables"]["fatura_ekleri"]["Row"];
 export type FaturaEkiInsert = Database["public"]["Tables"]["fatura_ekleri"]["Insert"];
+export type UserOnboardingRow = Database["public"]["Tables"]["user_onboarding"]["Row"];
+export type UserOnboardingInsert = Database["public"]["Tables"]["user_onboarding"]["Insert"];
