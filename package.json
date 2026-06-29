@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "codex:mac": "bash scripts/open-codex-mac.sh",
+    "codex:win": "powershell -ExecutionPolicy Bypass -File scripts/open-codex-windows.ps1",
     "dev": "next dev --webpack -H 127.0.0.1",
     "build": "next build",
     "start": "next start",
