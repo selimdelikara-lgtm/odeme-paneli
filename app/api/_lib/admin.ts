@@ -6,6 +6,7 @@ import {
   getClientIp,
   getServerSupabaseEnv,
   getUserAgent,
+  isSameOriginRequest,
   type ServerSupabaseEnv,
 } from "./server";
 
@@ -20,7 +21,7 @@ export type AdminContext = {
 
 export const adminCookieOptions = {
   httpOnly: true,
-  sameSite: "lax" as const,
+  sameSite: "strict" as const,
   secure: process.env.NODE_ENV === "production",
   path: "/",
   maxAge: 60 * 60 * 8,
@@ -34,8 +35,21 @@ export const hashIp = (ip: string) => {
 const base64UrlEncode = (value: string) => Buffer.from(value).toString("base64url");
 const base64UrlDecode = (value: string) => Buffer.from(value, "base64url").toString("utf8");
 
-const getAdminCookieSecret = () =>
-  process.env.ADMIN_COOKIE_SECRET || "odedimi-local-admin-cookie-secret";
+const MIN_ADMIN_COOKIE_SECRET_LENGTH = 32;
+const DEV_ADMIN_COOKIE_SECRET = "odedimi-local-admin-cookie-secret";
+
+export const hasSecureAdminCookieSecret = () => {
+  const secret = process.env.ADMIN_COOKIE_SECRET || "";
+  if (process.env.NODE_ENV !== "production") return true;
+  return secret.length >= MIN_ADMIN_COOKIE_SECRET_LENGTH && secret !== DEV_ADMIN_COOKIE_SECRET;
+};
+
+const getAdminCookieSecret = () => {
+  if (!hasSecureAdminCookieSecret()) {
+    throw new Error("ADMIN_COOKIE_SECRET is missing or too short for production.");
+  }
+  return process.env.ADMIN_COOKIE_SECRET || DEV_ADMIN_COOKIE_SECRET;
+};
 
 const signValue = (value: string) =>
   createHmac("sha256", getAdminCookieSecret()).update(value).digest("base64url");
@@ -54,7 +68,12 @@ const verifyAdminSessionToken = (token: string): { adminUserId: string } | null 
   const [payload, signature] = token.split(".");
   if (!payload || !signature) return null;
 
-  const expected = signValue(payload);
+  let expected = "";
+  try {
+    expected = signValue(payload);
+  } catch {
+    return null;
+  }
   const expectedBuffer = Buffer.from(expected);
   const signatureBuffer = Buffer.from(signature);
   if (
@@ -111,6 +130,11 @@ export const verifyAdminToken = async (
 export const requireAdmin = async (request: Request): Promise<AdminContext | null> => {
   const env = getServerSupabaseEnv();
   if (!env) return null;
+  if (!hasSecureAdminCookieSecret()) return null;
+
+  if (!["GET", "HEAD", "OPTIONS"].includes(request.method)) {
+    if (!isSameOriginRequest(request)) return null;
+  }
 
   const token = getCookieValue(request, ADMIN_ACCESS_COOKIE);
   if (!token) return null;

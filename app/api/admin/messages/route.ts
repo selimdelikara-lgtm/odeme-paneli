@@ -1,5 +1,5 @@
 import { requireAdmin } from "../../_lib/admin";
-import { jsonError, jsonOk } from "../../_lib/server";
+import { jsonError, jsonOk, sanitizeSearchTerm } from "../../_lib/server";
 
 const statuses = new Set(["new", "reviewed", "resolved", "archived"]);
 
@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   if (!context) return jsonError("Admin yetkisi gerekli.", 401);
 
   const url = new URL(request.url);
-  const q = (url.searchParams.get("q") || "").trim();
+  const q = sanitizeSearchTerm(url.searchParams.get("q") || "");
   const status = url.searchParams.get("status") || "all";
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const perPage = Math.min(50, Math.max(10, Number(url.searchParams.get("perPage") || "20")));

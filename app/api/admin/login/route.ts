@@ -7,12 +7,14 @@ import {
   adminCookieOptions,
   createAdminSessionToken,
   hashIp,
+  hasSecureAdminCookieSecret,
   writeAdminAuditLog,
 } from "../../_lib/admin";
 import {
   createAdminServerClient,
   getClientIp,
   getServerSupabaseEnv,
+  isSameOriginRequest,
   jsonError,
   readJsonBody,
 } from "../../_lib/server";
@@ -39,6 +41,7 @@ const verifyPasswordHash = (password: string, storedHash: string) => {
 export async function POST(request: Request) {
   const env = getServerSupabaseEnv();
   if (!env) return jsonError("Sunucu ortam değişkenleri eksik.", 500);
+  if (!isSameOriginRequest(request)) return jsonError("Geçersiz istek kaynağı.", 403);
 
   const { body, error } = await readJsonBody<LoginBody>(request, 4096);
   if (error) return error;
@@ -54,6 +57,9 @@ export async function POST(request: Request) {
 
   if (!expectedUsername || !expectedPasswordHash) {
     return jsonError("Admin giriş ortam değişkenleri eksik.", 500);
+  }
+  if (!hasSecureAdminCookieSecret()) {
+    return jsonError("Admin oturum anahtarı production için güvenli ayarlanmamış.", 500);
   }
 
   if (!username || !password || username.length > 80 || password.length > 256) {

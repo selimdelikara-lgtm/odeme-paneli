@@ -35,9 +35,10 @@ export async function POST(request: Request) {
   }
 
   const clientIp = getClientIp(request);
+  const ipHash = hashValue(clientIp);
   const ipLimiter = await rateLimit(`login-ip:${clientIp}`, 20, 15 * 60 * 1000);
   if (!ipLimiter.ok) {
-    console.warn("[auth-login-rate-limit]", { scope: "ip", ip: clientIp });
+    console.warn("[auth-login-rate-limit]", { scope: "ip", ipHash });
     return jsonError("Çok fazla giriş denemesi yapıldı. Biraz sonra tekrar dene.", 429);
   }
 
@@ -61,14 +62,14 @@ export async function POST(request: Request) {
   });
 
   if (signInError || !data.session) {
-    console.warn("[auth-login-failed]", { emailHash, ip: clientIp });
+    console.warn("[auth-login-failed]", { emailHash, ipHash });
     return jsonError("E-posta veya şifre hatalı.", 401);
   }
 
   const adminClient = createAdminServerClient(env);
   const isActive = await getUserActiveStatus(adminClient, data.session.user.id);
   if (!isActive) {
-    console.warn("[auth-login-passive-user]", { emailHash, ip: clientIp });
+    console.warn("[auth-login-passive-user]", { emailHash, ipHash });
     return jsonError("Hesabın geçici olarak pasifleştirildi. Destek ile iletişime geç.", 403);
   }
 

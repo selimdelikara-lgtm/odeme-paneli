@@ -1,12 +1,12 @@
 import { requireAdmin } from "../../_lib/admin";
-import { jsonError, jsonOk } from "../../_lib/server";
+import { jsonError, jsonOk, sanitizeSearchTerm } from "../../_lib/server";
 
 export async function GET(request: Request) {
   const context = await requireAdmin(request);
   if (!context) return jsonError("Admin yetkisi gerekli.", 401);
 
   const url = new URL(request.url);
-  const query = (url.searchParams.get("q") || "").trim();
+  const query = sanitizeSearchTerm(url.searchParams.get("q") || "");
   const status = url.searchParams.get("status") || "all";
   const project = (url.searchParams.get("project") || "").trim();
   const dateFrom = url.searchParams.get("from");

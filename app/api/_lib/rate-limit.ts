@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { createHash } from "node:crypto";
 import type { Database } from "@/lib/database.types";
 
 type BucketState = {
@@ -9,6 +10,11 @@ type BucketState = {
 const buckets = new Map<string, BucketState>();
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const hashRateLimitKey = (key: string) => {
+  const salt = process.env.TRAFFIC_IP_HASH_SALT || process.env.ADMIN_COOKIE_SECRET || "odedimi-dev-rate-limit";
+  return `rl:${createHash("sha256").update(`${salt}:${key}`).digest("hex")}`;
+};
 
 const memoryRateLimit = (
   key: string,
@@ -49,8 +55,10 @@ export const rateLimit = async (
   limit: number,
   windowMs: number
 ): Promise<{ ok: boolean; retryAfterMs: number }> => {
+  const storageKey = hashRateLimitKey(key);
+
   if (!supabaseUrl || !supabaseServiceRoleKey) {
-    return memoryRateLimit(key, limit, windowMs);
+    return memoryRateLimit(storageKey, limit, windowMs);
   }
 
   const adminClient = createClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
@@ -66,17 +74,17 @@ export const rateLimit = async (
   const { data: existing, error: fetchError } = await adminClient
     .from("security_rate_limits")
     .select("count, reset_at")
-    .eq("key", key)
+    .eq("key", storageKey)
     .maybeSingle();
 
   if (fetchError) {
-    return memoryRateLimit(key, limit, windowMs);
+    return memoryRateLimit(storageKey, limit, windowMs);
   }
 
   if (!existing || new Date(existing.reset_at).getTime() <= now) {
     const { error: upsertError } = await adminClient.from("security_rate_limits").upsert(
       {
-        key,
+        key: storageKey,
         count: 1,
         reset_at: nextResetAt,
       },
@@ -84,7 +92,7 @@ export const rateLimit = async (
     );
 
     if (upsertError) {
-      return memoryRateLimit(key, limit, windowMs);
+      return memoryRateLimit(storageKey, limit, windowMs);
     }
 
     return {
@@ -107,10 +115,10 @@ export const rateLimit = async (
       count: existing.count + 1,
       updated_at: new Date().toISOString(),
     })
-    .eq("key", key);
+    .eq("key", storageKey);
 
   if (updateError) {
-    return memoryRateLimit(key, limit, windowMs);
+    return memoryRateLimit(storageKey, limit, windowMs);
   }
 
   return {

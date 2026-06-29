@@ -43,6 +43,14 @@ export const jsonOk = <T extends object>(payload: T, status = 200) =>
     headers: NO_STORE_HEADERS,
   });
 
+export const sanitizeSearchTerm = (value: string, maxLength = 80) =>
+  value
+    .trim()
+    .slice(0, maxLength)
+    .replace(/[%*(),"'\\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
 export const getClientIp = (request: Request) =>
   request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
@@ -52,6 +60,12 @@ export const getUserAgent = (request: Request) =>
 export const getBearerToken = (request: Request) => {
   const authHeader = request.headers.get("authorization");
   return authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+};
+
+export const isSameOriginRequest = (request: Request) => {
+  const origin = request.headers.get("origin");
+  if (!origin) return true;
+  return origin === new URL(request.url).origin;
 };
 
 export const createAuthedServerClient = (
