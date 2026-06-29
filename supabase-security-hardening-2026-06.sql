@@ -5,6 +5,7 @@ do $$
 begin
   if to_regclass('public.odemeler') is not null then
     alter table public.odemeler enable row level security;
+    drop policy if exists "allow all" on public.odemeler;
     create index if not exists odemeler_user_id_idx
       on public.odemeler (user_id);
     create index if not exists odemeler_user_id_id_idx
@@ -120,6 +121,15 @@ begin
     alter table public.fatura_ekleri
       add constraint fatura_ekleri_path_owner_check
       check (split_part(path, '/', 1) = user_id::text);
+  end if;
+end $$;
+
+do $$
+begin
+  if to_regclass('storage.objects') is not null then
+    drop policy if exists "freelance ezk2s2_0" on storage.objects;
+    drop policy if exists "freelance ezk2s2_1" on storage.objects;
+    drop policy if exists "freelance ezk2s2_2" on storage.objects;
   end if;
 end $$;
 
