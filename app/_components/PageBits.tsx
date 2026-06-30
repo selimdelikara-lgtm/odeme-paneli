@@ -820,15 +820,25 @@ export function MobileProjectCards({
             {invoices.length ? (
               <div style={styles.invoiceList}>
                 {invoices.map((attachment) => (
-                  <a
-                    key={attachment.path}
-                    href={attachment.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={styles.invoiceLink}
-                  >
-                    {attachment.name}
-                  </a>
+                  attachment.url ? (
+                    <a
+                      key={attachment.path}
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={styles.invoiceLink}
+                    >
+                      {attachment.name}
+                    </a>
+                  ) : (
+                    <span
+                      key={attachment.path}
+                      style={styles.invoiceLink}
+                      title="Güvenli link hazırlanamadı"
+                    >
+                      {attachment.name}
+                    </span>
+                  )
                 ))}
               </div>
             ) : null}
@@ -866,5 +876,4 @@ export function MobileProjectCards({
     </div>
   );
 }
-
 

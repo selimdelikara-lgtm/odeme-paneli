@@ -131,6 +131,25 @@ begin
     drop policy if exists "freelance ezk2s2_1" on storage.objects;
     drop policy if exists "freelance ezk2s2_2" on storage.objects;
   end if;
+
+  if to_regclass('storage.buckets') is not null then
+    update storage.buckets
+    set
+      public = false,
+      file_size_limit = 1048576,
+      allowed_mime_types = array[
+        'application/pdf',
+        'image/png',
+        'image/jpeg',
+        'image/webp',
+        'image/gif',
+        'image/heic',
+        'image/heif',
+        'image/heic-sequence',
+        'image/heif-sequence'
+      ]::text[]
+    where id = 'faturalar';
+  end if;
 end $$;
 
 create or replace function public.cleanup_security_rate_limits()

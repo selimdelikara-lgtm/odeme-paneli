@@ -373,6 +373,37 @@ export default function Page() {
     }
   }
 
+  const fetchInvoiceSignedUrls = useCallback(async (paths: string[]) => {
+    const uniquePaths = Array.from(new Set(paths.filter(Boolean)));
+    if (!uniquePaths.length) return {} as Record<string, string>;
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const accessToken = session?.access_token;
+    if (!accessToken) return {} as Record<string, string>;
+
+    const response = await fetch("/api/invoices/signed-urls", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ paths: uniquePaths }),
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as {
+      urls?: Record<string, string>;
+    };
+
+    if (!response.ok || !payload.urls) {
+      return {} as Record<string, string>;
+    }
+
+    return payload.urls;
+  }, []);
+
   const openProjectTab = (tabName: string) => {
     setAktifSekme(tabName);
     setViewMode("project");
@@ -723,19 +754,30 @@ export default function Page() {
 
       if (cancelled || error) return;
 
+      const attachments = ((rows || []) as Array<Record<string, unknown>>).map((item) => ({
+        id: Number(item.id),
+        rowId: Number(item.odeme_id),
+        name: String(item.name || ""),
+        path: String(item.path || ""),
+        uploadedAt: String(item.uploaded_at || ""),
+      }));
+      const signedUrls = await fetchInvoiceSignedUrls(
+        attachments.map((attachment) => attachment.path)
+      );
+      if (cancelled) return;
+
       const nextMap: Record<number, InvoiceAttachment[]> = {};
 
-      for (const item of (rows || []) as Array<Record<string, unknown>>) {
-        const rowId = Number(item.odeme_id);
-        if (!rowId) continue;
+      for (const attachment of attachments) {
+        if (!attachment.rowId) continue;
 
-        if (!nextMap[rowId]) nextMap[rowId] = [];
-        nextMap[rowId].push({
-          id: Number(item.id),
-          name: String(item.name || ""),
-          path: String(item.path || ""),
-          url: String(item.url || ""),
-          uploadedAt: String(item.uploaded_at || ""),
+        if (!nextMap[attachment.rowId]) nextMap[attachment.rowId] = [];
+        nextMap[attachment.rowId].push({
+          id: attachment.id,
+          name: attachment.name,
+          path: attachment.path,
+          url: signedUrls[attachment.path] || "",
+          uploadedAt: attachment.uploadedAt,
         });
       }
 
@@ -747,7 +789,7 @@ export default function Page() {
     return () => {
       cancelled = true;
     };
-  }, [authUserId, rowIds]);
+  }, [authUserId, fetchInvoiceSignedUrls, rowIds]);
 
   useEffect(() => {
     const close = () => setTabMenu((p) => ({ ...p, visible: false }));
@@ -1013,14 +1055,10 @@ export default function Page() {
       return;
     }
 
-    const { data: publicUrlData } = supabase.storage
-      .from("faturalar")
-      .getPublicUrl(path);
-
     const nextAttachment: InvoiceAttachment = {
       name: file.name,
       path,
-      url: publicUrlData.publicUrl,
+      url: "",
       uploadedAt: new Date().toISOString(),
     };
 
@@ -1031,7 +1069,7 @@ export default function Page() {
           user_id: authUserId,
           name: nextAttachment.name,
           path: nextAttachment.path,
-          url: nextAttachment.url,
+          url: "",
           uploaded_at: nextAttachment.uploadedAt,
         } satisfies FaturaEkiInsert)
         .select()
@@ -1045,6 +1083,8 @@ export default function Page() {
     }
 
     nextAttachment.id = Number(insertedAttachment.id);
+    const signedUrls = await fetchInvoiceSignedUrls([path]);
+    nextAttachment.url = signedUrls[path] || "";
 
     setInvoiceMap((prev) => ({
       ...prev,
@@ -2157,14 +2197,20 @@ export default function Page() {
                 <div style={styles.invoiceList}>
                   {invoices.map((attachment) => (
                     <div key={attachment.path} style={styles.invoiceChip}>
-                      <a
-                        href={attachment.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={styles.invoiceLink}
-                      >
-                        {attachment.name}
-                      </a>
+                      {attachment.url ? (
+                        <a
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={styles.invoiceLink}
+                        >
+                          {attachment.name}
+                        </a>
+                      ) : (
+                        <span style={styles.invoiceLink} title="Güvenli link hazırlanamadı">
+                          {attachment.name}
+                        </span>
+                      )}
                       <button
                         type="button"
                         onClick={() => void removeInvoice(row.id, attachment)}
