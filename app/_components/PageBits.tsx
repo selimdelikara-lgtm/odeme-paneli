@@ -486,7 +486,7 @@ export function SettingsContent({
   onRestartOnboarding,
 }: SettingsContentProps) {
   return (
-    <div style={styles.settingsGrid}>
+    <div style={styles.settingsGrid} data-onboarding-target="settings-page">
       <div style={styles.settingsCard}>
         <div style={styles.sectionHead}>
           <h2 style={styles.h2}>Hesap Ayarları</h2>
@@ -876,4 +876,3 @@ export function MobileProjectCards({
     </div>
   );
 }
-

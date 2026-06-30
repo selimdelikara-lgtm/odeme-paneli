@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type OnboardingStep = {
   id: string;
@@ -41,10 +41,40 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     target: "[data-onboarding-target='reports']",
   },
   {
+    id: "project-form",
+    title: "Proje Icine Giris",
+    description: "Bir proje sekmesine girdiginde yeni kayit ekleme ve guncelleme alani burada acilir.",
+    target: "[data-onboarding-target='project-form']",
+  },
+  {
+    id: "project-status",
+    title: "Durum Kontrolu",
+    description: "Fatura kesildi ve odeme alindi durumlarini bu alandan hizlica isaretleyebilirsin.",
+    target: "[data-onboarding-target='project-status']",
+  },
+  {
+    id: "project-summary",
+    title: "Proje Ozeti",
+    description: "Aktif projenin ara toplam, odenen ve kalan tutarini burada takip edebilirsin.",
+    target: "[data-onboarding-target='project-summary']",
+  },
+  {
+    id: "project-records",
+    title: "Kayit Tablosu",
+    description: "Projedeki kayitlari siralayabilir, durumlarini degistirebilir ve fatura ekleyebilirsin.",
+    target: "[data-onboarding-target='project-records']",
+  },
+  {
     id: "settings",
     title: "Ayarlar",
     description: "Hesap, bildirim ve panel tercihlerini buradan duzenleyebilirsin.",
     target: "[data-onboarding-target='settings']",
+  },
+  {
+    id: "settings-page",
+    title: "Hesap ve Yardim",
+    description: "Profilini, sifreni ve yardim turunu yeniden baslatma secenegini burada bulabilirsin.",
+    target: "[data-onboarding-target='settings-page']",
   },
 ];
 
@@ -60,6 +90,7 @@ type OnboardingTourProps = {
   open: boolean;
   onSkip: () => void;
   onComplete: () => void;
+  onStepChange?: (stepId: string) => void;
 };
 
 const fallbackRect = (): RectState => ({
@@ -70,12 +101,22 @@ const fallbackRect = (): RectState => ({
   found: false,
 });
 
-export function OnboardingTour({ open, onSkip, onComplete }: OnboardingTourProps) {
+export function OnboardingTour({ open, onSkip, onComplete, onStepChange }: OnboardingTourProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [rect, setRect] = useState<RectState | null>(null);
+  const onStepChangeRef = useRef(onStepChange);
 
   const step = ONBOARDING_STEPS[stepIndex];
   const isLastStep = stepIndex === ONBOARDING_STEPS.length - 1;
+
+  useEffect(() => {
+    onStepChangeRef.current = onStepChange;
+  }, [onStepChange]);
+
+  useEffect(() => {
+    if (!open || !step) return;
+    onStepChangeRef.current?.(step.id);
+  }, [open, step]);
 
   useEffect(() => {
     if (!open || !step) return;
@@ -102,11 +143,12 @@ export function OnboardingTour({ open, onSkip, onComplete }: OnboardingTourProps
       }, 180);
     };
 
-    updateRect();
+    const timer = window.setTimeout(updateRect, 260);
     window.addEventListener("resize", updateRect);
     window.addEventListener("scroll", updateRect, true);
 
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener("resize", updateRect);
       window.removeEventListener("scroll", updateRect, true);
     };

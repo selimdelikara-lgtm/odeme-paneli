@@ -283,7 +283,7 @@ export default function Page() {
     setSettingsAvatarUrl(avatarUrl);
   };
 
-  const applyDraftToForm = (draft: DraftState | undefined) => {
+  const applyDraftToForm = useCallback((draft: DraftState | undefined) => {
     setProje(draft?.proje ?? "");
     setTutar(draft?.tutar ?? "");
     setTarih(draft?.tarih ?? "");
@@ -291,7 +291,7 @@ export default function Page() {
     setGvkli(draft?.gvkli ?? false);
     setFaturaKesildi(draft?.faturaKesildi ?? false);
     setOdemeAlindi(draft?.odemeAlindi ?? false);
-  };
+  }, []);
 
   const pushActivity = useCallback((title: string, detail: string) => {
     const item: ActivityItem = {
@@ -404,14 +404,14 @@ export default function Page() {
     return payload.urls;
   }, []);
 
-  const openProjectTab = (tabName: string) => {
+  const openProjectTab = useCallback((tabName: string) => {
     setAktifSekme(tabName);
     setViewMode("project");
     if (editId === null) {
       applyDraftToForm(drafts[tabName]);
     }
     setSelectedIds([]);
-  };
+  }, [applyDraftToForm, drafts, editId]);
 
   const updateDraftField = (patch: Partial<DraftState>) => {
     if (!aktifSekme || editId !== null || viewMode !== "project") return;
@@ -712,7 +712,7 @@ export default function Page() {
     });
 
     setLoading(false);
-  }, [aktifSekme, authUserId, drafts]);
+  }, [aktifSekme, applyDraftToForm, authUserId, drafts]);
 
   useEffect(() => {
     if (!authUserId) return;
@@ -819,6 +819,42 @@ export default function Page() {
       showArchivedTabs ? archivedTabs.includes(tab) : !archivedTabs.includes(tab)
     );
   }, [sekmeler, archivedTabs, showArchivedTabs]);
+
+  const handleOnboardingStepChange = useCallback(
+    (stepId: string) => {
+      const projectSteps = new Set([
+        "project-form",
+        "project-status",
+        "project-summary",
+        "project-records",
+      ]);
+
+      if (projectSteps.has(stepId)) {
+        const targetTab = aktifSekme || gorunenSekmeler[0];
+        if (targetTab) {
+          openProjectTab(targetTab);
+        } else {
+          setViewMode("home");
+        }
+        setShowMobileProjects(false);
+        return;
+      }
+
+      if (stepId === "settings-page") {
+        setViewMode("settings");
+        setSelectedIds([]);
+        setShowMobileProjects(false);
+        return;
+      }
+
+      if (["welcome", "projects", "payments", "due", "reports", "settings"].includes(stepId)) {
+        setViewMode("home");
+        setSelectedIds([]);
+        setShowMobileProjects(false);
+      }
+    },
+    [aktifSekme, gorunenSekmeler, openProjectTab]
+  );
 
   const homeBaseRows = useMemo(() => {
     return data.filter((row) =>
@@ -3802,6 +3838,7 @@ export default function Page() {
                 style={styles.card}
                 className="content-card"
                 data-inline-edit-row={editId !== null ? "true" : undefined}
+                data-onboarding-target="project-form"
               >
                 <div style={styles.sectionHead}>
                   <h2 style={styles.h2}>Kayıt Ekle / Güncelle</h2>
@@ -3869,7 +3906,7 @@ export default function Page() {
                     </div>
                   </div>
 
-                  <div style={styles.formSection}>
+                  <div style={styles.formSection} data-onboarding-target="project-status">
                     <div style={styles.formSectionTitle}>Durum ve İşlem</div>
                     <div style={styles.formChecks}>
                       <button
@@ -4004,6 +4041,7 @@ export default function Page() {
 
               <div style={styles.card} className="content-card" ref={projectPdfRef}>
                 <div
+                  data-onboarding-target="project-summary"
                   style={
                     isMobileViewport
                       ? styles.mobileProjectSummaryStrip
@@ -4069,25 +4107,27 @@ export default function Page() {
                     styles={styles}
                   />
                 ) : isMobileViewport ? (
-                  <MobileProjectCards
-                    rows={filteredActiveKayitlar}
-                    invoiceMap={invoiceMap}
-                    rowMeta={rowMeta}
-                    aktifTabMeta={aktifTabMeta}
-                    styles={styles}
-                    shortDate={shortDate}
-                    shortDateTime={shortDateTime}
-                    tl={tl}
-                    durumGorunum={durumGorunum}
-                    durumIlerle={durumIlerle}
-                    editAc={editAc}
-                    kayitSil={kayitSil}
-                    openInvoicePicker={openInvoicePicker}
-                    uploadingInvoiceId={uploadingInvoiceId}
-                  />
+                  <div data-onboarding-target="project-records">
+                    <MobileProjectCards
+                      rows={filteredActiveKayitlar}
+                      invoiceMap={invoiceMap}
+                      rowMeta={rowMeta}
+                      aktifTabMeta={aktifTabMeta}
+                      styles={styles}
+                      shortDate={shortDate}
+                      shortDateTime={shortDateTime}
+                      tl={tl}
+                      durumGorunum={durumGorunum}
+                      durumIlerle={durumIlerle}
+                      editAc={editAc}
+                      kayitSil={kayitSil}
+                      openInvoicePicker={openInvoicePicker}
+                      uploadingInvoiceId={uploadingInvoiceId}
+                    />
+                  </div>
                 ) : (
                   <div
-                    data-onboarding-target="payments"
+                    data-onboarding-target="project-records"
                     style={{
                       ...styles.tableWrap,
                       ...(draggedId !== null && sortKey === "manual"
@@ -4296,6 +4336,7 @@ export default function Page() {
         open={onboardingOpen}
         onSkip={() => void completeOnboarding()}
         onComplete={() => void completeOnboarding()}
+        onStepChange={handleOnboardingStepChange}
       />
 
       {tabMenu.visible ? (
