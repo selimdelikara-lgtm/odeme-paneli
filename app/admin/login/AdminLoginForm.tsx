@@ -7,29 +7,58 @@ import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "lucide-
 export default function AdminLoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [challengeId, setChallengeId] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const otpStep = Boolean(challengeId);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setMessage("");
 
+    const body = otpStep
+      ? { challengeId, code }
+      : { username, password };
+
     const response = await fetch("/api/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify(body),
     });
 
+    const payload = await response.json().catch(() => ({ error: "Giriş yapılamadı." })) as {
+      error?: string;
+      requiresOtp?: boolean;
+      challengeId?: string;
+      email?: string;
+    };
+
     if (response.ok) {
+      if (payload.requiresOtp && payload.challengeId) {
+        setChallengeId(payload.challengeId);
+        setMaskedEmail(payload.email || "");
+        setCode("");
+        setMessage("");
+        setLoading(false);
+        return;
+      }
       window.location.href = "/admin";
       return;
     }
 
-    const payload = await response.json().catch(() => ({ error: "Giriş yapılamadı." }));
     setMessage(payload.error || "Giriş yapılamadı.");
     setLoading(false);
+  }
+
+  function resetOtpStep() {
+    setChallengeId("");
+    setMaskedEmail("");
+    setCode("");
+    setMessage("");
   }
 
   return (
@@ -58,58 +87,101 @@ export default function AdminLoginForm() {
             <span className="admin-login-icon"><LockKeyhole size={21} /></span>
             <div>
               <h2>Admin girişi</h2>
-              <p>Yalnızca tanımlı sahip hesabı erişebilir.</p>
+              <p>
+                {otpStep
+                  ? "E-postana gelen 6 haneli kodu gir."
+                  : "Yalnızca tanımlı sahip hesabı erişebilir."}
+              </p>
             </div>
           </div>
 
-          <label>
-            Kullanıcı adı
-            <span className="admin-login-input">
-              <Mail size={18} />
-              <input
-                type="text"
-                autoComplete="username"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                placeholder="selimdelikara"
-                required
-              />
-            </span>
-          </label>
+          {!otpStep ? (
+            <>
+              <label>
+                Kullanıcı adı
+                <span className="admin-login-input">
+                  <Mail size={18} />
+                  <input
+                    type="text"
+                    autoComplete="username"
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                    placeholder="selimdelikara"
+                    required
+                  />
+                </span>
+              </label>
 
-          <label>
-            Şifre
-            <span className="admin-login-input">
-              <LockKeyhole size={18} />
-              <input
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Hesap şifren"
-                required
-              />
-              <button
-                type="button"
-                className="admin-login-ghost"
-                onClick={() => setShowPassword((value) => !value)}
-                aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </span>
-          </label>
+              <label>
+                Şifre
+                <span className="admin-login-input">
+                  <LockKeyhole size={18} />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="Hesap şifren"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="admin-login-ghost"
+                    onClick={() => setShowPassword((value) => !value)}
+                    aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </span>
+              </label>
+            </>
+          ) : (
+            <>
+              <div className="admin-login-footnote">
+                Doğrulama kodu {maskedEmail || "admin e-posta adresine"} gönderildi. Kod 10 dakika geçerli.
+              </div>
+              <label>
+                Doğrulama kodu
+                <span className="admin-login-input admin-login-code-input">
+                  <ShieldCheck size={18} />
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={code}
+                    onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="000000"
+                    minLength={6}
+                    maxLength={6}
+                    required
+                  />
+                </span>
+              </label>
+            </>
+          )}
 
           {message ? <p className="admin-login-error">{message}</p> : null}
 
           <button className="admin-login-submit" type="submit" disabled={loading}>
-            {loading ? "Yetki kontrol ediliyor..." : "Panele giriş yap"}
+            {loading
+              ? otpStep
+                ? "Kod doğrulanıyor..."
+                : "Yetki kontrol ediliyor..."
+              : otpStep
+                ? "Kodu doğrula"
+                : "Panele giriş yap"}
             <ArrowRight size={18} />
           </button>
 
-          <div className="admin-login-footnote">
+          {otpStep ? (
+            <button className="admin-login-secondary" type="button" onClick={resetOtpStep} disabled={loading}>
+              Kullanıcı adı ve şifreye dön
+            </button>
+          ) : null}
+
+          {!otpStep ? <div className="admin-login-footnote">
             Bu giriş yalnızca server tarafında tanımlı sahip bilgileriyle çalışır.
-          </div>
+          </div> : null}
         </form>
       </section>
       <style jsx global>{`
@@ -267,6 +339,11 @@ export default function AdminLoginForm() {
           font: inherit;
           color: #172033;
         }
+        .admin-login-code-input input {
+          font-size: 22px;
+          font-weight: 900;
+          letter-spacing: 6px;
+        }
         .admin-login-ghost {
           width: 34px;
           height: 34px;
@@ -294,6 +371,19 @@ export default function AdminLoginForm() {
           opacity: 0.65;
           cursor: wait;
           box-shadow: none;
+        }
+        .admin-login-secondary {
+          min-height: 44px;
+          border: 1px solid #cbd8ea;
+          border-radius: 8px;
+          background: #ffffff;
+          color: #1d4ed8;
+          font-weight: 900;
+          cursor: pointer;
+        }
+        .admin-login-secondary:disabled {
+          opacity: 0.65;
+          cursor: wait;
         }
         .admin-login-error {
           margin: 0;

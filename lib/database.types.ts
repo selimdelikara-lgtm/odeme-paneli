@@ -207,6 +207,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      admin_login_otps: {
+        Row: {
+          id: string;
+          admin_user_id: string;
+          email: string;
+          code_hash: string;
+          attempts: number;
+          expires_at: string;
+          consumed_at: string | null;
+          request_ip_hash: string | null;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          admin_user_id: string;
+          email: string;
+          code_hash: string;
+          attempts?: number;
+          expires_at: string;
+          consumed_at?: string | null;
+          request_ip_hash?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          admin_user_id?: string;
+          email?: string;
+          code_hash?: string;
+          attempts?: number;
+          expires_at?: string;
+          consumed_at?: string | null;
+          request_ip_hash?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       traffic_events: {
         Row: {
           id: string;

@@ -48,6 +48,15 @@ begin
     revoke all on public.admin_audit_logs from anon, authenticated;
   end if;
 
+  if to_regclass('public.admin_login_otps') is not null then
+    alter table public.admin_login_otps enable row level security;
+    revoke all on public.admin_login_otps from anon, authenticated;
+    create index if not exists admin_login_otps_admin_created_idx
+      on public.admin_login_otps (admin_user_id, created_at desc);
+    create index if not exists admin_login_otps_expires_idx
+      on public.admin_login_otps (expires_at);
+  end if;
+
   if to_regclass('public.traffic_events') is not null then
     alter table public.traffic_events enable row level security;
     revoke all on public.traffic_events from anon, authenticated;
@@ -149,6 +158,12 @@ begin
         'image/heif-sequence'
       ]::text[]
     where id = 'faturalar';
+  end if;
+
+  if to_regclass('public.fatura_ekleri') is not null then
+    update public.fatura_ekleri
+    set url = ''
+    where coalesce(url, '') <> '';
   end if;
 end $$;
 

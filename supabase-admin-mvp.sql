@@ -28,6 +28,26 @@ create index if not exists admin_audit_logs_created_idx
 create index if not exists admin_audit_logs_entity_idx
   on public.admin_audit_logs (entity_type, entity_id, created_at desc);
 
+create table if not exists public.admin_login_otps (
+  id uuid primary key default gen_random_uuid(),
+  admin_user_id uuid not null references public.admin_user(id) on delete cascade,
+  email text not null,
+  code_hash text not null,
+  attempts integer not null default 0,
+  expires_at timestamptz not null,
+  consumed_at timestamptz,
+  request_ip_hash text,
+  user_agent text,
+  created_at timestamptz not null default timezone('utc', now()),
+  constraint admin_login_otps_attempts_check check (attempts between 0 and 10)
+);
+
+create index if not exists admin_login_otps_admin_created_idx
+  on public.admin_login_otps (admin_user_id, created_at desc);
+
+create index if not exists admin_login_otps_expires_idx
+  on public.admin_login_otps (expires_at);
+
 create table if not exists public.traffic_events (
   id uuid primary key default gen_random_uuid(),
   path text not null,
@@ -105,6 +125,7 @@ create index if not exists contact_message_replies_message_idx
 
 alter table public.admin_user enable row level security;
 alter table public.admin_audit_logs enable row level security;
+alter table public.admin_login_otps enable row level security;
 alter table public.traffic_events enable row level security;
 alter table public.admin_user_status enable row level security;
 alter table public.system_settings enable row level security;
@@ -113,6 +134,7 @@ alter table public.contact_message_replies enable row level security;
 
 revoke all on public.admin_user from anon, authenticated;
 revoke all on public.admin_audit_logs from anon, authenticated;
+revoke all on public.admin_login_otps from anon, authenticated;
 revoke all on public.traffic_events from anon, authenticated;
 revoke all on public.admin_user_status from anon, authenticated;
 revoke all on public.system_settings from anon, authenticated;
